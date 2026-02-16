@@ -1,0 +1,40 @@
+/.idea
+
+
+# Dotnet
+**/bin/
+**/obj/
+
+# IDE
+.idea/
+.run/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+**/appsettings.json
+
+#IDE
+/backend/.idea/.idea.backend/.idea
+
+
+# Publish Web Output
+*.[Pp]ublish.xml
+*.azurePubxml
+*.pubxml
+*.publishproj
+PublishScripts/
+
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
