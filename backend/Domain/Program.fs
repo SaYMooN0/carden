@@ -1,5 +1,7 @@
 ﻿module Types
 
+open System
+
 type DeckStudyState = {} //мб отдельная сущность мб внутри колоды
 
 
@@ -15,6 +17,8 @@ type Card = {
      Id: CardId
      ContentFront: CardContentItem list //обязательно Ordered
      ContentBack: CardContentItem list //обязательно Ordered
+     LastTimeEdited: DateTime
+     CreationTime: DateTime
 } 
  
 type DeckId = System.Guid
@@ -22,24 +26,18 @@ type DeckId = System.Guid
 type Deck ={
      Id: DeckId
      Cards: Card list
+     LastTimeEdited: DateTime
 }
-//мб назвать Attachment sprout
-type AttachmentSprite = string
-//Attchment читаем свреху вниз, слева направа
-type SimplePlantStageSprite = string
-
-type AttachmentPosition = {
-     x: int
-     y: int
-}
+type SimplePlantStageSprite = string 
+type AttachmentSprite = string //размер спрайта аттачмента такой же как и у растения
 
 type Attachment = {
-     Pos: AttachmentPosition 
-     Sp: AttachmentSprite[]
+     Sp: AttachmentSprite[] 
 }
 
 type Stage5Sprite = {
      Sprite: SimplePlantStageSprite
+     //Attchment читаем свреху вниз, слева направа
      Attachment1: Attachment
      Attachment2: Attachment
      Attachment3: Attachment
@@ -58,10 +56,6 @@ type PlantSpecieId =
      | Арбузарбуз 
      | Хэловинпамкин
 
-type PlantInPoPosition = {//позиция левого нижнего края
-     x: int
-     y: int
-}
 
 type PlantSpecie = {
      Id: PlantSpecieId
@@ -74,7 +68,7 @@ type PlantSpecie = {
 
 type PotLvlSprite = {
      Image: string
-     PlantPosition: PlantInPoPosition
+     PlantSpriteStartPosition: int //кол-во пикселей сверху
 }
 type PotTypeId =
      | Керамикссолнышокм 
@@ -92,18 +86,23 @@ type PotType = {
 type PlantId = System.Guid
 type UserId = {Value: System.Guid}
 
-
+type PlantDescription = string
 type Plant = {
      Id: PlantId
      OwnerId: UserId
+     Description: PlantDescription
      Deck: Deck
      PotType: PotType
-     CreationDate: System.DateTime
+     CreationDate: DateTime
      PlantSpecie: PlantSpecie
      StudyState: DeckStudyState
      // View()=> currentplantstage (got from current StudyState & PlantSpecie )+ current pot lvl (lvl + deck)
 }
 
+type Email = string
 type User  = {
      Id : UserId
+     Email : Email
+     PasswordHash : string
+     RegistrationDate : DateTime
 }
