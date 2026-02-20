@@ -1,0 +1,10 @@
+```
+CREATE TABLE pot_types (
+    Id VARCHAR(50) PRIMARY KEY,
+    Lvl1Spite VARCHAR(255) NOT NULL,
+    Lvl2Spite VARCHAR(255) NOT NULL,
+    Lvl3Spite VARCHAR(255) NOT NULL,
+    Lvl4Spite VARCHAR(255) NOT NULL,
+    Lvl5Spite VARCHAR(255) NOT NULL
+);
+```
