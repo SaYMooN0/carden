@@ -5,12 +5,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="WeatherForecast.fs"/>
+        <Compile Include="Types.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Giraffe" Version="8.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Domain\Domain.fsproj" />
     </ItemGroup>
 
 </Project>

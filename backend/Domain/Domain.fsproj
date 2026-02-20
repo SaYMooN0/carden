@@ -6,6 +6,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Errs.fs" />
+        <Compile Include="Models.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>
 
