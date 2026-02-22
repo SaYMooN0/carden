@@ -1,37 +1,39 @@
 open System
 open System.Text.Json
 open System.Text.Json.Serialization
+open Domain.Errs
 open Giraffe
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
+open WebApi
+open WebApi.Types
 
 
-let sayHelloWorld: HttpHandler = text "Hello World, from Giraffe"
-let sayHi: HttpHandler = text "Hiiiiiiiiiii"
 
 let handleNoMatchedEndpoint: HttpHandler =
-    RequestErrors.NOT_FOUND "Endpoint not found"
+    fun next ctx ->
+        let method = ctx.Request.Method
+        let route = ctx.Request.Path.Value
+        let response = ErrResponse.NoMatchingEndpoint method route
+        json response next ctx
 
 let webApp =
-    choose
-        [ GET >=> choose [ route "/foo" >=> text "Foo" ]
-          POST >=> choose [ route "/bar" >=> text "Bar" ]
-          handleNoMatchedEndpoint ]
-// let someHttpHandler : HttpHandler =
-//     fun (next : HttpFunc) (ctx : HttpContext) ->
-//         match ctx.GetRequestHeader "X-MyOwnHeader" with
-//         | Error msg ->
-//             // Mandatory header is missing.
-//             // Log error message
-//             // Return error response to the client.
-//         | Ok headerValue ->
-//             // Do something with `headerValue`...
-//             // Return a Task<HttpContext option>
-let errorHandler (ex: Exception) (_: ILogger) =
-    clearResponse >=> ServerErrors.INTERNAL_ERROR ex.Message
+    choose [ subRoute "/auth" AuthHandlers.handlers; handleNoMatchedEndpoint ]
+
+let errorHandler (ex: Exception) (logger: ILogger) =
+    logger.LogError(ex, "Unhandled exception")
+
+    clearResponse
+    >=> setStatusCode 500
+    >=> json (
+        ErrResponse.create (DomainErr ErrCode.ProgramBug) "Server error"
+        |> ErrResponse.setAdditionalData {| ExceptionMsg = ex.Message |}
+    )
+
+
 
 let configureApp (app: IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler).UseGiraffe webApp

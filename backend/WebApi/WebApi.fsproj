@@ -5,6 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="AuthHandlers.fs" />
         <Compile Include="Types.fs" />
         <Compile Include="Program.fs"/>
     </ItemGroup>

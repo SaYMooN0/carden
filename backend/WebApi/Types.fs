@@ -1,7 +1,7 @@
 ﻿module WebApi.Types
 
 open System.Net.Http
-open Domain
+open Domain.Errs
 
 type ApiLevelErr =
     | DomainErr of ErrCode
@@ -16,30 +16,28 @@ let parseErrToStringCode =
     | NoMatchingEndpoint -> "no_matching_endpoint"
 
 
-type  FlatErrResponse<'a>  =
-    private
-        { Msg: string
-          Code: string
-          Details: string option
-          FixSuggestion: string option
-          AdditionalData: 'a option }
-        
-module FlatErrResponse =
-    let private create code msg details : FlatErrResponse<'a> =
+type ErrResponse<'a> =
+    { Msg: string
+      Code: string
+      Details: string option
+      FixSuggestion: string option
+      AdditionalData: 'a option }
+
+module ErrResponse =
+    let createWithDetails code msg details : ErrResponse<'a> =
         { Msg = msg
           Code = parseErrToStringCode code
           Details = details
           FixSuggestion = None
           AdditionalData = None }
 
-    let fromErr (err: ErrExtract) =
-        create
-            (err |> ErrExtract.code |> DomainErr)
-            (ErrExtract.msg err)
-            (ErrExtract.details err)
+    let create code msg : ErrResponse<'a> = createWithDetails code msg None
 
-    let NoMatchingEndpoint (method: HttpMethod) route =
-        create
-            NoMatchingEndpoint
-            "There is no matching endpoint"
-            (Some $"No endpoint mapped for {method.Method} '{route}'")
+    let fromErr (err: Err) =
+        createWithDetails (err |> ErrExtract.code |> DomainErr) (ErrExtract.msg err) (ErrExtract.details err)
+
+    let setAdditionalData data err = { err with AdditionalData = Some data }
+
+    let NoMatchingEndpoint (method: string) route : ErrResponse<{| Method: string; Route: string |}> =
+        create NoMatchingEndpoint "There is no matching endpoint"
+        |> setAdditionalData {| Method = method; Route = route |}

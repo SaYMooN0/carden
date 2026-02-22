@@ -97,7 +97,7 @@ type Plant = {
      PotType: PotType
      CreationDate: DateTime
      PlantSpecie: PlantSpecie
-     StudyState: DeckStudyState
+     // StudyState: DeckStudyState
      // View()=> currentplantstage (got from current StudyState & PlantSpecie )+ current pot lvl (lvl + deck)
 }
 

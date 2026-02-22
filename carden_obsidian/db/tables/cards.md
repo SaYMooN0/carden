@@ -2,6 +2,7 @@
 CREATE TYPE content_item AS (
 	Value VARCHAR(4096)
 	Type VARCHAR(30)
+	OrderInCard INT
 )
 
 CREATE TABLE cards (

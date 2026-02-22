@@ -1,4 +1,4 @@
-﻿module Domain
+﻿module Domain.Errs
 
 type ErrCode =
     | Unspecified
@@ -6,7 +6,7 @@ type ErrCode =
     | ProgramBug
     | IncorrectFormat
 
-type ErrExtract =
+type Err =
     private
         { Code: ErrCode
           Msg: string
@@ -15,10 +15,10 @@ type ErrExtract =
 
 
 module ErrExtract =
-    let code (err: ErrExtract) = err.Code
-    let msg (err: ErrExtract) = err.Msg
-    let details (err: ErrExtract) = err.Details
-    let suggestion (err: ErrExtract) = err.FixSuggestion
+    let code (err: Err) = err.Code
+    let msg (err: Err) = err.Msg
+    let details (err: Err) = err.Details
+    let suggestion (err: Err) = err.FixSuggestion
 
 module Err =
 
