@@ -1,6 +1,6 @@
 type ErrBase = {
     msg: string;
-    code: ErrCode;
+    code?: ErrCode;
     details?: string;
     fixSuggestion?: string;
 };
@@ -54,6 +54,9 @@ export namespace ErrUtils {
         };
     }
     export function ensureAdditionalData(err: ErrBase): err is Err<unknown> {
+        return "additionalData" in err;
+    }
+    export function hasAdditionalData(err: ErrBase): boolean {
         return "additionalData" in err;
     }
 }

@@ -13,7 +13,7 @@ export namespace Backend {
     export async function fetchJsonResponse<T>(url: string, options: RequestInit): Promise<BackendResponse<T>> {
         try {
 
-            const response = await fetch(url, {
+            const response = await fetch("/api/" + url, {
                 ...options,
                 credentials: 'include'
             });
@@ -36,7 +36,7 @@ export namespace Backend {
 
     export async function fetchVoidResponse(url: string, options: RequestInit): Promise<BackendResponseVoid> {
         try {
-            const response = await fetch(url, {
+            const response = await fetch("/api/" + url, {
                 ...options,
                 credentials: 'include'
             });
@@ -61,7 +61,7 @@ export namespace Backend {
         options: RequestInit
     ): Promise<BackendResponse<T>> {
         try {
-            const response = await fetchFunc(url, {
+            const response = await fetchFunc("/api/" + url, {
                 ...options,
                 credentials: 'include'
             });
