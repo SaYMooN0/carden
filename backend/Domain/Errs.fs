@@ -4,6 +4,7 @@ type ErrCode =
     | Unspecified
     | NotImplemented
     | ProgramBug
+    | NoValue
     | IncorrectFormat
 
 type Err =
@@ -28,9 +29,11 @@ module Err =
           Details = details
           FixSuggestion = None }
 
-    let WithDetails details err = { err with Details = details }
+    let setDetails (details: string) err =
+        { err with
+            Details = option.Some details }
 
-    let withSuggestion suggestion err =
+    let setSuggestion suggestion err =
         { err with
             FixSuggestion = Some suggestion }
 
@@ -42,6 +45,9 @@ module Err =
 
     let ProgramBug msg =
         createWithoutSuggestion ErrCode.ProgramBug msg (option.Some "Something unexpected happened")
+
+    let NoValue msg =
+        createWithoutSuggestion ErrCode.IncorrectFormat msg option.None
 
     module IncorrectFormat =
 

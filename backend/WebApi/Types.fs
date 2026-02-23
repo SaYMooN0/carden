@@ -1,21 +1,16 @@
 ﻿module WebApi.Types
 
-open System.Net.Http
 open Domain.Errs
 
-type ApiLevelErr =
-    | DomainErr of ErrCode
-    | NoMatchingEndpoint
+type private ListOfInvalidFields = {| Name: string; Message: string |} list
 
-let parseErrToStringCode =
-    function
-    | DomainErr Unspecified -> "unspecified"
-    | DomainErr NotImplemented -> "not_implemented"
-    | DomainErr ProgramBug -> "program_bug"
-    | DomainErr IncorrectFormat -> "incorrect_format"
-    | NoMatchingEndpoint -> "no_matching_endpoint"
+type ApiLvlErr =
+    | NoMatchingEndpoint of {| Method: string; Route: string |}
+    | RequestBodyParseErr of ListOfInvalidFields
 
-
+type BackendErr =
+    | DomainErr of Err
+    | ApiErr of ApiLvlErr
 type ErrResponse<'a> =
     { Msg: string
       Code: string
@@ -24,20 +19,38 @@ type ErrResponse<'a> =
       AdditionalData: 'a option }
 
 module ErrResponse =
-    let createWithDetails code msg details : ErrResponse<'a> =
+    let private getStringForDomainErr (err: Err) =
+        match (ErrExtract.code err) with
+        | Unspecified -> "unspecified"
+        | NotImplemented -> "not_implemented"
+        | ProgramBug -> "program_bug"
+        | IncorrectFormat -> "incorrect_format"
+        | NoValue -> "no_value"
+
+    let private getStringForApiErr (err: ApiLvlErr) =
+        match err with
+        | NoMatchingEndpoint _ -> "no_matching_endpoint"
+        | RequestBodyParseErr _ -> "request_parse_err"
+
+    let fromDomainErr (err: Err) : ErrResponse<'a> =
+        { Msg = ErrExtract.msg err
+          Code = getStringForDomainErr err
+          Details = ErrExtract.details err
+          FixSuggestion = ErrExtract.suggestion err
+          AdditionalData = None }
+
+    let createFromApiErr msg (err: ApiLvlErr) : ErrResponse<'a> =
         { Msg = msg
-          Code = parseErrToStringCode code
-          Details = details
+          Code = getStringForApiErr err
+          Details = None
           FixSuggestion = None
           AdditionalData = None }
 
-    let create code msg : ErrResponse<'a> = createWithDetails code msg None
-
-    let fromErr (err: Err) =
-        createWithDetails (err |> ErrExtract.code |> DomainErr) (ErrExtract.msg err) (ErrExtract.details err)
-
     let setAdditionalData data err = { err with AdditionalData = Some data }
 
-    let NoMatchingEndpoint (method: string) route : ErrResponse<{| Method: string; Route: string |}> =
-        create NoMatchingEndpoint "There is no matching endpoint"
-        |> setAdditionalData {| Method = method; Route = route |}
+    let fromApiLvlErr (err: ApiLvlErr) : ErrResponse<ApiLvlErr> =
+        let msg =
+            match err with
+            | NoMatchingEndpoint _ ->"There is no matching endpoint"
+            | RequestBodyParseErr  _ -> "Some errors in the input data"
+        createFromApiErr msg err

@@ -1,6 +1,8 @@
 open System
+open System.Data
 open System.Text.Json
 open System.Text.Json.Serialization
+open Dapper
 open Domain.Errs
 open Giraffe
 open Microsoft.AspNetCore.Builder
@@ -8,7 +10,9 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
+open Npgsql
 open WebApi
+open WebApi.Repositories
 open WebApi.Types
 
 
@@ -33,8 +37,6 @@ let errorHandler (ex: Exception) (logger: ILogger) =
         |> ErrResponse.setAdditionalData {| ExceptionMsg = ex.Message |}
     )
 
-
-
 let configureApp (app: IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler).UseGiraffe webApp
 
@@ -44,6 +46,8 @@ let configureServices (services: IServiceCollection) =
             let opts = JsonSerializerOptions(JsonSerializerDefaults.Web)
             opts.Converters.Add(JsonFSharpConverter())
             opts)
+        .AddTransient<ConnectionFactory>()
+        .AddTransient<UsersRepository>()
         .AddGiraffe()
     |> ignore
 

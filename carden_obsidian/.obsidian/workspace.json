@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "db/tables/cards.md",
+                "file": "db/tables/users.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "cards"
+              "title": "users"
             }
           }
         ]
@@ -201,6 +201,20 @@
   },
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "plants/Сactus/Cactus1Sprite.png",
+    "plants/Сactus/Cactus2Attachment.png",
+    "plants/Сactus/Cactus1Attachment.png",
+    "plants/Сactus/Cactus2Sprite.png",
+    "plants/Сactus/Cactus5Sprite.png",
+    "plants/Сactus/Cactus4Sprite.png",
+    "plants/Сactus/Cactus3Sprite.png",
+    "plants/Сactus/Cactus.md",
+    "db/tables/cards.md",
+    "pots/PotPvZSprite.png",
+    "pots/PotPVZ.md",
+    "pots/Pot1Sprite.png",
+    "pots/Pot1.md",
+    "plants/Сactus",
     "pots/PotNumberOne.md",
     "pots/PotNumberOne",
     "plants/PlantNumeroUno1/PlantNumeroUno1.md",
