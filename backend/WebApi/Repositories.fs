@@ -25,14 +25,17 @@ type UserDbDto =
 module UserDbDto =
     let toDomain (dto: UserDbDto) : User =
         { Id = { Value = dto.Id }
-          Email = Email.value dto.Email
+          Email =
+            match Email.tryCreate dto.Email with
+            | Ok email -> email
+            | Error _ -> failwith "Incorrect email in the db"
           PasswordHash = dto.PasswordHash
           RegistrationDate = dto.RegistrationDate }
 
 
     let fromDomain (u: User) : UserDbDto =
         { Id = u.Id.Value
-          Email = u.Email
+          Email = Email.value u.Email
           PasswordHash = u.PasswordHash
           RegistrationDate = u.RegistrationDate }
 
@@ -52,7 +55,7 @@ type UsersRepository(connectionFactory: ConnectionFactory) =
             return dto |> Option.ofObj |> Option.map UserDbDto.toDomain
         }
 
-    member _.AnyUserWithEmail(email: Email) : Task<bool> =
+    member _.AnyUserWithEmail(email: Email.Email) : Task<bool> =
         task {
             use conn = connectionFactory.CreateConnection()
 
@@ -65,6 +68,6 @@ type UsersRepository(connectionFactory: ConnectionFactory) =
                     )
                 """
 
-            let! exists = conn.QuerySingleOrDefaultAsync<bool>(sql, {| Email = email |})
+            let! exists = conn.QuerySingleOrDefaultAsync<bool>(sql, {| Email = Email.value email |})
             return exists
         }

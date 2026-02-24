@@ -5,9 +5,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Repositories.fs" />
-        <Compile Include="Types.fs" />
         <Compile Include="BackendResponse.fs" />
+        <Compile Include="Validation.fs" />
+        <Compile Include="Repositories.fs" />
         <Compile Include="AuthHandlers.fs"/>
         <Compile Include="Program.fs"/>
     </ItemGroup>
@@ -16,6 +16,10 @@
         <PackageReference Include="Giraffe" Version="8.2.0"/>
         <PackageReference Include="Npgsql" Version="10.0.1"/>
         <PackageReference Include="Dapper" Version="2.1.66"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Domain\Domain.fsproj" />
     </ItemGroup>
 
 </Project>

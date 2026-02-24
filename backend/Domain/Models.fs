@@ -101,28 +101,27 @@ type Plant =
     // View()=> currentplantstage (got from current StudyState & PlantSpecie )+ current pot lvl (lvl + deck)
     }
 
-type Email = private Email of string
 
 module Email =
+    type Email = private Email of string
+
     type EmailCreationErr =
         | NoValue
-        | IncorrectFormat of {| ProvidedValue: string |}
+        | IncorrectFormat of {| Value: string |}
 
-    let private emailRegex =
-        Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled ||| RegexOptions.IgnoreCase)
+    let private emailRegex = Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled)
 
     let tryCreate (value: string) : Result<Email, EmailCreationErr> =
-        if String.IsNullOrWhiteSpace value then
-            Error NoValue
-        elif emailRegex.IsMatch value then
-            Ok(Email value)
-        else
-            
+        if String.IsNullOrWhiteSpace value then Error NoValue
+        else if emailRegex.IsMatch value then Ok(Email value)
+        else Error(IncorrectFormat {| Value = value |})
+
 
     let value (Email v) = v
 
+
 type User =
     { Id: UserId
-      Email: Email
+      Email: Email.Email
       PasswordHash: string
       RegistrationDate: DateTimeOffset }

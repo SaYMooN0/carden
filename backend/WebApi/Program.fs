@@ -1,19 +1,16 @@
 open System
-open System.Data
+open System.Net
 open System.Text.Json
 open System.Text.Json.Serialization
-open Dapper
-open Domain.Errs
 open Giraffe
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
-open Npgsql
 open WebApi
+open WebApi.BackendResponse
 open WebApi.Repositories
-open WebApi.Types
 
 
 
@@ -21,21 +18,27 @@ let handleNoMatchedEndpoint: HttpHandler =
     fun next ctx ->
         let method = ctx.Request.Method
         let route = ctx.Request.Path.Value
-        let response = ErrResponse.NoMatchingEndpoint method route
-        json response next ctx
+
+        let err =
+            BackendResponseErr.create "Endpoint not found"
+            |> BackendResponseErr.SetAdditionalData.noMatchedEndpoint {| Method = method; Route = route |}
+
+        constructFailure HttpStatusCode.NotFound [ err ] next ctx
 
 let webApp =
     choose [ subRoute "/auth" AuthHandlers.handlers; handleNoMatchedEndpoint ]
 
 let errorHandler (ex: Exception) (logger: ILogger) =
-    logger.LogError(ex, "Unhandled exception")
+    fun next ctx ->
+        logger.LogError(ex, "Unhandled exception")
 
-    clearResponse
-    >=> setStatusCode 500
-    >=> json (
-        ErrResponse.create (DomainErr ErrCode.ProgramBug) "Server error"
-        |> ErrResponse.setAdditionalData {| ExceptionMsg = ex.Message |}
-    )
+        let err =
+            BackendResponseErr.create "Server error"
+            |> BackendResponseErr.SetAdditionalData.serverException ex
+
+        clearResponse >=> constructFailure HttpStatusCode.InternalServerError [ err ]
+        <| next
+        <| ctx
 
 let configureApp (app: IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler).UseGiraffe webApp
