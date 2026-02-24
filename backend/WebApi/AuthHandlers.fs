@@ -1,9 +1,11 @@
 ﻿module WebApi.AuthHandlers
+
 open System
 open System.Net
 open Domain.Models
 open Giraffe
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Identity
 open WebApi.BackendResponse
 open WebApi.Repositories
 open Email
@@ -12,23 +14,7 @@ open WebApi.Validation
 let handlePingAuth: HttpHandler = text "Hello World, from Giraffe"
 
 
-module UserPassword =
-    type UserPassword = private UserPassword of string
-    let MinLength = 6
-    let MaxLength = 30
 
-    type PasswordCreationErr =
-        | NoValue
-        | TooShort
-        | TooLong
-
-    let tryCreate (value: string) : Result<UserPassword, PasswordCreationErr> =
-        if String.IsNullOrWhiteSpace value then Error NoValue
-        else if value.Length < MinLength then Error TooShort
-        else if value.Length > MaxLength then Error TooLong
-        else Ok(UserPassword value)
-
-    let value (UserPassword v) = v
 
 open UserPassword
 
@@ -70,11 +56,11 @@ module RawSignUpRequest =
 
 
 let handleSignUp: HttpHandler =
-    withValidatedBody RawSignUpRequest.parse (fun parsed ->
+    withValidatedBody RawSignUpRequest.parse (fun req ->
         fun next ctx ->
             task {
                 let repo = ctx.GetService<UsersRepository>()
-                let! exists = repo.AnyUserWithEmail parsed.Email
+                let! exists = repo.AnyUserWithEmail req.Email
 
                 if exists then
                     return!
@@ -84,10 +70,20 @@ let handleSignUp: HttpHandler =
                             next
                             ctx
                 else
-                    // let user = {
-                    //     
-                    // }
-                    return! json {| isSuccess = true |} next ctx
+                    let passwordHasher = ctx.GetService<PasswordHasher>()
+
+                    let user: User =
+                        { Id = UserId(Guid.CreateVersion7())
+                          Email = req.Email
+                          PasswordHash = passwordHasher.HashPassword req.Password
+                          RegistrationDate = DateTimeOffset.UtcNow }
+
+                    let! insertRes = repo.Insert user
+
+                    return!
+                        match insertRes with
+                        | Ok() -> constructSuccess () HttpStatusCode.OK next ctx
+                        | Error msg -> constructFailure HttpStatusCode.InternalServerError (BackendResponseErr.create msg) next ctx
             })
 
 let handleLogin: HttpHandler = text "Hello World, from Giraffe"

@@ -2,7 +2,6 @@
 
 open System
 open System.Net
-open Domain.Errs
 open Giraffe
 
 

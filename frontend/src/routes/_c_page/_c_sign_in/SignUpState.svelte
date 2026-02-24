@@ -34,7 +34,7 @@
 		}
 		isLoading = true;
 		const response = await Backend.fetchVoidResponse(
-			'/sign-up',
+			'/auth/sign-up',
 			RJO.POST({ email, password, confirmPassword })
 		);
 		isLoading = false;

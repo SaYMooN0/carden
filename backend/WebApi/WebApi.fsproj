@@ -5,14 +5,16 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="UserPassword.fs" />
         <Compile Include="BackendResponse.fs" />
         <Compile Include="Validation.fs" />
         <Compile Include="Repositories.fs" />
         <Compile Include="AuthHandlers.fs"/>
-        <Compile Include="Program.fs"/>
+        <Compile Include="Program.fs" />
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
         <PackageReference Include="Giraffe" Version="8.2.0"/>
         <PackageReference Include="Npgsql" Version="10.0.1"/>
         <PackageReference Include="Dapper" Version="2.1.66"/>

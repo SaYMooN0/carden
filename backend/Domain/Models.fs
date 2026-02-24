@@ -84,9 +84,10 @@ type PotType =
       Lvl5Sprite: PotLvlSprite }
 
 
-type PlantId = System.Guid
-type UserId = { Value: Guid }
-
+type PlantId = PlantId of Guid
+type UserId = UserId of Guid
+module UserId =
+    let value (UserId g) = g
 type PlantDescription = string
 
 type Plant =
@@ -119,9 +120,11 @@ module Email =
 
     let value (Email v) = v
 
-
+type PasswordHash = PasswordHash of string
+module PasswordHash =
+    let value (PasswordHash h) = h
 type User =
     { Id: UserId
       Email: Email.Email
-      PasswordHash: string
+      PasswordHash: PasswordHash
       RegistrationDate: DateTimeOffset }

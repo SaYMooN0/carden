@@ -11,6 +11,7 @@ open Microsoft.Extensions.Logging
 open WebApi
 open WebApi.BackendResponse
 open WebApi.Repositories
+open WebApi.UserPassword
 
 
 
@@ -45,12 +46,13 @@ let configureApp (app: IApplicationBuilder) =
 
 let configureServices (services: IServiceCollection) =
     services
+        .AddTransient<ConnectionFactory>()
+        .AddTransient<UsersRepository>()
+        .AddTransient<WebApi.UserPassword.PasswordHasher>()
         .AddSingleton<JsonSerializerOptions>(fun _ ->
             let opts = JsonSerializerOptions(JsonSerializerDefaults.Web)
             opts.Converters.Add(JsonFSharpConverter())
             opts)
-        .AddTransient<ConnectionFactory>()
-        .AddTransient<UsersRepository>()
         .AddGiraffe()
     |> ignore
 
