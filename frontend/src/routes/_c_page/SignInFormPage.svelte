@@ -14,10 +14,37 @@
 	}
 </script>
 
-{#if currentState === 'login'}
-	<LoginState bind:email bind:password {changeState} />
-{:else if currentState === 'signup'}
-	<SignUpState bind:email bind:password {changeState} />
-{:else if currentState === 'confirmation-sent'}
-	<ConfirmationLinkSent {email} />
-{/if}
+<div class="sign-in-page-wrapper">
+	<div class="sign-in-form-container">
+		{#if currentState === 'login'}
+			<LoginState bind:email bind:password {changeState} />
+		{:else if currentState === 'signup'}
+			<SignUpState bind:email bind:password {changeState} />
+		{:else if currentState === 'confirmation-sent'}
+			<ConfirmationLinkSent {email} />
+		{/if}
+	</div>
+</div>
+
+<style>
+	.sign-in-page-wrapper {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 100vh;
+		width: 100%;
+	}
+
+	:global(.sign-in-form-container),
+	:global(form) {
+		display: flex;
+		flex-direction: column;
+		background: #ffffff;
+		padding: 2.5rem 2rem;
+		border-radius: 1rem;
+		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+		width: 100%;
+		max-width: 400px;
+		margin: 2rem;
+	}
+</style>

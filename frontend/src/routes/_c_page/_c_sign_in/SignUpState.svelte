@@ -4,7 +4,7 @@
 	import type { Err } from '$lib/ts/err';
 	import { StringUtils } from '$lib/ts/utils/string-utils';
 	import SignInFormConfirmButton from './_c_shared/SignInFormConfirmButton.svelte';
-	import SignInFormHeader from './_c_shared/SignInFormHeader.svelte';
+	import PlantIcon from '$lib/icons/PlantIcon.svelte';
 	import SignInFormInput from './_c_shared/SignInFormInput.svelte';
 	import SignInFormLink from './_c_shared/SignInFormLink.svelte';
 	import type { SignInFormState } from './sign-in-form-page';
@@ -63,7 +63,12 @@
 	}
 </script>
 
-<SignInFormHeader text="Create Carden account" />
+<div class="form-hero">
+	<PlantIcon size="54px" color="var(--color-sage)" />
+	<h2>Create an account</h2>
+	<p>Join Carden to get started</p>
+</div>
+
 <SignInFormInput type="email" fieldName="Email" bind:value={email} />
 <SignInFormInput type="password" fieldName="Password" bind:value={password} />
 <SignInFormInput type="password" fieldName="Confirm password" bind:value={confirmPassword} />
@@ -79,5 +84,25 @@
 
 	:global(.err-block.sign-up-err-block) {
 		margin-top: 0.375rem;
+	}
+
+	.form-hero {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin-bottom: 2rem;
+	}
+
+	.form-hero h2 {
+		margin-top: 1rem;
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: var(--text);
+	}
+
+	.form-hero p {
+		margin-top: 0.25rem;
+		font-size: 0.95rem;
+		color: var(--color-text-light, #64748b);
 	}
 </style>

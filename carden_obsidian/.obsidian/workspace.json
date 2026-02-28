@@ -11,14 +11,12 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "db/tables/decks.md",
-                "mode": "preview",
-                "source": false
+                "file": "refs/coldw1nd/interface_main_style3.png"
               },
-              "icon": "lucide-file",
-              "title": "decks"
+              "icon": "lucide-image",
+              "title": "interface_main_style3"
             }
           }
         ]
@@ -201,12 +199,6 @@
   },
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
-    "db/tables/users.md",
-    "db/tables/pot_types.md",
-    "db/tables/plants.md",
-    "db/tables/plant_species.md",
-    "db/tables/decks.md",
-    "db/tables/cards.md",
     "refs/coldw1nd/interface_main_style4.png",
     "refs/coldw1nd/interface_main_style3.png",
     "refs/coldw1nd/interface_main_style2.png",
@@ -215,6 +207,12 @@
     "refs/ArgentiLover/logo.jpg",
     "refs/ArgentiLover/color_scheme.jpg",
     "refs/ArgentiLover/card_font_style.jpg",
+    "db/tables/decks.md",
+    "db/tables/users.md",
+    "db/tables/pot_types.md",
+    "db/tables/plants.md",
+    "db/tables/plant_species.md",
+    "db/tables/cards.md",
     "refs/coldw1nd",
     "refs/ArgentiLover",
     "refs",

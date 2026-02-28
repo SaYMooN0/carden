@@ -55,12 +55,12 @@
 	.err-message {
 		display: grid;
 		place-items: center left;
-		min-width: 22rem;
+		min-width: 16rem;
 		min-height: 1.5rem;
 		margin: 0;
 		color: inherit;
 		font-size: 1rem;
-		font-weight: 440;
+		font-weight: 450;
 		grid-template-columns: 1fr 1.5rem;
 		word-break: normal;
 		overflow-wrap: anywhere;

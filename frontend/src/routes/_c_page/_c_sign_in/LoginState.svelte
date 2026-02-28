@@ -4,10 +4,11 @@
 	import type { Err } from '$lib/ts/err';
 	import { StringUtils } from '$lib/ts/utils/string-utils';
 	import SignInFormConfirmButton from './_c_shared/SignInFormConfirmButton.svelte';
-	import SignInFormHeader from './_c_shared/SignInFormHeader.svelte';
+	import PlantIcon from '$lib/icons/PlantIcon.svelte';
 	import SignInFormInput from './_c_shared/SignInFormInput.svelte';
 	import SignInFormLink from './_c_shared/SignInFormLink.svelte';
 	import type { SignInFormState } from './sign-in-form-page';
+
 	interface Props {
 		email: string;
 		password: string;
@@ -51,7 +52,12 @@
 	}
 </script>
 
-<SignInFormHeader text="Log into your account" />
+<div class="form-hero">
+	<PlantIcon size="54px" color="var(--color-sage)" />
+	<h2>Welcome back</h2>
+	<p>Sign in to continue to Carden</p>
+</div>
+
 <SignInFormInput type="email" fieldName="Email" bind:value={email} />
 <SignInFormInput type="password" fieldName="Password" bind:value={password} />
 <div class="gap" />
@@ -66,5 +72,25 @@
 
 	:global(.err-block.login-err-block) {
 		margin-top: 0.375rem;
+	}
+
+	.form-hero {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin-bottom: 2rem;
+	}
+
+	.form-hero h2 {
+		margin-top: 1rem;
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: var(--text);
+	}
+
+	.form-hero p {
+		margin-top: 0.25rem;
+		font-size: 0.95rem;
+		color: var(--color-text-light, #64748b);
 	}
 </style>

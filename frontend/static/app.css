@@ -1,7 +1,5 @@
   :root {
-    --back: #fbf9fe;
     --text: #1e293b;
-    /* --font-family: "Rubik", sans-serif; */
     --font-family:
       system-ui,
       -apple-system,
@@ -14,8 +12,33 @@
       'Open Sans',
       'Helvetica Neue',
       sans-serif;
+
+    /* New UI Color Palette */
+    --color-cream: #f5f2e7;
+    --color-sage: #c5d3c1;
+    --color-terracotta: #c57b58;
+
+    --color-terracotta-hover: #b36846;
+    /* Slightly darker terracotta for hover */
+    --color-terracotta-light: #e09673;
+    /* Lighter hover for text/links */
+    --color-sage-hover: #eaf1e7;
+    /* Very light sage for input backgrounds/hover */
+
+    /* Component Mappings */
+    --primary: var(--color-terracotta);
+    --primary-hov: var(--color-terracotta-hover);
+    --primary-foreground: #ffffff;
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+
     --red-1: #ffe9ea;
     --red-2: #fe3f41;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--text);
   }
 
 

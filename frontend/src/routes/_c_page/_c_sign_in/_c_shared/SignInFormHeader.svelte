@@ -7,9 +7,10 @@
 <style>
 	h1 {
 		width: 100%;
-		margin-bottom: 1rem;
-		font-size: 1.75rem;
-		font-weight: 500;
+		margin-bottom: 1.5rem;
+		font-size: 1.5rem;
+		font-weight: 600;
 		text-align: center;
+		color: var(--color-text);
 	}
 </style>
