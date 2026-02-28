@@ -9,6 +9,7 @@
         <Compile Include="BackendResponse.fs" />
         <Compile Include="Validation.fs" />
         <Compile Include="Repositories.fs" />
+        <Compile Include="Contracts.fs" />
         <Compile Include="AuthHandlers.fs"/>
         <Compile Include="Program.fs" />
     </ItemGroup>

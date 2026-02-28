@@ -11,12 +11,14 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "refs/coldw1nd/interface_main_style3.png"
+                "file": "отчеты/symn.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "interface_main_style3"
+              "icon": "lucide-file",
+              "title": "symn"
             }
           }
         ]
@@ -200,13 +202,16 @@
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
     "refs/coldw1nd/interface_main_style4.png",
+    "отчеты/symn.md",
+    "отчеты",
+    "Новая папка",
     "refs/coldw1nd/interface_main_style3.png",
     "refs/coldw1nd/interface_main_style2.png",
-    "refs/coldw1nd/interface_main_style1.png",
-    "refs/ArgentiLover/main_font_styles.jpg",
-    "refs/ArgentiLover/logo.jpg",
-    "refs/ArgentiLover/color_scheme.jpg",
     "refs/ArgentiLover/card_font_style.jpg",
+    "refs/ArgentiLover/color_scheme.jpg",
+    "refs/ArgentiLover/logo.jpg",
+    "refs/ArgentiLover/main_font_styles.jpg",
+    "refs/coldw1nd/interface_main_style1.png",
     "db/tables/decks.md",
     "db/tables/users.md",
     "db/tables/pot_types.md",
@@ -230,8 +235,6 @@
     "pots",
     "plants",
     "First note.md",
-    "db/tables",
-    "db",
     "Welcome.md"
   ]
 }
