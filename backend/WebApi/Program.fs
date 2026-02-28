@@ -22,7 +22,7 @@ let handleNoMatchedEndpoint: HttpHandler =
 
         let err =
             BackendResponseErr.create "Endpoint not found"
-            |> BackendResponseErr.SetAdditionalData.noMatchedEndpoint {| Method = method; Route = route |}
+            |> BackendResponseErr.SetExtraData.noMatchedEndpoint {| Method = method; Route = route |}
 
         constructFailure HttpStatusCode.NotFound [ err ] next ctx
 
@@ -35,7 +35,7 @@ let errorHandler (ex: Exception) (logger: ILogger) =
 
         let err =
             BackendResponseErr.create "Server error"
-            |> BackendResponseErr.SetAdditionalData.serverException ex
+            |> BackendResponseErr.SetExtraData.serverException ex
 
         clearResponse >=> constructFailure HttpStatusCode.InternalServerError [ err ]
         <| next

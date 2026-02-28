@@ -59,9 +59,9 @@ let handleSignUp: HttpHandler =
     withValidatedBody RawSignUpRequest.parse (fun req ->
         fun next ctx ->
             task {
+                let dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
                 let repo = ctx.GetService<UsersRepository>()
-                let! exists = repo.AnyUserWithEmail req.Email
-
+                let! exists = repo.AnyUserWithEmail dbConn req.Email
                 if exists then
                     return!
                         constructFailure
@@ -78,7 +78,7 @@ let handleSignUp: HttpHandler =
                           PasswordHash = passwordHasher.HashPassword req.Password
                           RegistrationDate = DateTimeOffset.UtcNow }
 
-                    let! insertRes = repo.Insert user
+                    let! insertRes = repo.Insert dbConn user
 
                     return!
                         match insertRes with

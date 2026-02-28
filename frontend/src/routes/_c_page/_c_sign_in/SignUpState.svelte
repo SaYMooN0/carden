@@ -33,7 +33,7 @@
 			return;
 		}
 		isLoading = true;
-		const response = await Backend.fetchVoidResponse(
+		const response = await Backend.fetchJsonResponse<void>(
 			'/auth/sign-up',
 			RJO.POST({ email, password, confirmPassword })
 		);

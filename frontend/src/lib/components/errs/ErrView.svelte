@@ -15,9 +15,9 @@
 		}
 	}
 	let hasDetails = $derived(!StringUtils.isNullOrWhiteSpace(err.details));
-	let hasCode = $derived(!StringUtils.isNullOrWhiteSpace(err.code));
 	let hasFixSuggestion = $derived(!StringUtils.isNullOrWhiteSpace(err.fixSuggestion));
-	let hasSomethingExceptMessage = $derived(hasDetails || hasCode || hasFixSuggestion);
+
+	let hasSomethingExceptMessage = $derived(hasDetails || hasFixSuggestion);
 </script>
 
 <div class="err-container">
@@ -29,11 +29,6 @@
 			>
 		{/if}
 	</div>
-	{#if hasCode}
-		<label class="err-additional" class:hidden={!showAdditional}>
-			Code: {err.code}
-		</label>
-	{/if}
 	{#if hasDetails}
 		<label class="err-additional" class:hidden={!showAdditional}>
 			Details: {err.details}

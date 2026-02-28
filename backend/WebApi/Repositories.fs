@@ -11,8 +11,8 @@ open Npgsql
 type ConnectionFactory(configuration: IConfiguration) =
     let connectionString = configuration.GetConnectionString("CardenDb")
 
-    member _.CreateConnection() : IDbConnection =
-        let conn = new NpgsqlConnection(connectionString)
+    member _.CreateConnection() : NpgsqlConnection =
+        let conn: NpgsqlConnection = new NpgsqlConnection(connectionString)
         conn
 
 
@@ -39,11 +39,9 @@ module UserDbDto =
           PasswordHash = PasswordHash.value u.PasswordHash
           RegistrationDate = u.RegistrationDate }
 
-type UsersRepository(connectionFactory: ConnectionFactory) =
-    member _.GetById(id: UserId) : Task<User option> =
+type UsersRepository() =
+    member _.GetById (conn: NpgsqlConnection) (id: UserId) : Task<User option> =
         task {
-            use conn = connectionFactory.CreateConnection()
-
             let sql =
                 """
                     SELECT Id, Email, PasswordHash, RegistrationDate
@@ -55,10 +53,8 @@ type UsersRepository(connectionFactory: ConnectionFactory) =
             return dto |> Option.ofObj |> Option.map UserDbDto.toDomain
         }
 
-    member _.AnyUserWithEmail(email: Email.Email) : Task<bool> =
+    member _.AnyUserWithEmail (conn: NpgsqlConnection) (email: Email.Email) : Task<bool> =
         task {
-            use conn = connectionFactory.CreateConnection()
-
             let sql =
                 """
                     SELECT EXISTS (
@@ -72,11 +68,9 @@ type UsersRepository(connectionFactory: ConnectionFactory) =
             return exists
         }
 
-    member _.Insert(user: User) : Task<Result<unit, string>> =
+    member _.Insert (conn: NpgsqlConnection) (user: User) : Task<Result<unit, string>> =
         task {
             try
-                use conn = connectionFactory.CreateConnection()
-
                 let sql =
                     """
                         INSERT INTO users (Id, Email, PasswordHash, RegistrationDate)

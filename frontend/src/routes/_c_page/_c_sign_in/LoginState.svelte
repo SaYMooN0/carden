@@ -26,7 +26,10 @@
 			return;
 		}
 		isLoading = true;
-		const response = await Backend.fetchVoidResponse('/login', RJO.POST({ email, password }));
+		const response = await Backend.fetchJsonResponse<void>(
+			'/auth/login',
+			RJO.POST({ email, password })
+		);
 		isLoading = false;
 		if (response.isSuccess) {
 			window.location.reload();

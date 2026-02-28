@@ -1,62 +1,68 @@
-type ErrBase = {
+export type BaseErr = {
     msg: string;
-    code?: ErrCode;
     details?: string;
     fixSuggestion?: string;
 };
 
-export type Err<T = never> =
-    ErrBase & ([T] extends [never] ? {} : { additionalData: T });
+type TypedAdditionalData<T extends keyof ErrAdditionalDataMap> = {
+    id: T;
+    data: ErrAdditionalDataMap[T];
+};
+export type Err<T extends keyof ErrAdditionalDataMap | undefined = undefined> =
+    BaseErr &
+    (T extends keyof ErrAdditionalDataMap
+        ? { extraData: TypedAdditionalData<T> }
+        : { extraData?: undefined });
 
-export type ErrCode =
-    | BackendErrCode
-    //frontend exclusive
-    | 'unexpected_backend_response'
-
-
-type BackendErrCode =
-    | 'unspecified'
-    | 'not_implemented'
-    | 'program_bug'
-    | 'incorrect_format'
-    | 'no_matching_endpoint'
 export namespace ErrUtils {
 
 
     export function createUnknown(details?: string): Err {
         return {
             msg: "Unknown error",
-            code: 'unspecified',
             details: details
         };
 
     }
-    export function fromPlain(obj: any): Err | Err<unknown> {
-        const base: Err = {
-            msg: String(obj?.message ?? "Unknown error"),
-            code: typeof obj?.code === "string" ? (obj.code as ErrCode) : "unspecified",
-            details: typeof obj?.details === "string" ? obj.details : undefined,
-            fixSuggestion: typeof obj?.fixSuggestion === "string" ? obj.fixSuggestion : undefined,
-        };
+    // export function fromPlain(obj: any): Err | Err<unknown> {
+    //     const base: Err = {
+    //         msg: String(obj?.message ?? "Unknown error"),
+    //         details: typeof obj?.details === "string" ? obj.details : undefined,
+    //         fixSuggestion: typeof obj?.fixSuggestion === "string" ? obj.fixSuggestion : undefined,
+    //     };
 
-        if ("additionalData" in (obj ?? {}) && obj.additionalData !== undefined) {
-            return { ...base, additionalData: obj.additionalData } as Err<unknown>;
-        }
+    //     if ("additionalData" in (obj ?? {}) && obj.additionalData !== undefined) {
+    //         return { ...base, additionalData: obj.additionalData } as Err<unknown>;
+    //     }
 
-        return base;
+    //     return base;
+    // }
+    // export function createForStatusCode(msg: string, statusCode: number, fixSuggestion?: string): Err<"UNEXPECTED_BACKEND_RESPONSE"> {
+    //     return {
+    //         msg: msg,
+    //         fixSuggestion: fixSuggestion,
+    //         additionalData: {
+    //             id: "UNEXPECTED_BACKEND_RESPONSE",
+    //             data: { statusCode: statusCode }
+    //         }
+    //     };
+    // }
+    export function hasAdditionalData(err: BaseErr): boolean {
+        return "additionalData" in err && err.additionalData !== undefined && 'id' in (err.additionalData as any);
     }
-    export function createWithStatusCode(msg: string, statusCode: number, fixSuggestion?: string): Err<{ statusCode: number }> {
-        return {
-            msg: msg,
-            code: 'unexpected_backend_response',
-            fixSuggestion: fixSuggestion,
-            additionalData: { statusCode }
-        };
-    }
-    export function ensureAdditionalData(err: ErrBase): err is Err<unknown> {
-        return "additionalData" in err;
-    }
-    export function hasAdditionalData(err: ErrBase): boolean {
-        return "additionalData" in err;
+    export function ensureAdditionalData<T extends keyof ErrAdditionalDataMap>(err: BaseErr, id: T): err is Err<T> {
+        return hasAdditionalData(err) && (err as any).additionalData.id === id;
     }
 }
+type ErrAdditionalDataMap = {
+    NO_MATCHED_ENDPOINT: {
+        method: string;
+        route: string;
+    };
+    SERVER_EXCEPTION: {
+        exception: string;
+    };
+    FAILED_TO_FETCH: {
+        exception: string;
+    };
+};

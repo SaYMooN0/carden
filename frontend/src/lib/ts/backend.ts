@@ -1,60 +1,14 @@
-import { ErrUtils, type Err } from "./err";
-import { DateUtils } from "./utils/date-utils";
+import { type BaseErr, type Err } from "./err";
 
 export type BackendResponse<T> =
     | { isSuccess: true; data: T }
-    | { isSuccess: false; errs: Err[] };
-export type BackendResponseVoid =
-    | { isSuccess: true }
-    | { isSuccess: false; errs: Err[] };
+    | { isSuccess: false; errs: BaseErr[] };
+
+export type BackendResponseVoid = BackendResponse<void>;
 
 export namespace Backend {
-
     export async function fetchJsonResponse<T>(url: string, options: RequestInit): Promise<BackendResponse<T>> {
-        try {
-
-            const response = await fetch("/api" + url, {
-                ...options,
-                credentials: 'include'
-            });
-            if (response.ok) {
-                const text = await response.text();
-                const data = parseWithDates<T>(text);
-                return { isSuccess: true, data };
-            }
-            const errs = await parseErrResponse(response);
-
-            return { isSuccess: false, errs };
-
-        } catch (e: any) {
-            return {
-                isSuccess: false,
-                errs: createErrsFromException(e)
-            };
-        }
-    }
-
-    export async function fetchVoidResponse(url: string, options: RequestInit): Promise<BackendResponseVoid> {
-        try {
-            console.log(1);
-            const response = await fetch("/api" + url, {
-                ...options,
-                credentials: 'include'
-            });
-            console.log(response);
-            if (response.ok) {
-                return { isSuccess: true };
-            }
-
-            const errs = await parseErrResponse(response);
-            return { isSuccess: false, errs };
-
-        } catch (e: any) {
-            return {
-                isSuccess: false,
-                errs: createErrsFromException(e)
-            };
-        }
+        return serverFetchJsonResponse<T>(fetch, url, options);
     }
 
     export async function serverFetchJsonResponse<T>(
@@ -63,121 +17,120 @@ export namespace Backend {
         options: RequestInit
     ): Promise<BackendResponse<T>> {
         try {
+
             const response = await fetchFunc("/api" + url, {
                 ...options,
                 credentials: 'include'
             });
-            if (response.ok) {
-                const text = await response.text();
-                const data = parseWithDates<T>(text);
-                return { isSuccess: true, data };
+            const text = await response.text();
+            console.log(text);
+            try {
+                const data = JSON.parse(text) as BackendResponse<T>;
+                return data;
+            } catch (e: any) {
+                return {
+                    isSuccess: false,
+                    errs: [createErrFromResponseWhenNotDeserializable(response)]
+                };
             }
 
-            const errs = await parseErrResponse(response);
-            return { isSuccess: false, errs };
-
         } catch (e: any) {
+            console.log(e);
+
             return {
                 isSuccess: false,
-                errs: createErrsFromException(e)
+                errs: [createErrFromException(e)]
             };
         }
     }
+    function createErrFromResponseWhenNotDeserializable(response: Response): Err<"FAILED_TO_FETCH"> {
 
-    function parseWithDates<T>(json: string): T {
-        return JSON.parse(json, (key, value) => {
-            if (typeof value === 'string' && DateUtils.isoDateRegex.test(value)) {
-                return new Date(value);
-            }
-            return value;
-        });
-    }
-
-    async function parseErrResponse(response: Response): Promise<Err[]> {
-        const contentType = response.headers.get("content-type");
-
-        if (contentType?.includes("application/json")) {
-
-            try {
-                const json = await response.json();
-                if (!Array.isArray(json.errs)) {
-                    return [{
-                        code: 'unexpected_backend_response',
-                        msg: "Unexpected error",
-                        details: `Expected 'errs' array in response, 'errs' field type: ${typeof json.errs}`,
-                        fixSuggestion: "Try again later",
-                    }];
-                }
-                return json.errs.map(ErrUtils.fromPlain);
-            } catch {
-                return [{
-                    code: 'unexpected_backend_response',
-                    msg: "Unexpected error",
-                    details: "Failed to parse JSON error response",
-                    fixSuggestion: "Try again later",
-                }];
-            }
-        }
-        // in case of server unexpected error
         const status = response.status;
         if (status === 404) {
-            return [ErrUtils.createWithStatusCode(
-                "Unexpected error: requested resource was not found (404)",
-                status
-            )];
+            return {
+                msg: "Unexpected error: requested resource was not found (404)",
+                fixSuggestion: "Please try again later",
+                extraData: {
+                    id: "FAILED_TO_FETCH",
+                    data: { exception: response.statusText }
+                }
+            };
         }
         if (status === 403) {
-            return [ErrUtils.createWithStatusCode(
-                "Unexpected error: no permission to access this resource (403)",
-                status
-            )];
+            return {
+                msg: "Unexpected error: no permission to access this resource (403)",
+                fixSuggestion: "Please try again later",
+                extraData: {
+                    id: "FAILED_TO_FETCH",
+                    data: { exception: response.statusText }
+                }
+            };
         }
         if (status === 401) {
-            return [ErrUtils.createWithStatusCode(
-                "Unexpected error: not authorized (401)",
-                status,
-                "Please log in"
-            )];
+            return {
+                msg: "Unexpected error: not authorized (401)",
+                fixSuggestion: "Please log in",
+                extraData: {
+                    id: "FAILED_TO_FETCH",
+                    data: { exception: response.statusText }
+                }
+            };
         }
         if (status >= 500) {
-            return [ErrUtils.createWithStatusCode(
-                `Unexpected error: Internal server error (${status})`,
-                status,
-                "Please try again later"
-            )];
+            return {
+                msg: `Unexpected error: Internal server error (${status})`,
+                fixSuggestion: "Please try again later",
+                extraData: {
+                    id: "FAILED_TO_FETCH",
+                    data: { exception: response.statusText }
+                }
+            };
         }
 
         // fallback for everything else
-        return [ErrUtils.createWithStatusCode(
-            `Unexpected error: Unexpected non-JSON error response (status ${status})`,
-            status,
-            "Please try again later"
-        )];
+        return {
+            msg: `Unexpected error: Unexpected non-JSON error response (status ${status})`,
+            fixSuggestion: "Please try again later",
+            extraData: {
+                id: "FAILED_TO_FETCH",
+                data: { exception: response.statusText }
+            }
+        };
+
     }
-    function createErrsFromException(e: unknown): Err[] {
+    function createErrFromException(e: unknown): Err<"FAILED_TO_FETCH"> {
         if (e instanceof TypeError && e.message === "Failed to fetch") {
             // Server doesn't respond or no connection
-            return [{
-                code: 'unexpected_backend_response',
+            return {
                 msg: "Could not connect to the server. Please check your connection or try again later",
-                fixSuggestion: "Please try again later"
-            }];
+                fixSuggestion: "Please try again later",
+                extraData: {
+                    id: "FAILED_TO_FETCH",
+                    data: { exception: e.message }
+                }
+            };
         }
 
         if (e instanceof DOMException && e.name === "AbortError") {
             // Request was aborted
-            return [{
-                code: 'unexpected_backend_response',
+            return {
                 msg: "The request was aborted",
-                fixSuggestion: "Please try again later"
-            }];
+                fixSuggestion: "Please try again later",
+                extraData: {
+                    id: "FAILED_TO_FETCH",
+                    data: { exception: e.message }
+                }
+            };
         }
 
-        return [{
-            code: 'unexpected_backend_response',
+        return {
             msg: "Unexpected error",
-            fixSuggestion: "Please try again later"
-        }];
+            fixSuggestion: "Please try again later",
+            extraData: {
+                id: "FAILED_TO_FETCH",
+                data: { exception: String(e) }
+            }
+        };
     }
 
 }
