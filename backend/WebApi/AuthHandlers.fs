@@ -7,6 +7,7 @@ open Giraffe
 open Microsoft.AspNetCore.Http
 open WebApi.BackendResponse
 open WebApi.Contracts
+open WebApi.JwtToken
 open WebApi.Repositories
 open WebApi.UserPassword
 open WebApi.Validation
@@ -33,8 +34,8 @@ let handleSignUp: HttpHandler =
                 else
                     let passwordHasher = ctx.GetService<PasswordHasher>()
 
-                    let user: User =
-                        { Id = UserId(Guid.CreateVersion7())
+                    let user: AppUser =
+                        { Id = AppUserId(Guid.CreateVersion7())
                           Email = req.Email
                           PasswordHash = passwordHasher.HashPassword req.Password
                           RegistrationDate = DateTimeOffset.UtcNow }
@@ -60,11 +61,25 @@ let handleLogin: HttpHandler =
                 let! user = repo.GetByEmail dbConn req.Email
 
                 match user with
-                | None  -> return! constructFailure HttpStatusCode.Unauthorized [] next ctx
-                | Ok token -> // validate password
+                | None ->
+                    return!
+                        constructFailure
+                            HttpStatusCode.Unauthorized
+                            [ BackendResponseErr.create "There is no account for this email" ]
+                            next
+                            ctx
 
-                let! result = handler.Handle(query)
+                | Some user ->
+                    let passwordHasher = ctx.GetService<PasswordHasher>()
 
+                    if not (passwordHasher.VerifyPassword user.PasswordHash req.Password) then
+                        return! constructFailure HttpStatusCode.Unauthorized [ BackendResponseErr.create "Incorrect password" ] next ctx
+                    else
+                        let jwtService = ctx.GetService<JwtTokenService>()
+                        let token = jwtService.CreateToken(user)
+
+                        ctx.Response.Cookies.Append(tokenCookieName, token, authCookieOptions ())
+                        return! constructSuccess () HttpStatusCode.OK next ctx
             })
 
 let handleLogout: HttpHandler =
@@ -88,14 +103,3 @@ let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
           POST >=> route "/sign-up" >=> handleSignUp
           POST >=> route "/login" >=> handleLogin
           POST >=> route "/logout" >=> handleLogout ]
-
-// let someHttpHandler : HttpHandler =
-//     fun (next : HttpFunc) (ctx : HttpContext) ->
-//         match ctx.GetRequestHeader "X-MyOwnHeader" with
-//         | Error msg ->
-//             // Mandatory header is missing.
-//             // Log error message
-//             // Return error response to the client.
-//         | Ok headerValue ->
-//             // Do something with `headerValue`...
-//             // Return a Task<HttpContext option>

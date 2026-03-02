@@ -26,4 +26,4 @@ type PasswordHasher() =
         PasswordHash(BCrypt.HashPassword(value password))
 
     member _.VerifyPassword (hash: PasswordHash) (password: UserPassword) =
-        BCrypt.Verify(value password, string hash)
+        BCrypt.Verify(value password, PasswordHash.value hash)

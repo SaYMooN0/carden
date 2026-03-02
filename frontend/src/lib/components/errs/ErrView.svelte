@@ -3,15 +3,15 @@
 	import { StringUtils } from '$lib/ts/utils/string-utils';
 
 	const { err }: { err: Err } = $props<{ err: Err }>();
-	let showAdditional = $state(false);
+	let showExtra = $state(false);
 
 	let iconElement = $state<SVGSVGElement>()!;
 
 	function toggleDetails() {
-		showAdditional = !showAdditional;
+		showExtra = !showExtra;
 		if (iconElement) {
 			iconElement.classList.remove('rotate-down', 'rotate-up');
-			iconElement.classList.add(showAdditional ? 'rotate-down' : 'rotate-up');
+			iconElement.classList.add(showExtra ? 'rotate-down' : 'rotate-up');
 		}
 	}
 	let hasDetails = $derived(!StringUtils.isNullOrWhiteSpace(err.details));
@@ -30,12 +30,12 @@
 		{/if}
 	</div>
 	{#if hasDetails}
-		<label class="err-additional" class:hidden={!showAdditional}>
+		<label class="err-additional" class:hidden={!showExtra}>
 			Details: {err.details}
 		</label>
 	{/if}
 	{#if hasFixSuggestion}
-		<label class="err-additional" class:hidden={!showAdditional}>
+		<label class="err-additional" class:hidden={!showExtra}>
 			Fix suggestion: {err.fixSuggestion}
 		</label>
 	{/if}

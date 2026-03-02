@@ -25,7 +25,7 @@ type Card =
       LastTimeEdited: DateTime
       CreationTime: DateTime }
 
-type DeckId = System.Guid
+type DeckId = Guid
 
 type Deck =
     { Id: DeckId
@@ -53,56 +53,30 @@ type Stage5Sprite =
 //не массив чтобы нельзя было ошибиться с количеством, + все равно задаем 1 раз + хранить легче (отдельный столбец в бд)
 //если у разных спишиз может быть разное колво аттачментсов то массивом естественно
 
-type PlantSpecieId =
+type PlantSpecieName =
     | Венеринамухоловка
     | Арбузарбуз
     | Хэловинпамкин
-
-
-type PlantSpecie =
-    { Id: PlantSpecieId
-      SpriteStage1: SimplePlantStageSprite
-      SpriteStage2: SimplePlantStageSprite
-      SpriteStage3: SimplePlantStageSprite
-      SpriteStage4: SimplePlantStageSprite
-      Stage5Sprite: Stage5Sprite }
-
-type PotLvlSprite =
-    { Image: string
-      PlantSpriteStartPosition: int } //кол-во пикселей сверху
-
-type PotTypeId =
+type PotTypeName =
     | Керамикссолнышокм
     | Черныйпластик
-
-type PotType =
-    { Id: PotTypeId
-      Lvl1Sprite: PotLvlSprite
-      Lvl2Sprite: PotLvlSprite
-      Lvl3Sprite: PotLvlSprite
-      Lvl4Sprite: PotLvlSprite
-      Lvl5Sprite: PotLvlSprite }
-
-
 type PlantId = PlantId of Guid
-type UserId = UserId of Guid
-module UserId =
-    let value (UserId g) = g
+type AppUserId = AppUserId of Guid
+module AppUserId =
+    let value (AppUserId g) = g
 type PlantDescription = string
 
 type Plant =
     { Id: PlantId
-      OwnerId: UserId
+      OwnerId: AppUserId
       Description: PlantDescription
       Deck: Deck
-      PotType: PotType
       CreationDate: DateTime
-      PlantSpecie: PlantSpecie
+      PotType: PotTypeName
+      PlantSpecie: PlantSpecieName
     // StudyState: DeckStudyState
     // View()=> currentplantstage (got from current StudyState & PlantSpecie )+ current pot lvl (lvl + deck)
     }
-
-
 module Email =
     type Email = private Email of string
 
@@ -123,8 +97,8 @@ module Email =
 type PasswordHash = PasswordHash of string
 module PasswordHash =
     let value (PasswordHash h) = h
-type User =
-    { Id: UserId
+type AppUser =
+    { Id: AppUserId
       Email: Email.Email
       PasswordHash: PasswordHash
       RegistrationDate: DateTimeOffset }

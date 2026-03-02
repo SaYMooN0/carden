@@ -4,14 +4,14 @@ export type BaseErr = {
     fixSuggestion?: string;
 };
 
-type TypedAdditionalData<T extends keyof ErrAdditionalDataMap> = {
+type TypedExtraData<T extends keyof ErrExtraDataMap> = {
     id: T;
-    data: ErrAdditionalDataMap[T];
+    data: ErrExtraDataMap[T];
 };
-export type Err<T extends keyof ErrAdditionalDataMap | undefined = undefined> =
+export type Err<T extends keyof ErrExtraDataMap | undefined = undefined> =
     BaseErr &
-    (T extends keyof ErrAdditionalDataMap
-        ? { extraData: TypedAdditionalData<T> }
+    (T extends keyof ErrExtraDataMap
+        ? { extraData: TypedExtraData<T> }
         : { extraData?: undefined });
 
 export namespace ErrUtils {
@@ -24,37 +24,15 @@ export namespace ErrUtils {
         };
 
     }
-    // export function fromPlain(obj: any): Err | Err<unknown> {
-    //     const base: Err = {
-    //         msg: String(obj?.message ?? "Unknown error"),
-    //         details: typeof obj?.details === "string" ? obj.details : undefined,
-    //         fixSuggestion: typeof obj?.fixSuggestion === "string" ? obj.fixSuggestion : undefined,
-    //     };
 
-    //     if ("additionalData" in (obj ?? {}) && obj.additionalData !== undefined) {
-    //         return { ...base, additionalData: obj.additionalData } as Err<unknown>;
-    //     }
-
-    //     return base;
-    // }
-    // export function createForStatusCode(msg: string, statusCode: number, fixSuggestion?: string): Err<"UNEXPECTED_BACKEND_RESPONSE"> {
-    //     return {
-    //         msg: msg,
-    //         fixSuggestion: fixSuggestion,
-    //         additionalData: {
-    //             id: "UNEXPECTED_BACKEND_RESPONSE",
-    //             data: { statusCode: statusCode }
-    //         }
-    //     };
-    // }
-    export function hasAdditionalData(err: BaseErr): boolean {
-        return "additionalData" in err && err.additionalData !== undefined && 'id' in (err.additionalData as any);
+    export function hasExtraData(err: BaseErr): boolean {
+        return "extraData" in err && err.extraData !== undefined && 'id' in (err.extraData as any);
     }
-    export function ensureAdditionalData<T extends keyof ErrAdditionalDataMap>(err: BaseErr, id: T): err is Err<T> {
-        return hasAdditionalData(err) && (err as any).additionalData.id === id;
+    export function ensureExtraData<T extends keyof ErrExtraDataMap>(err: BaseErr, id: T): err is Err<T> {
+        return hasExtraData(err) && (err as any).extraData.id === id;
     }
 }
-type ErrAdditionalDataMap = {
+type ErrExtraDataMap = {
     NO_MATCHED_ENDPOINT: {
         method: string;
         route: string;

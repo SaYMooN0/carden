@@ -5,14 +5,14 @@ open System.Text.Json.Serialization
 open Giraffe
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
+open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open WebApi
 open WebApi.BackendResponse
+open WebApi.JwtToken
 open WebApi.Repositories
-
-
 
 let handleNoMatchedEndpoint: HttpHandler =
     fun next ctx ->
@@ -43,11 +43,16 @@ let errorHandler (ex: Exception) (logger: ILogger) =
 let configureApp (app: IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler).UseGiraffe webApp
 
-let configureServices (services: IServiceCollection) =
+let addServices (context: WebHostBuilderContext) (services: IServiceCollection) =
+
+    let jwtConfig = context.Configuration.GetSection("JwtSettings").Get<JwtTokenConfig>()
+
     services
+        .AddSingleton(jwtConfig)
         .AddTransient<ConnectionFactory>()
         .AddTransient<UsersRepository>()
-        .AddTransient<WebApi.UserPassword.PasswordHasher>()
+        .AddTransient<UserPassword.PasswordHasher>()
+        .AddSingleton<JwtTokenService>()
         .AddSingleton<JsonSerializerOptions>(fun _ ->
             let opts = JsonSerializerOptions(JsonSerializerDefaults.Web)
             opts.Converters.Add(JsonFSharpConverter())
@@ -59,9 +64,7 @@ let configureServices (services: IServiceCollection) =
 let main _ =
     Host
         .CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(fun webHostBuilder ->
-            webHostBuilder.Configure(configureApp).ConfigureServices(configureServices)
-            |> ignore)
+        .ConfigureWebHostDefaults(fun webHostBuilder -> webHostBuilder.Configure(configureApp).ConfigureServices(addServices) |> ignore)
         .Build()
         .Run()
 

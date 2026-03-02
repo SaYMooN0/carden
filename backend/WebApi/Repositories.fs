@@ -15,16 +15,16 @@ type ConnectionFactory(configuration: IConfiguration) =
         let conn: NpgsqlConnection = new NpgsqlConnection(connectionString)
         conn
 
-
-type UserDbDto =
+[<CLIMutable>]
+type AppUserDbDto =
     { Id: Guid
       Email: string
       PasswordHash: string
       RegistrationDate: DateTimeOffset }
 
-module UserDbDto =
-    let toDomain (dto: UserDbDto) : User =
-        { Id = UserId dto.Id
+module AppUserDbDto =
+    let toDomain (dto: AppUserDbDto) : AppUser =
+        { Id = AppUserId dto.Id
           Email =
             match Email.tryCreate dto.Email with
             | Ok email -> email
@@ -33,24 +33,37 @@ module UserDbDto =
           RegistrationDate = dto.RegistrationDate }
 
 
-    let fromDomain (u: User) : UserDbDto =
-        { Id = UserId.value u.Id
+    let fromDomain (u: AppUser) : AppUserDbDto =
+        { Id = AppUserId.value u.Id
           Email = Email.value u.Email
           PasswordHash = PasswordHash.value u.PasswordHash
           RegistrationDate = u.RegistrationDate }
 
 type UsersRepository() =
-    member _.GetById (conn: NpgsqlConnection) (id: UserId) : Task<User option> =
+    member _.GetById (conn: NpgsqlConnection) (id: AppUserId) : Task<AppUser option> =
         task {
             let sql =
                 """
                     SELECT Id, Email, PasswordHash, RegistrationDate
-                    FROM users
+                    FROM app_user
                     WHERE Id = @Id
                 """
 
-            let! dto = conn.QuerySingleOrDefaultAsync<UserDbDto>(sql, {| Id = UserId.value id |})
-            return dto |> Option.ofObj |> Option.map UserDbDto.toDomain
+            let! dto = conn.QuerySingleOrDefaultAsync<AppUserDbDto>(sql, {| Id = AppUserId.value id |})
+            return dto |> Option.ofObj |> Option.map AppUserDbDto.toDomain
+        }
+
+    member _.GetByEmail (conn: NpgsqlConnection) (email: Email.Email) : Task<AppUser option> =
+        task {
+            let sql =
+                """
+                    SELECT Id, Email, PasswordHash, RegistrationDate
+                    FROM app_user
+                    WHERE Email = @Email
+                """
+
+            let! dto = conn.QuerySingleOrDefaultAsync<AppUserDbDto>(sql, {| Email = Email.value email |})
+            return dto |> Option.ofObj |> Option.map AppUserDbDto.toDomain
         }
 
     member _.AnyUserWithEmail (conn: NpgsqlConnection) (email: Email.Email) : Task<bool> =
@@ -59,7 +72,7 @@ type UsersRepository() =
                 """
                     SELECT EXISTS (
                         SELECT 1
-                        FROM users
+                        FROM app_user
                         WHERE email = @Email
                     )
                 """
@@ -68,16 +81,16 @@ type UsersRepository() =
             return exists
         }
 
-    member _.Insert (conn: NpgsqlConnection) (user: User) : Task<Result<unit, string>> =
+    member _.Insert (conn: NpgsqlConnection) (user: AppUser) : Task<Result<unit, string>> =
         task {
             try
                 let sql =
                     """
-                        INSERT INTO users (Id, Email, PasswordHash, RegistrationDate)
+                        INSERT INTO app_user (Id, Email, PasswordHash, RegistrationDate)
                         VALUES (@Id, @Email, @PasswordHash, @RegistrationDate)
                     """
 
-                let dto = UserDbDto.fromDomain user
+                let dto = AppUserDbDto.fromDomain user
                 let! rows = conn.ExecuteAsync(sql, dto)
 
                 if rows = 1 then
