@@ -1,15 +1,13 @@
 ```
-CREATE TABLE plants (
+CREATE TABLE plant (
     Id UUID PRIMARY KEY,
     OwnerId UUID NOT NULL,
     Description TEXT,
     DeckId UUID NOT NULL UNIQUE,
-    PotTypeId VARCHAR(50) NOT NULL,
-    PlantSpecieId VARCHAR(50) NOT NULL,
-    CreationDate TIMESTAMP NOT NULL,
-    FOREIGN KEY (OwnerId) REFERENCES users(Id) ON DELETE CASCADE,
-    FOREIGN KEY (DeckId) REFERENCES decks(Id) ON DELETE CASCADE,
-    FOREIGN KEY (PotTypeId) REFERENCES pot_types(Id),
-    FOREIGN KEY (PlantSpecieId) REFERENCES plant_species(Id)
+    PotTypeName VARCHAR(50) NOT NULL,
+    PlantSpecieName VARCHAR(50) NOT NULL,
+    CreationDate TIMESTAMPTZ NOT NULL,
+    FOREIGN KEY (OwnerId) REFERENCES app_user(Id) ON DELETE CASCADE,
+    FOREIGN KEY (DeckId) REFERENCES deck(Id) ON DELETE CASCADE,
 );
 ```

@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Тудушник.md",
+                "file": "db/tables/все таблички.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Тудушник"
+              "title": "все таблички"
             }
           }
         ]
@@ -34,7 +34,7 @@
               "type": "graph",
               "state": {},
               "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "title": "Граф"
             }
           }
         ]
@@ -60,7 +60,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "Files"
+              "title": "Файловый менеджер"
             }
           },
           {
@@ -190,21 +190,30 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "templates:Insert template": false,
-      "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "switcher:Меню быстрого перехода": false,
+      "graph:Граф": false,
+      "canvas:Создать новый холст": false,
+      "daily-notes:Сегодняшняя заметка": false,
+      "templates:Вставить шаблон": false,
+      "command-palette:Открыть палитру команд": false,
+      "bases:Создать новую базу": false
     }
   },
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "db/tables/plants.md",
+    "db/tables/все таблички.md",
+    "db/tables/card.md",
+    "db/tables/decks.md",
+    "db/tables/unconfirmed_user.md",
+    "db/tables/app_user.md",
+    "отчеты/Кр1/Rennix5321.md",
+    "db/tables/pot_types.md",
+    "db/tables/plant_species.md",
+    "Тудушник.md",
     "отчеты/symn.md",
     "отчеты/Rennix5321.md",
     "отчеты/ArgentiLover.md",
-    "db/tables/users.md",
     "отчеты",
     "refs/coldw1nd/interface_main_style4.png",
     "refs/coldw1nd/interface_main_style3.png",
@@ -220,7 +229,6 @@
     "plants/Сactus/Cactus1Sprite.png",
     "plants/Сactus/Cactus2Attachment.png",
     "plants/Сactus/Cactus.md",
-    "db/tables/cards.md",
     "pots/PotPVZ.md",
     "pots/Pot1.md",
     "plants/Сactus",
@@ -231,7 +239,6 @@
     "db/tables/table_name_1.md",
     "pots",
     "plants",
-    "Тудушник.md",
     "db/tables",
     "Welcome.md"
   ]

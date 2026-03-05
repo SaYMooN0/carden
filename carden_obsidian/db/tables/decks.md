@@ -1,6 +1,6 @@
 ```
-CREATE TABLE decks (
+CREATE TABLE deck (
     Id UUID PRIMARY KEY,
-    LastTimeEdited TIMESTAMP NOT NULL
+    LastTimeEdited TIMESTAMPTZ NOT NULL
 );
 ```
