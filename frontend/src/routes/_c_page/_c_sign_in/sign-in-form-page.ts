@@ -1,1 +1,6 @@
-export type SignInFormState = 'login' | 'signup' | 'confirmation-sent';
+export type SignInFormState =
+	| 'login'
+	| 'signup'
+	| 'confirmation-sent'
+	| 'iforgotmypassword'
+	| 'passwordresetlinksent';

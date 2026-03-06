@@ -1,6 +1,8 @@
 <script lang="ts">
 	import ConfirmationLinkSent from './_c_sign_in/ConfirmationLinkSent.svelte';
+	import ForgotPasswordState from './_c_sign_in/ForgotPasswordState.svelte';
 	import LoginState from './_c_sign_in/LoginState.svelte';
+	import PasswordResetLinkSent from './_c_sign_in/PasswordResetLinkSent.svelte';
 	import type { SignInFormState } from './_c_sign_in/sign-in-form-page';
 	import SignUpState from './_c_sign_in/SignUpState.svelte';
 
@@ -11,6 +13,10 @@
 
 	function changeState(val: SignInFormState) {
 		currentState = val;
+
+		if (val === 'iforgotmypassword' || val === 'passwordresetlinksent') {
+			password = '';
+		}
 	}
 </script>
 
@@ -22,6 +28,10 @@
 			<SignUpState bind:email bind:password {changeState} />
 		{:else if currentState === 'confirmation-sent'}
 			<ConfirmationLinkSent {email} />
+		{:else if currentState === 'iforgotmypassword'}
+			<ForgotPasswordState bind:email {changeState} />
+		{:else if currentState === 'passwordresetlinksent'}
+			<PasswordResetLinkSent {email} />
 		{/if}
 	</div>
 </div>
