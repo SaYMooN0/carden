@@ -3,6 +3,7 @@
 open System.Net
 open Giraffe
 
+open Microsoft.AspNetCore.Http
 open WebApi.BackendResponse
 
 let map2 (f: 'a -> 'b -> 'c) (ra: Result<'a, 'e list>) (rb: Result<'b, 'e list>) : Result<'c, 'e list> =
@@ -14,7 +15,7 @@ let map2 (f: 'a -> 'b -> 'c) (ra: Result<'a, 'e list>) (rb: Result<'b, 'e list>)
 
 let withValidatedBody<'raw, 'parsed>
     (parse: 'raw -> Result<'parsed, BackendResponseErr list>)
-    (onValid: 'parsed -> HttpHandler)
+    (onValid: 'parsed -> HttpFunc -> HttpContext -> HttpFuncResult)
     : HttpHandler =
     fun next ctx ->
         task {

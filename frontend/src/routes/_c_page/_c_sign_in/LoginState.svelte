@@ -69,8 +69,8 @@
 
 <SignInFormInput type="email" fieldName="Email" bind:value={email} />
 <SignInFormInput type="password" fieldName="Password" bind:value={password} />
-<SignInFormLink text="I forgot my password" onClick={() => changeState('iforgotmypassword')} />
 <div class="gap" />
+<SignInFormLink text="I forgot my password" onClick={() => changeState('password-forgotten')} />
 <SignInFormLink text="I don't have an account yet" onClick={() => changeState('signup')} />
 <DefaultErrBlock errList={errs} class="login-err-block" />
 <SignInFormConfirmButton text="Log in" onclick={() => confirmLogin()} {isLoading} />
@@ -94,13 +94,13 @@
 	.form-hero h2 {
 		margin-top: 1rem;
 		font-size: 1.5rem;
-		font-weight: 600;
+		font-weight: 700;
 		color: var(--text);
 	}
 
 	.form-hero p {
 		margin-top: 0.25rem;
-		font-size: 0.95rem;
-		color: var(--color-text-light, #64748b);
+		font-size: 1rem;
+		color: var(--color-text-light);
 	}
 </style>

@@ -81,6 +81,21 @@ type UsersRepository() =
             return exists
         }
 
+    member _.AnyUserWithId (conn: NpgsqlConnection) (id: AppUserId) : Task<bool> =
+        task {
+            let sql =
+                """
+                        SELECT EXISTS (
+                            SELECT 1
+                            FROM app_user
+                            WHERE id = @Id
+                        )
+                    """
+
+            let! exists = conn.QuerySingleOrDefaultAsync<bool>(sql, {| Id = AppUserId.value id |})
+            return exists
+        }
+
     member _.Insert (conn: NpgsqlConnection) (user: AppUser) : Task<Result<unit, string>> =
         task {
             try

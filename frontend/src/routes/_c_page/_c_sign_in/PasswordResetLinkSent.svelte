@@ -29,7 +29,7 @@
 
 	.subtext {
 		font-size: 0.95rem;
-		color: var(--color-text-light, #64748b);
+		color: var(--color-text-light);
 	}
 
 	strong {

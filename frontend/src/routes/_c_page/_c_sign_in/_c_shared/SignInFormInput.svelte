@@ -50,14 +50,13 @@
 		top: 50%;
 		transform: translateY(-50%);
 		font-size: 1rem;
-		color: var(--color-text-light, #64748b);
+		color: var(--color-text-light);
 		pointer-events: none;
 		transition: all 0.2s ease;
 		background-color: transparent;
 		padding: 0;
 	}
 
-	/* Float label up when focused or not empty */
 	input:focus ~ label,
 	input:not(:placeholder-shown) ~ label {
 		top: 0;

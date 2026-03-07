@@ -38,7 +38,7 @@
 		isLoading = false;
 
 		if (response.isSuccess) {
-			changeState('passwordresetlinksent');
+			changeState('password-reset-link-sent');
 		} else {
 			errs = response.errs;
 		}
@@ -99,7 +99,7 @@
 	.form-hero p {
 		margin-top: 0.25rem;
 		font-size: 0.95rem;
-		color: var(--color-text-light, #64748b);
+		color: var(--color-text-light);
 		text-align: center;
 	}
 </style>

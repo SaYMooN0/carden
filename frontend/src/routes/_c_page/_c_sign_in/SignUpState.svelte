@@ -96,14 +96,14 @@
 
 	.form-hero h2 {
 		margin-top: 1rem;
-		font-size: 1.5rem;
+		font-size: 1.75rem;
 		font-weight: 600;
 		color: var(--text);
 	}
 
 	.form-hero p {
 		margin-top: 0.25rem;
-		font-size: 0.95rem;
-		color: var(--color-text-light, #64748b);
+		font-size: 1rem;
+		color: var(--color-text-light);
 	}
 </style>

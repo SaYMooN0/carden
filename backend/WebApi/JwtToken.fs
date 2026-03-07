@@ -39,7 +39,8 @@ type JwtTokenService(config: JwtTokenConfig, logger: ILogger<JwtTokenService>) =
 
     member _.CreateToken(user: AppUser) : JwtToken =
         try
-            let claims = [| Claim(userIdClaimKey, user.Id.ToString()) |]
+            let userIdStr = (AppUserId.value user.Id).ToString()
+            let claims = [| Claim(userIdClaimKey, userIdStr) |]
             let creds = SigningCredentials(privateKey, SecurityAlgorithms.RsaSha256)
 
             let token =
@@ -55,7 +56,13 @@ type JwtTokenService(config: JwtTokenConfig, logger: ILogger<JwtTokenService>) =
             JwtToken tokenString
 
         with ex ->
-            logger.LogError(ex, "Failed to generate JWT token for userId '{userId}'. Error: {errorMessage}", user.Id.ToString(), ex.Message)
+            logger.LogError(
+                ex,
+                "Failed to generate JWT token for userId '{userId}'. Error: {errorMessage}",
+                user.Id.ToString(),
+                ex.Message
+            )
+
             reraise ()
 
 
@@ -87,7 +94,11 @@ type JwtTokenService(config: JwtTokenConfig, logger: ILogger<JwtTokenService>) =
                     match Guid.TryParse claim.Value with
                     | true, guid -> Ok(AppUserId guid)
                     | false, _ ->
-                        logger.LogWarning("JWT token contains malformed userId claim. Value: '{claimValue}'.", claim.Value)
+                        logger.LogWarning(
+                            "JWT token contains malformed userId claim. Value: '{claimValue}'.",
+                            claim.Value
+                        )
+
                         Error TokenParsingErr.InvalidToken
 
         with ex ->

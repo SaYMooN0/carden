@@ -13,10 +13,6 @@
 
 	function changeState(val: SignInFormState) {
 		currentState = val;
-
-		if (val === 'iforgotmypassword' || val === 'passwordresetlinksent') {
-			password = '';
-		}
 	}
 </script>
 
@@ -28,10 +24,13 @@
 			<SignUpState bind:email bind:password {changeState} />
 		{:else if currentState === 'confirmation-sent'}
 			<ConfirmationLinkSent {email} />
-		{:else if currentState === 'iforgotmypassword'}
+		{:else if currentState === 'password-forgotten'}
 			<ForgotPasswordState bind:email {changeState} />
-		{:else if currentState === 'passwordresetlinksent'}
+		{:else if currentState === 'password-reset-link-sent'}
 			<PasswordResetLinkSent {email} />
+		{:else}
+			<p>unknown state</p>
+			<button onclick={() => changeState('login')}>go back</button>
 		{/if}
 	</div>
 </div>
@@ -45,8 +44,7 @@
 		width: 100%;
 	}
 
-	:global(.sign-in-form-container),
-	:global(form) {
+	.sign-in-form-container {
 		display: flex;
 		flex-direction: column;
 		background: #ffffff;

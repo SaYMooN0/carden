@@ -87,7 +87,7 @@
 	}
 
 	p {
-		color: var(--color-text-light, #64748b);
+		color: var(--color-text-light);
 		font-size: 1.125rem;
 	}
 </style>

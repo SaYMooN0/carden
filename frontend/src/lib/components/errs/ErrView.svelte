@@ -49,7 +49,7 @@
 		padding: 0.125rem 0.5rem;
 		border-radius: 0.25rem;
 		background-color: var(--red-1);
-		color: var(--red-2);
+		color: var(--red-4);
 	}
 
 	.err-message {
@@ -89,7 +89,7 @@
 		margin: 0.125rem 0 0.125rem 0.25rem;
 		color: inherit;
 		font-size: 1rem;
-		font-weight: 420;
+		font-weight: 450;
 		opacity: 1;
 		transition: all 0.2s ease;
 		interpolate-size: allow-keywords;
