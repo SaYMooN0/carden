@@ -11,12 +11,14 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "refs/coldw1nd/interface_main_style3.png"
+                "file": "db/tables/все таблички.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "interface_main_style3"
+              "icon": "lucide-file",
+              "title": "все таблички"
             }
           }
         ]
@@ -199,6 +201,8 @@
   },
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "db/tables/app_user.md",
+    "refs/coldw1nd/interface_main_style3.png",
     "refs/coldw1nd/interface_main_style2.png",
     "refs/coldw1nd/interface_main_style1.png",
     "Идеи.md",
@@ -207,7 +211,6 @@
     "db/tables/card.md",
     "db/tables/decks.md",
     "db/tables/unconfirmed_user.md",
-    "db/tables/app_user.md",
     "отчеты/Кр1/Rennix5321.md",
     "db/tables/pot_types.md",
     "db/tables/plant_species.md",
@@ -217,7 +220,6 @@
     "отчеты/ArgentiLover.md",
     "отчеты",
     "refs/coldw1nd/interface_main_style4.png",
-    "refs/coldw1nd/interface_main_style3.png",
     "refs/ArgentiLover/main_font_styles.jpg",
     "refs/ArgentiLover/logo.jpg",
     "refs/ArgentiLover/color_scheme.jpg",

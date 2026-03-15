@@ -26,12 +26,12 @@ type Card =
       LastTimeEdited: DateTime
       CreationTime: DateTime }
 
-type DeckId = Guid
+type DeckId = DeckId of Guid
 
 type Deck =
     { Id: DeckId
       Cards: Card list
-      LastTimeEdited: DateTime }
+      LastTimeEdited: DateTimeOffset }
 
 type SimplePlantStageSprite = string
 type AttachmentSprite = string //размер спрайта аттачмента такой же как и у растения
@@ -58,26 +58,100 @@ type PlantSpecieName =
     | Венеринамухоловка
     | Арбузарбуз
     | Хэловинпамкин
+
+module PlantSpecieName =
+    let value =
+        function
+        | Венеринамухоловка -> "Венеринамухоловка"
+        | Арбузарбуз -> "Арбузарбуз"
+        | Хэловинпамкин -> "Хэловинпамкин"
+
+    let tryCreate (raw: string) : Result<PlantSpecieName, unit> =
+        let value = if isNull raw then "" else raw.Trim()
+
+        match value with
+        | "Венеринамухоловка" -> Ok Венеринамухоловка
+        | "Арбузарбуз" -> Ok Арбузарбуз
+        | "Хэловинпамкин" -> Ok Хэловинпамкин
+        | _ -> Error()
+
 type PotTypeName =
     | Керамикссолнышокм
     | Черныйпластик
+
+module PotTypeName =
+    let value =
+        function
+        | Керамикссолнышокм -> "Керамикссолнышокм"
+        | Черныйпластик -> "Черныйпластик"
+
+    let tryCreate (raw: string) : Result<PotTypeName, unit> =
+        let value = if isNull raw then "" else raw.Trim()
+
+        match value with
+        | "Керамикссолнышокм" -> Ok Керамикссолнышокм
+        | "Черныйпластик" -> Ok Черныйпластик
+        | _ -> Error()
+
 type PlantId = PlantId of Guid
+
+module PlantId =
+    let value (PlantId value) = value
+
 type AppUserId = AppUserId of Guid
+
 module AppUserId =
     let value (AppUserId g) = g
+
 type PlantDescription = string
+
+type PlantName = private PlantName of string
+
+type PlantNameCreationErr =
+    | NoValue
+    | TooLong
+
+module PlantName =
+    let tryCreate (valueToValidate: string) : Result<PlantName, PlantNameCreationErr> =
+        let value =
+            if isNull valueToValidate then
+                ""
+            else
+                valueToValidate.Trim()
+
+        if String.IsNullOrWhiteSpace value then Error NoValue
+        elif value.Length > 100 then Error TooLong
+        else Ok(PlantName value)
+
+    let value (PlantName value) = value
 
 type Plant =
     { Id: PlantId
       OwnerId: AppUserId
+      Name: PlantName
       Description: PlantDescription
       Deck: Deck
-      CreationDate: DateTime
+      CreationDate: DateTimeOffset
       PotType: PotTypeName
       PlantSpecie: PlantSpecieName
     // StudyState: DeckStudyState
     // View()=> currentplantstage (got from current StudyState & PlantSpecie )+ current pot lvl (lvl + deck)
     }
+
+module Plant =
+    let createNew ownerId name description (now: DateTimeOffset) potType plantSpecie : Plant =
+        { Id = PlantId(Guid.CreateVersion7())
+          OwnerId = ownerId
+          Name = name
+          Description = description
+          Deck =
+            { Id = DeckId(Guid.CreateVersion7())
+              Cards = []
+              LastTimeEdited = now }
+          CreationDate = now
+          PotType = potType
+          PlantSpecie = plantSpecie }
+
 module Email =
     type Email = private Email of string
 
@@ -96,13 +170,16 @@ module Email =
     let value (Email v) = v
 
 type PasswordHash = PasswordHash of string
+
 module PasswordHash =
     let value (PasswordHash h) = h
+
 type AppUser =
     { Id: AppUserId
       Email: Email.Email
       PasswordHash: PasswordHash
       RegistrationDate: DateTimeOffset }
+
 type UnconfirmedUserId = UnconfirmedUserId of Guid
 
 module UnconfirmedUserId =
@@ -116,7 +193,10 @@ module ConfirmationCode =
 
     let tryCreate (valueToValidate: string) : Result<ConfirmationCode, string> =
         let value =
-            if isNull valueToValidate then "" else valueToValidate.Trim()
+            if isNull valueToValidate then
+                ""
+            else
+                valueToValidate.Trim()
 
         if String.IsNullOrWhiteSpace value then
             Error "Confirmation code is required"
@@ -126,9 +206,7 @@ module ConfirmationCode =
             Ok(ConfirmationCode value)
 
     let generate () : ConfirmationCode =
-        RandomNumberGenerator.GetBytes(32)
-        |> Convert.ToHexString
-        |> ConfirmationCode
+        RandomNumberGenerator.GetBytes(32) |> Convert.ToHexString |> ConfirmationCode
 
 
 type UnconfirmedUser =
