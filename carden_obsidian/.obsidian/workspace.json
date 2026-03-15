@@ -11,14 +11,12 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "db/tables/все таблички.md",
-                "mode": "source",
-                "source": false
+                "file": "refs/coldw1nd/interface_main_style3.png"
               },
-              "icon": "lucide-file",
-              "title": "все таблички"
+              "icon": "lucide-image",
+              "title": "interface_main_style3"
             }
           }
         ]
@@ -201,6 +199,9 @@
   },
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "refs/coldw1nd/interface_main_style2.png",
+    "refs/coldw1nd/interface_main_style1.png",
+    "Идеи.md",
     "db/tables/все таблички.md",
     "db/tables/plants.md",
     "db/tables/card.md",
@@ -217,8 +218,6 @@
     "отчеты",
     "refs/coldw1nd/interface_main_style4.png",
     "refs/coldw1nd/interface_main_style3.png",
-    "refs/coldw1nd/interface_main_style2.png",
-    "refs/coldw1nd/interface_main_style1.png",
     "refs/ArgentiLover/main_font_styles.jpg",
     "refs/ArgentiLover/logo.jpg",
     "refs/ArgentiLover/color_scheme.jpg",

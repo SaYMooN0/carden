@@ -7,6 +7,7 @@ open Giraffe
 open Microsoft.AspNetCore.Http
 open WebApi.BackendResponse
 open WebApi.Contracts
+open WebApi.EmailService
 open WebApi.JwtToken
 open WebApi.Repositories
 open WebApi.UserPassword
@@ -37,12 +38,7 @@ let ensureNoAuthToken: HttpHandler =
                 ctx
 
 let authCookieOptions () =
-    CookieOptions(
-        HttpOnly = true,
-        Secure = true,
-        SameSite = SameSiteMode.Strict,
-        Expires = Nullable(DateTimeOffset.UtcNow.AddMinutes(4.0))
-    )
+    CookieOptions(HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = Nullable(DateTimeOffset.UtcNow.AddMinutes(4.0)))
 
 let handlePingAuth: HttpHandler =
     fun next ctx ->
@@ -89,35 +85,90 @@ let handleResetPassword: HttpHandler = text "Hello World, from Giraffe"
 let handleSignUp: HttpHandler =
     withValidatedBody RawSignUpRequest.parse (fun req next ctx ->
         task {
+            use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
+            let usersRepo = ctx.GetService<UsersRepository>()
+            let unconfirmedUsersRepo = ctx.GetService<UnconfirmedUsersRepository>()
+            let emailService = ctx.GetService<EmailService>()
 
-            let dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
-            let repo = ctx.GetService<UsersRepository>()
-            let! exists = repo.AnyUserWithEmail dbConn req.Email
+            let! exists = usersRepo.AnyUserWithEmail dbConn req.Email
 
             if exists then
                 return!
-                    constructFailure
-                        HttpStatusCode.Conflict
-                        [ BackendResponseErr.create "User with such email already exists" ]
-                        next
-                        ctx
+                    constructFailure HttpStatusCode.Conflict [ BackendResponseErr.create "User with such email already exists" ] next ctx
             else
                 let passwordHasher = ctx.GetService<PasswordHasher>()
 
-                let user: AppUser =
-                    { Id = AppUserId(Guid.CreateVersion7())
+                let unconfirmedUser: UnconfirmedUser =
+                    { Id = UnconfirmedUserId(Guid.CreateVersion7())
                       Email = req.Email
                       PasswordHash = passwordHasher.HashPassword req.Password
-                      RegistrationDate = DateTimeOffset.UtcNow }
+                      ConfirmationCode = ConfirmationCode.generate () }
 
-                let! insertRes = repo.Insert dbConn user
+                let! saveRes = unconfirmedUsersRepo.UpsertByEmail dbConn unconfirmedUser
 
+                match saveRes with
+                | Error msg -> return! constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+
+                | Ok savedUser ->
+                    let! emailRes = emailService.SendRegistrationConfirmationLink savedUser.Email savedUser.Id savedUser.ConfirmationCode
+
+                    match emailRes with
+                    | Ok() -> return! constructSuccess () HttpStatusCode.OK next ctx
+
+                    | Error msg -> return! constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+        })
+
+let handleConfirmRegistration: HttpHandler =
+    withValidatedBody RawConfirmRegistrationRequest.parse (fun req next ctx ->
+        task {
+            use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
+            let usersRepo = ctx.GetService<UsersRepository>()
+            let unconfirmedUsersRepo = ctx.GetService<UnconfirmedUsersRepository>()
+
+            let! unconfirmedUserOpt = unconfirmedUsersRepo.GetByIdAndConfirmationCode dbConn req.UserId req.ConfirmationCode
+
+            match unconfirmedUserOpt with
+            | None ->
                 return!
-                    match insertRes with
-                    | Ok() -> constructSuccess () HttpStatusCode.OK next ctx
+                    constructFailure
+                        HttpStatusCode.BadRequest
+                        [ BackendResponseErr.create "Invalid or expired confirmation link" ]
+                        next
+                        ctx
 
+            | Some unconfirmedUser ->
+                do! dbConn.OpenAsync()
+                let! tx = dbConn.BeginTransactionAsync()
+                use tx = tx
+
+                let confirmedUser =
+                    UnconfirmedUser.toConfirmedUser DateTimeOffset.UtcNow unconfirmedUser
+
+                let! insertRes = usersRepo.InsertWithinTransaction dbConn tx confirmedUser
+
+                match insertRes with
+                | Error msg ->
+                    do! tx.RollbackAsync()
+
+                    let status =
+                        if msg = "User with this email already exists" then
+                            HttpStatusCode.Conflict
+                        else
+                            HttpStatusCode.InternalServerError
+
+                    return! constructFailure status [ BackendResponseErr.create msg ] next ctx
+
+                | Ok() ->
+                    let! deleteRes = unconfirmedUsersRepo.DeleteByIdWithinTransaction dbConn tx unconfirmedUser.Id
+
+                    match deleteRes with
                     | Error msg ->
-                        constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+                        do! tx.RollbackAsync()
+                        return! constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+
+                    | Ok() ->
+                        do! tx.CommitAsync()
+                        return! constructSuccess () HttpStatusCode.OK next ctx
         })
 
 let handleLogin: HttpHandler =
@@ -141,12 +192,7 @@ let handleLogin: HttpHandler =
                     let passwordHasher = ctx.GetService<PasswordHasher>()
 
                     if not (passwordHasher.VerifyPassword user.PasswordHash req.Password) then
-                        return!
-                            constructFailure
-                                HttpStatusCode.Unauthorized
-                                [ BackendResponseErr.create "Incorrect password" ]
-                                next
-                                ctx
+                        return! constructFailure HttpStatusCode.Unauthorized [ BackendResponseErr.create "Incorrect password" ] next ctx
                     else
                         let jwtService = ctx.GetService<JwtTokenService>()
                         let token = jwtService.CreateToken(user)
@@ -172,9 +218,12 @@ let handleLogout: HttpHandler =
 
 let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
     choose
-        [ POST >=> route "/ping" >=> handlePingAuth
-          POST >=> route "/logout" >=> handleLogout
-
+        [
           POST >=> route "/sign-up" >=> ensureNoAuthToken >=> handleSignUp
           POST >=> route "/login" >=> ensureNoAuthToken >=> handleLogin
+          
+          POST >=> route "/ping" >=> handlePingAuth
+          POST >=> route "/logout" >=> handleLogout
+          POST >=> route "/confirm-registration" >=> handleConfirmRegistration
           POST >=> route "/reset-password" >=> ensureNoAuthToken >=> handleResetPassword ]
+

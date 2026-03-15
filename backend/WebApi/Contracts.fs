@@ -1,5 +1,6 @@
 module WebApi.Contracts
 
+open System
 open Domain.Models
 open Domain.Models.Email
 open WebApi.BackendResponse
@@ -66,3 +67,31 @@ module RawLoginRequest =
 
     let parse (req: RawLoginRequest) =
         map2 (fun email password -> { Email = email; Password = password }) (validateEmail req.Email) (validatePassword req.Password)
+
+
+type RawConfirmRegistrationRequest =
+    { UserId: Guid
+      ConfirmationCode: string }
+
+type ParsedConfirmRegistrationRequest =
+    { UserId: UnconfirmedUserId
+      ConfirmationCode: ConfirmationCode }
+
+module RawConfirmRegistrationRequest =
+    let private validateUserId (rawUserId: Guid) : Result<UnconfirmedUserId, BackendResponseErr list> =
+        if rawUserId = Guid.Empty then
+            Error [ BackendResponseErr.create "User id is required" ]
+        else
+            Ok(UnconfirmedUserId rawUserId)
+
+    let private validateConfirmationCode (rawConfirmationCode: string) : Result<ConfirmationCode, BackendResponseErr list> =
+        ConfirmationCode.tryCreate rawConfirmationCode
+        |> Result.mapError (fun _ -> [ BackendResponseErr.create "Confirmation code is invalid" ])
+
+    let parse (raw: RawConfirmRegistrationRequest) : Result<ParsedConfirmRegistrationRequest, BackendResponseErr list> =
+        map2
+            (fun userId confirmationCode ->
+                { UserId = userId
+                  ConfirmationCode = confirmationCode })
+            (validateUserId raw.UserId)
+            (validateConfirmationCode raw.ConfirmationCode)

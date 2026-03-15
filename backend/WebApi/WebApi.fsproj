@@ -5,6 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="EmailService.fs" />
         <Compile Include="JwtToken.fs" />
         <Compile Include="UserPassword.fs" />
         <Compile Include="BackendResponse.fs" />
@@ -19,6 +20,7 @@
         <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
         <PackageReference Include="FsToolkit.ErrorHandling" Version="5.2.0" />
         <PackageReference Include="Giraffe" Version="8.2.0"/>
+        <PackageReference Include="MailKit" Version="4.15.1" />
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.16.0" />
         <PackageReference Include="Npgsql" Version="10.0.1"/>
         <PackageReference Include="Dapper" Version="2.1.66"/>
