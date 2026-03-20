@@ -16,7 +16,6 @@ export type Err<T extends keyof ErrExtraDataMap | undefined = undefined> =
 
 export namespace ErrUtils {
 
-
     export function createUnknown(details?: string): Err {
         return {
             msg: "Unknown error",

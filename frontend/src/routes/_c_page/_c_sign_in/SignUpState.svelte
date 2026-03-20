@@ -75,7 +75,7 @@
 <SignInFormInput type="password" fieldName="Confirm password" bind:value={confirmPassword} />
 <div class="gap" />
 <SignInFormLink text="I already have an account" onClick={() => changeState('login')} />
-<DefaultErrBlock errList={errs} class="sign-up-err-block" />
+<DefaultErrBlock {errs} class="sign-up-err-block" />
 <SignInFormConfirmButton text="Sign Up" onclick={() => confirmSignUp()} {isLoading} />
 
 <style>

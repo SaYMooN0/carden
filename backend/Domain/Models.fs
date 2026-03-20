@@ -3,21 +3,13 @@
 open System
 open System.Security.Cryptography
 open System.Text.RegularExpressions
-open Domain.Errs
-
-
-
-
-// type DeckStudyState = {} //мб отдельная сущность мб внутри колоды
-
 
 type CardContentItem =
     | TextContentItem
     | ImageContentItem
     | MathAjaxContentItem
-//https://docs.mathjax.org/en/latest/basic/mathematics.html#:~:text=TeX%20mathematics%20(see%20the-,MathJax%20Web%20Demos%20Repository%20for%20more,-).
 
-type CardId = System.Guid
+type CardId = CardId of Guid
 
 type Card =
     { Id: CardId
@@ -33,64 +25,42 @@ type Deck =
       Cards: Card list
       LastTimeEdited: DateTimeOffset }
 
-type SimplePlantStageSprite = string
-type AttachmentSprite = string //размер спрайта аттачмента такой же как и у растения
-
-type Attachment = { Sp: AttachmentSprite[] }
-
-type Stage5Sprite =
-    { Sprite: SimplePlantStageSprite
-      //Attchment читаем свреху вниз, слева направа
-      Attachment1: Attachment
-      Attachment2: Attachment
-      Attachment3: Attachment
-      Attachment4: Attachment
-
-    //View(days count)=> determined by day. убедиться что чередуем. скорее всего через остатки от деления  (и инедекс в массиве если массив)
-
-    }
-// AttachmentPosition: SimpleStageSprite по умолчанию 256 на 256 можно договориться о другом. и
-// x и y это позиция куда мы влепим верхний левый угол attchmemt
-//не массив чтобы нельзя было ошибиться с количеством, + все равно задаем 1 раз + хранить легче (отдельный столбец в бд)
-//если у разных спишиз может быть разное колво аттачментсов то массивом естественно
+//View(days count)=> determined by day. убедиться что чередуем. скорее всего через остатки от деления  (и инедекс в массиве если массив)
 
 type PlantSpecieName =
-    | Венеринамухоловка
-    | Арбузарбуз
-    | Хэловинпамкин
+    | Cactus
+    | McPitcherPlant
 
 module PlantSpecieName =
     let value =
         function
-        | Венеринамухоловка -> "Венеринамухоловка"
-        | Арбузарбуз -> "Арбузарбуз"
-        | Хэловинпамкин -> "Хэловинпамкин"
+        | Cactus -> "Cactus"
+        | McPitcherPlant -> "McPitcherPlant"
 
-    let tryCreate (raw: string) : Result<PlantSpecieName, unit> =
+    let tryCreate (raw: string | null) : Result<PlantSpecieName, unit> =
         let value = if isNull raw then "" else raw.Trim()
 
         match value with
-        | "Венеринамухоловка" -> Ok Венеринамухоловка
-        | "Арбузарбуз" -> Ok Арбузарбуз
-        | "Хэловинпамкин" -> Ok Хэловинпамкин
+        | "Cactus" -> Ok Cactus
+        | "McPitcherPlant" -> Ok McPitcherPlant
         | _ -> Error()
 
 type PotTypeName =
-    | Керамикссолнышокм
-    | Черныйпластик
+    | CeramicWithSun
+    | PVZ
 
 module PotTypeName =
     let value =
         function
-        | Керамикссолнышокм -> "Керамикссолнышокм"
-        | Черныйпластик -> "Черныйпластик"
+        | CeramicWithSun -> "CeramicWithSun"
+        | PVZ -> "PVZ"
 
-    let tryCreate (raw: string) : Result<PotTypeName, unit> =
+    let tryCreate (raw: string | null) : Result<PotTypeName, unit> =
         let value = if isNull raw then "" else raw.Trim()
 
         match value with
-        | "Керамикссолнышокм" -> Ok Керамикссолнышокм
-        | "Черныйпластик" -> Ok Черныйпластик
+        | "CeramicWithSun" -> Ok CeramicWithSun
+        | "PVZ" -> Ok PVZ
         | _ -> Error()
 
 type PlantId = PlantId of Guid
@@ -103,7 +73,28 @@ type AppUserId = AppUserId of Guid
 module AppUserId =
     let value (AppUserId g) = g
 
-type PlantDescription = string
+type PlantDescription = private PlantDescription of string
+
+type PlantDescriptionCreationErr = | TooLong
+
+module PlantDescription =
+    let MaxLength = 500
+
+    let tryCreate (valueToValidate: string) : Result<PlantDescription, PlantDescriptionCreationErr> =
+        let value =
+            if isNull valueToValidate then
+                ""
+            else
+                valueToValidate.Trim()
+
+        if String.IsNullOrWhiteSpace value then
+            Ok(PlantDescription "")
+        elif value.Length > MaxLength then
+            Error TooLong
+        else
+            Ok(PlantDescription value)
+
+    let value (PlantDescription value) = value
 
 type PlantName = private PlantName of string
 
@@ -111,7 +102,10 @@ type PlantNameCreationErr =
     | NoValue
     | TooLong
 
+
 module PlantName =
+    let MaxLength = 100
+
     let tryCreate (valueToValidate: string) : Result<PlantName, PlantNameCreationErr> =
         let value =
             if isNull valueToValidate then
@@ -120,7 +114,7 @@ module PlantName =
                 valueToValidate.Trim()
 
         if String.IsNullOrWhiteSpace value then Error NoValue
-        elif value.Length > 100 then Error TooLong
+        elif value.Length > MaxLength then Error TooLong
         else Ok(PlantName value)
 
     let value (PlantName value) = value

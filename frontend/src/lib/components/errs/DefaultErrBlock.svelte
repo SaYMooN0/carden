@@ -2,10 +2,10 @@
 	import type { Err } from '$lib/ts/err';
 	import ErrView from './ErrView.svelte';
 	interface Props {
-		errList: Err[];
+		errs: Err[];
 		class?: string;
 	}
-	let { errList, class: className }: Props = $props();
+	let { errs: errList, class: className }: Props = $props();
 </script>
 
 <div class="err-block {className}">

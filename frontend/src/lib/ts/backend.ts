@@ -1,8 +1,8 @@
 import { type BaseErr, type Err } from "./err";
 
 export type BackendResponse<T> =
-    | { isSuccess: true; data: T }
-    | { isSuccess: false; errs: BaseErr[] };
+    | { isSuccess: true; data: T, statusCode: number }
+    | { isSuccess: false; errs: BaseErr[], statusCode: number };
 
 export type BackendResponseVoid = BackendResponse<void>;
 
@@ -22,28 +22,33 @@ export namespace Backend {
                 ...options,
                 credentials: 'include'
             });
+
             const text = await response.text();
+
             console.log(text);
             try {
-                const data = JSON.parse(text) as BackendResponse<T>;
+                const parsed = JSON.parse(text) as Omit<BackendResponse<T>, "statusCode">;
+                const data: BackendResponse<T> = { ...parsed, statusCode: response.status } as BackendResponse<T>;
                 return data;
+
             } catch (e: any) {
+
                 return {
                     isSuccess: false,
-                    errs: [createErrFromResponseWhenNotDeserializable(response)]
+                    errs: [createErrFromResponseIfNotDeserializable(response)],
+                    statusCode: response.status
                 };
             }
 
         } catch (e: any) {
-            console.log(e);
-
             return {
                 isSuccess: false,
-                errs: [createErrFromException(e)]
+                errs: [createErrFromException(e)],
+                statusCode: 500
             };
         }
     }
-    function createErrFromResponseWhenNotDeserializable(response: Response): Err<"FAILED_TO_FETCH"> {
+    function createErrFromResponseIfNotDeserializable(response: Response): Err<"FAILED_TO_FETCH"> {
 
         const status = response.status;
         if (status === 404) {

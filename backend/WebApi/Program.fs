@@ -26,7 +26,10 @@ let handleNoMatchedEndpoint: HttpHandler =
         constructFailure HttpStatusCode.NotFound [ err ] next ctx
 
 let webApp =
-    choose [ subRoute "/auth" AuthHandlers.handlers; handleNoMatchedEndpoint ]
+    choose
+        [ subRoute "/auth" AuthHandlers.handlers
+          subRoute "/plants" PlantsHandlers.handlers
+          handleNoMatchedEndpoint ]
 
 let errorHandler (ex: Exception) (logger: ILogger) =
     fun next ctx ->
@@ -44,13 +47,14 @@ let configureApp (app: IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler).UseGiraffe webApp
 
 let addServices (context: WebHostBuilderContext) (services: IServiceCollection) =
-
-    let jwtConfig = context.Configuration.GetSection("JwtSettings").Get<JwtTokenConfig>()
+    let jwtConfig =
+        context.Configuration.GetSection("JwtSettings").Get<JwtTokenConfig>()
 
     services
         .AddSingleton(jwtConfig)
         .AddTransient<ConnectionFactory>()
         .AddTransient<UsersRepository>()
+        .AddTransient<PlantsRepository>()
         .AddTransient<UserPassword.PasswordHasher>()
         .AddSingleton<JwtTokenService>()
         .AddSingleton<JsonSerializerOptions>(fun _ ->
@@ -64,7 +68,8 @@ let addServices (context: WebHostBuilderContext) (services: IServiceCollection) 
 let main _ =
     Host
         .CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(fun webHostBuilder -> webHostBuilder.Configure(configureApp).ConfigureServices(addServices) |> ignore)
+        .ConfigureWebHostDefaults(fun webHostBuilder ->
+            webHostBuilder.Configure(configureApp).ConfigureServices(addServices) |> ignore)
         .Build()
         .Run()
 

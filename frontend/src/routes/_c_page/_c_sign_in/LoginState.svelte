@@ -72,7 +72,7 @@
 <div class="gap" />
 <SignInFormLink text="I forgot my password" onClick={() => changeState('password-forgotten')} />
 <SignInFormLink text="I don't have an account yet" onClick={() => changeState('signup')} />
-<DefaultErrBlock errList={errs} class="login-err-block" />
+<DefaultErrBlock {errs} class="login-err-block" />
 <SignInFormConfirmButton text="Log in" onclick={() => confirmLogin()} {isLoading} />
 
 <style>

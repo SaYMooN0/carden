@@ -1,4 +1,4 @@
-module WebApi.PlantHandlers
+module WebApi.PlantsHandlers
 
 open System
 open System.Net
@@ -11,22 +11,24 @@ open Giraffe
 open WebApi.Contracts
 open WebApi.Validation
 
-type DeckSummaryResponse =
+type PlantPreviewResponse =
     { Id: Guid
       Name: string
       PlantSpecie: string
       PotType: string
       CardsCount: int
-      CreationDate: DateTime }
+      CreationDate: string
+      StudyProgress: int }
 
-module DeckSummaryResponse =
-    let fromDomain (item: PlantDeckSummary) : DeckSummaryResponse =
+module PlantPreviewResponse =
+    let fromDomain (item: PlantPreviewDto) : PlantPreviewResponse =
         { Id = PlantId.value item.Id
           Name = PlantName.value item.Name
           PlantSpecie = PlantSpecieName.value item.PlantSpecie
           PotType = PotTypeName.value item.PotType
           CardsCount = item.CardsCount
-          CreationDate = item.CreationDate }
+          CreationDate = item.CreationDate.ToIsoString()
+          StudyProgress = 1 }
 
 let private tokenCookieName = "user_tkn"
 
@@ -45,14 +47,20 @@ let private withAuthenticatedUser (handler: AppUserId -> HttpHandler) : HttpHand
                 ctx
 
         | Ok token ->
-            let jwtService = ctx.GetService<JwtTokenService>()
-
-            match jwtService.UserIdFromJwtToken token with
+            match ctx.GetService<JwtTokenService>().UserIdFromJwtToken token with
             | Error InvalidToken ->
-                constructFailure HttpStatusCode.Unauthorized [ BackendResponseErr.create "Invalid authentication token" ] next ctx
+                constructFailure
+                    HttpStatusCode.Unauthorized
+                    [ BackendResponseErr.create "Invalid authentication token" ]
+                    next
+                    ctx
 
             | Error Unexpected ->
-                constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create "Unexpected token parsing error" ] next ctx
+                constructFailure
+                    HttpStatusCode.InternalServerError
+                    [ BackendResponseErr.create "Unexpected token parsing error" ]
+                    next
+                    ctx
 
             | Ok userId ->
                 task {
@@ -82,7 +90,7 @@ let private tryGetQueryValue (ctx: HttpContext) (key: string) : string option =
             Some valueStr
     | _ -> None
 
-let handleGetMyDecks: HttpHandler =
+let handleLoadMyPlants: HttpHandler =
     withAuthenticatedUser (fun userId next ctx ->
         task {
             let sortByRaw = tryGetQueryValue ctx "sortBy"
@@ -90,19 +98,16 @@ let handleGetMyDecks: HttpHandler =
 
             match ParsedGetMyDecksRequest.parse sortByRaw directionRaw with
             | Error errs -> return! constructFailure HttpStatusCode.BadRequest errs next ctx
-
             | Ok parsed ->
                 use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
                 let repo = ctx.GetService<PlantsRepository>()
+                let! items = repo.GetPreviewsByOwner dbConn userId parsed.SortBy parsed.Direction
 
-                let! items = repo.GetDeckSummariesByOwner dbConn userId parsed.SortBy parsed.Direction
-
-                let response = items |> List.map DeckSummaryResponse.fromDomain
-
+                let response = items |> List.map PlantPreviewResponse.fromDomain
                 return! constructSuccess response HttpStatusCode.OK next ctx
         })
 
-let handleCreatePlantDeck: HttpHandler =
+let handleCreatePlant: HttpHandler =
     withAuthenticatedUser (fun userId ->
         withValidatedBody RawCreatePlantDeckRequest.parse (fun req next ctx ->
             task {
@@ -113,8 +118,15 @@ let handleCreatePlantDeck: HttpHandler =
                     Plant.createNew userId req.Name req.Description DateTimeOffset.UtcNow req.PotType req.PlantSpecie
 
                 let! createRes = repo.InsertNewPlant dbConn plant
+
                 return!
                     match createRes with
                     | Ok plantId -> constructSuccess {| Id = PlantId.value plantId |} HttpStatusCode.OK next ctx
-                    | Error msg -> constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+                    | Error msg ->
+                        constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
             }))
+
+let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
+    choose
+        [ GET >=> route "/load-all" >=> handleLoadMyPlants
+          POST >=> route "/create" >=> handleCreatePlant ]

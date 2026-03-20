@@ -13,7 +13,7 @@
         <Compile Include="Repositories.fs" />
         <Compile Include="Contracts.fs" />
         <Compile Include="AuthHandlers.fs"/>
-        <Compile Include="PlantHandlers.fs" />
+        <Compile Include="PlantsHandlers.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>
 

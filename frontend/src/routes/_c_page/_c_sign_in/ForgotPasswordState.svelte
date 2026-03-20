@@ -66,7 +66,7 @@
 <SignInFormInput type="email" fieldName="Email" bind:value={email} />
 <div class="gap" />
 <SignInFormLink text="Back to log in" onClick={() => changeState('login')} />
-<DefaultErrBlock errList={errs} class="forgot-password-err-block" />
+<DefaultErrBlock {errs} class="forgot-password-err-block" />
 <SignInFormConfirmButton
 	text="Send reset link"
 	onclick={() => confirmForgotPassword()}

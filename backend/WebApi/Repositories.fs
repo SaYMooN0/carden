@@ -247,7 +247,7 @@ type UnconfirmedUsersRepository() =
         }
 
 [<CLIMutable>]
-type PlantDeckSummaryDbDto =
+type PlantPreviewDbDto =
     { Id: Guid
       Name: string
       PlantSpecie: string
@@ -255,7 +255,7 @@ type PlantDeckSummaryDbDto =
       CardsCount: int
       CreationDate: DateTime }
 
-type PlantDeckSummary =
+type PlantPreviewDto =
     { Id: PlantId
       Name: PlantName
       PlantSpecie: PlantSpecieName
@@ -263,8 +263,8 @@ type PlantDeckSummary =
       CardsCount: int
       CreationDate: DateTime }
 
-module PlantDeckSummaryDbDto =
-    let toDomain (dto: PlantDeckSummaryDbDto) : PlantDeckSummary =
+module PlantPreviewDbDto =
+    let toDomain (dto: PlantPreviewDbDto) : PlantPreviewDto =
         let name =
             match PlantName.tryCreate dto.Name with
             | Ok value -> value
@@ -289,12 +289,12 @@ module PlantDeckSummaryDbDto =
 
 
 type PlantsRepository() =
-    member _.GetDeckSummariesByOwner
+    member _.GetPreviewsByOwner
         (conn: NpgsqlConnection)
         (ownerId: AppUserId)
         (sortBy: DecksSortBy)
         (direction: SortDirection)
-        : Task<PlantDeckSummary list> =
+        : Task<PlantPreviewDto list> =
         task {
             let sortColumn =
                 match sortBy with
@@ -323,9 +323,9 @@ type PlantsRepository() =
                     ORDER BY {sortColumn} {sortDirection}, p.Id ASC
                 """
 
-            let! dtos = conn.QueryAsync<PlantDeckSummaryDbDto>(sql, {| OwnerId = AppUserId.value ownerId |})
+            let! dtos = conn.QueryAsync<PlantPreviewDbDto>(sql, {| OwnerId = AppUserId.value ownerId |})
 
-            return dtos |> Seq.map PlantDeckSummaryDbDto.toDomain |> Seq.toList
+            return dtos |> Seq.map PlantPreviewDbDto.toDomain |> Seq.toList
         }
 
     member _.InsertNewPlant (conn: NpgsqlConnection) (plant: Plant) : Task<Result<PlantId, string>> =

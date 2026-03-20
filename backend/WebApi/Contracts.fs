@@ -67,7 +67,10 @@ module RawLoginRequest =
             | TooLong -> [ BackendResponseErr.create "Password too long" ])
 
     let parse (req: RawLoginRequest) =
-        map2 (fun email password -> { Email = email; Password = password }) (validateEmail req.Email) (validatePassword req.Password)
+        map2
+            (fun email password -> { Email = email; Password = password })
+            (validateEmail req.Email)
+            (validatePassword req.Password)
 
 
 type RawConfirmRegistrationRequest =
@@ -85,7 +88,9 @@ module RawConfirmRegistrationRequest =
         else
             Ok(UnconfirmedUserId rawUserId)
 
-    let private validateConfirmationCode (rawConfirmationCode: string) : Result<ConfirmationCode, BackendResponseErr list> =
+    let private validateConfirmationCode
+        (rawConfirmationCode: string)
+        : Result<ConfirmationCode, BackendResponseErr list> =
         ConfirmationCode.tryCreate rawConfirmationCode
         |> Result.mapError (fun _ -> [ BackendResponseErr.create "Confirmation code is invalid" ])
 
@@ -123,7 +128,10 @@ type ParsedGetMyDecksRequest =
       Direction: SortDirection }
 
 module ParsedGetMyDecksRequest =
-    let parse (sortByRaw: string option) (directionRaw: string option) : Result<ParsedGetMyDecksRequest, BackendResponseErr list> =
+    let parse
+        (sortByRaw: string option)
+        (directionRaw: string option)
+        : Result<ParsedGetMyDecksRequest, BackendResponseErr list> =
         map2
             (fun sortBy direction ->
                 { SortBy = sortBy
@@ -150,12 +158,16 @@ module RawCreatePlantDeckRequest =
         |> Result.mapError (fun e ->
             match e with
             | PlantNameCreationErr.NoValue -> [ BackendResponseErr.create "Plant name is required" ]
-            | PlantNameCreationErr.TooLong -> [ BackendResponseErr.create "Plant name must be at most 100 characters" ])
+            | PlantNameCreationErr.TooLong ->
+                [ BackendResponseErr.create $"Plant name cannot be longer than {PlantName.MaxLength} characters" ])
 
     let private validateDescription (raw: string) : Result<PlantDescription, BackendResponseErr list> =
-        let value = if isNull raw then "" else raw.Trim()
-
-        Ok value
+        PlantDescription.tryCreate raw
+        |> Result.mapError (fun e ->
+            match e with
+            | PlantDescriptionCreationErr.TooLong ->
+                [ BackendResponseErr.create
+                      $"Plant description cannot be longer than {PlantDescription.MaxLength} characters" ])
 
     let private validatePlantSpecie (raw: string) : Result<PlantSpecieName, BackendResponseErr list> =
         PlantSpecieName.tryCreate raw
@@ -172,5 +184,11 @@ module RawCreatePlantDeckRequest =
                   Description = description
                   PlantSpecie = plantSpecie
                   PotType = potType })
-            (map2 (fun name description -> name, description) (validateName req.Name) (validateDescription req.Description))
-            (map2 (fun plantSpecie potType -> plantSpecie, potType) (validatePlantSpecie req.PlantSpecie) (validatePotType req.PotType))
+            (map2
+                (fun name description -> name, description)
+                (validateName req.Name)
+                (validateDescription req.Description))
+            (map2
+                (fun plantSpecie potType -> plantSpecie, potType)
+                (validatePlantSpecie req.PlantSpecie)
+                (validatePotType req.PotType))
