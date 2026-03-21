@@ -250,8 +250,8 @@ type UnconfirmedUsersRepository() =
 type PlantPreviewDbDto =
     { Id: Guid
       Name: string
-      PlantSpecie: string
-      PotType: string
+      PlantSpecieName: string
+      PotTypeName: string
       CardsCount: int
       CreationDate: DateTime }
 
@@ -271,12 +271,12 @@ module PlantPreviewDbDto =
             | Error _ -> failwith "Incorrect plant name in db"
 
         let plantSpecie =
-            match PlantSpecieName.tryCreate dto.PlantSpecie with
+            match PlantSpecieName.tryCreate dto.PlantSpecieName with
             | Ok value -> value
             | Error _ -> failwith "Incorrect plant specie in db"
 
         let potType =
-            match PotTypeName.tryCreate dto.PotType with
+            match PotTypeName.tryCreate dto.PotTypeName with
             | Ok value -> value
             | Error _ -> failwith "Incorrect pot type in db"
 
@@ -311,15 +311,15 @@ type PlantsRepository() =
                     SELECT
                         p.Id,
                         p.Name,
-                        p.PlantSpecie,
-                        p.PotType,
+                        p.PlantSpecieName,
+                        p.PotTypeName,
                         COUNT(c.Id)::int AS CardsCount,
                         p.CreationDate
                     FROM plant p
                     INNER JOIN deck d ON d.Id = p.DeckId
                     LEFT JOIN card c ON c.DeckId = d.Id
                     WHERE p.OwnerId = @OwnerId
-                    GROUP BY p.Id, p.Name, p.PlantSpecie, p.PotType, p.CreationDate
+                    GROUP BY p.Id, p.Name, p.PlantSpecieName, p.PotTypeName, p.CreationDate
                     ORDER BY {sortColumn} {sortDirection}, p.Id ASC
                 """
 

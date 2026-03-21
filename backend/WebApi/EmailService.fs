@@ -23,7 +23,7 @@ type EmailService(config: EmailServiceConfig, frontendConfig: FrontendConfig) =
 
         $"{baseUrl}/{confirmPath}/{UnconfirmedUserId.value userId}/{ConfirmationCode.value confirmationCode}"
 
-    member private _.ConfigureSmtpClient() : Task<SmtpClient> =
+    member private _.ConfigureSmtpClient: Task<SmtpClient> =
         task {
             let client = new SmtpClient()
             do! client.ConnectAsync(config.Host, config.Port, true)
@@ -31,7 +31,7 @@ type EmailService(config: EmailServiceConfig, frontendConfig: FrontendConfig) =
             return client
         }
 
-    member private this.SendEmailWithHtmlBody (toEmail: Email.Email) (subject: string) (body: string) : Task<Result<unit, string>> =
+    member private this.SendEmailWithHtmlBody (toEmail: Email.Email) (subject: string) (body: string) (ct) : Task<Result<unit, string>> =
         task {
             try
                 let message = new MimeMessage()
@@ -43,14 +43,14 @@ type EmailService(config: EmailServiceConfig, frontendConfig: FrontendConfig) =
                 bodyPart.Text <- body
                 message.Body <- bodyPart
 
-                let! smtpClient = this.ConfigureSmtpClient()
+                let! smtpClient = this.ConfigureSmtpClient
                 use client = smtpClient
 
                 let! _ = client.SendAsync(message)
-                do! client.DisconnectAsync(true)
+                do! client.DisconnectAsync(true, ct)
 
                 return Ok()
-            with _ ->
+            with ex ->
                 return Error "Could not establish connection to send an email"
         }
 
@@ -60,6 +60,7 @@ type EmailService(config: EmailServiceConfig, frontendConfig: FrontendConfig) =
         (email: Email.Email)
         (userId: UnconfirmedUserId)
         (confirmationCode: ConfirmationCode)
+        (ct)
         : Task<Result<unit, string>> =
         task {
             let link = buildConfirmationLink userId confirmationCode
@@ -88,5 +89,5 @@ type EmailService(config: EmailServiceConfig, frontendConfig: FrontendConfig) =
                     </div>
                     """
 
-            return! this.SendEmailWithHtmlBody email subject body
+            return! this.SendEmailWithHtmlBody email subject body ct
         }

@@ -21,12 +21,7 @@ let getAuthCookie (ctx: HttpContext) : Result<JwtToken, unit> =
 
 
 let authCookieOptions () =
-    CookieOptions(
-        HttpOnly = true,
-        Secure = true,
-        SameSite = SameSiteMode.Strict,
-        Expires = Nullable(DateTimeOffset.UtcNow.AddMinutes(4.0))
-    )
+    CookieOptions(HttpOnly = true, Secure = true, SameSite = SameSiteMode.Strict, Expires = Nullable(DateTimeOffset.UtcNow.AddDays(2.0)))
 
 let makeAuthCookieExpired (ctx: HttpContext) : unit =
     let expired =
@@ -43,6 +38,7 @@ let ensureNoAuthToken: HttpHandler =
     fun next ctx ->
         if (getAuthCookie ctx).IsOk then
             makeAuthCookieExpired (ctx)
+
         next ctx
 
 let handlePingAuth: HttpHandler =
@@ -99,11 +95,7 @@ let handleSignUp: HttpHandler =
 
             if exists then
                 return!
-                    constructFailure
-                        HttpStatusCode.Conflict
-                        [ BackendResponseErr.create "User with such email already exists" ]
-                        next
-                        ctx
+                    constructFailure HttpStatusCode.Conflict [ BackendResponseErr.create "User with such email already exists" ] next ctx
             else
                 let passwordHasher = ctx.GetService<PasswordHasher>()
 
@@ -116,9 +108,7 @@ let handleSignUp: HttpHandler =
                 let! saveRes = unconfirmedUsersRepo.UpsertByEmail dbConn unconfirmedUser
 
                 match saveRes with
-                | Error msg ->
-                    return!
-                        constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+                | Error msg -> return! constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
 
                 | Ok savedUser ->
                     let! emailRes =
@@ -126,17 +116,13 @@ let handleSignUp: HttpHandler =
                             savedUser.Email
                             savedUser.Id
                             savedUser.ConfirmationCode
+                            ctx.RequestAborted
+
 
                     match emailRes with
                     | Ok() -> return! constructSuccess () HttpStatusCode.OK next ctx
 
-                    | Error msg ->
-                        return!
-                            constructFailure
-                                HttpStatusCode.InternalServerError
-                                [ BackendResponseErr.create msg ]
-                                next
-                                ctx
+                    | Error msg -> return! constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
         })
 
 let handleConfirmRegistration: HttpHandler =
@@ -146,8 +132,7 @@ let handleConfirmRegistration: HttpHandler =
             let usersRepo = ctx.GetService<UsersRepository>()
             let unconfirmedUsersRepo = ctx.GetService<UnconfirmedUsersRepository>()
 
-            let! unconfirmedUserOpt =
-                unconfirmedUsersRepo.GetByIdAndConfirmationCode dbConn req.UserId req.ConfirmationCode
+            let! unconfirmedUserOpt = unconfirmedUsersRepo.GetByIdAndConfirmationCode dbConn req.UserId req.ConfirmationCode
 
             match unconfirmedUserOpt with
             | None ->
@@ -187,16 +172,11 @@ let handleConfirmRegistration: HttpHandler =
                     | Error msg ->
                         do! tx.RollbackAsync()
 
-                        return!
-                            constructFailure
-                                HttpStatusCode.InternalServerError
-                                [ BackendResponseErr.create msg ]
-                                next
-                                ctx
+                        return! constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
 
                     | Ok() ->
                         do! tx.CommitAsync()
-                        return! constructSuccess () HttpStatusCode.OK next ctx
+                        return! constructSuccess {| confirmedEmail = Email.value confirmedUser.Email |} HttpStatusCode.OK next ctx
         })
 
 let handleLogin: HttpHandler =
@@ -220,12 +200,7 @@ let handleLogin: HttpHandler =
                     let passwordHasher = ctx.GetService<PasswordHasher>()
 
                     if not (passwordHasher.VerifyPassword user.PasswordHash req.Password) then
-                        return!
-                            constructFailure
-                                HttpStatusCode.Unauthorized
-                                [ BackendResponseErr.create "Incorrect password" ]
-                                next
-                                ctx
+                        return! constructFailure HttpStatusCode.Unauthorized [ BackendResponseErr.create "Incorrect password" ] next ctx
                     else
                         let jwtService = ctx.GetService<JwtTokenService>()
                         let token = jwtService.CreateToken(user)

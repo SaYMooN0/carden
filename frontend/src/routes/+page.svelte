@@ -1,15 +1,15 @@
 <script lang="ts">
-	import CardenPage from './_c_page/CardenPage.svelte';
 	import SignInFormPage from './_c_page/SignInFormPage.svelte';
 	import type { PageProps } from './$types';
 	import DefaultErrBlock from '$lib/components/errs/DefaultErrBlock.svelte';
+	import UserPlantsDisplay from './_c_page/UserPlantsDisplay.svelte';
 
 	let { data }: PageProps = $props();
 </script>
 
 <div class="fade-in-with-delay">
 	{#if data.isSuccess}
-		<CardenPage />
+		<UserPlantsDisplay loadedPlants={data.data} />
 	{:else if data.statusCode === 401}
 		<SignInFormPage />
 	{:else}

@@ -1,4 +1,4 @@
-import { Backend, RJO } from '$lib/ts/backend';
+import { Backend } from '$lib/ts/backend';
 import type { PageLoad } from './$types';
 import type { PlantPreview } from './types';
 export const prerender = false;

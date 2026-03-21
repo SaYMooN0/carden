@@ -11,6 +11,7 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open WebApi
 open WebApi.BackendResponse
+open WebApi.EmailService
 open WebApi.JwtToken
 open WebApi.Repositories
 
@@ -46,17 +47,26 @@ let errorHandler (ex: Exception) (logger: ILogger) =
 let configureApp (app: IApplicationBuilder) =
     app.UseGiraffeErrorHandler(errorHandler).UseGiraffe webApp
 
+let getTypedConfig<'a> (context: WebHostBuilderContext) (fieldName: string) =
+    context.Configuration.GetSection(fieldName).Get<'a>()
+
 let addServices (context: WebHostBuilderContext) (services: IServiceCollection) =
-    let jwtConfig =
-        context.Configuration.GetSection("JwtSettings").Get<JwtTokenConfig>()
 
     services
-        .AddSingleton(jwtConfig)
+        .AddSingleton(getTypedConfig<FrontendConfig> context "FrontendConfig")
+        
         .AddTransient<ConnectionFactory>()
         .AddTransient<UsersRepository>()
         .AddTransient<PlantsRepository>()
+        .AddTransient<UnconfirmedUsersRepository>()
+
+        .AddSingleton(getTypedConfig<EmailServiceConfig> context "EmailServiceConfig")
+        .AddTransient<EmailService>()
+        
+        .AddSingleton(getTypedConfig<JwtTokenConfig> context "JwtSettings")
         .AddTransient<UserPassword.PasswordHasher>()
         .AddSingleton<JwtTokenService>()
+        
         .AddSingleton<JsonSerializerOptions>(fun _ ->
             let opts = JsonSerializerOptions(JsonSerializerDefaults.Web)
             opts.Converters.Add(JsonFSharpConverter())
@@ -68,8 +78,7 @@ let addServices (context: WebHostBuilderContext) (services: IServiceCollection) 
 let main _ =
     Host
         .CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(fun webHostBuilder ->
-            webHostBuilder.Configure(configureApp).ConfigureServices(addServices) |> ignore)
+        .ConfigureWebHostDefaults(fun webHostBuilder -> webHostBuilder.Configure(configureApp).ConfigureServices(addServices) |> ignore)
         .Build()
         .Run()
 
