@@ -11,14 +11,12 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "Тудушник.md",
-                "mode": "source",
-                "source": false
+                "file": "plants/Сactus/Cactus3Sprite.png"
               },
-              "icon": "lucide-file",
-              "title": "Тудушник"
+              "icon": "lucide-image",
+              "title": "Cactus3Sprite"
             }
           }
         ]
@@ -201,20 +199,26 @@
   },
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "plants/Сactus/Cactus5Sprite.png",
+    "plants/Сactus/Cactus4Sprite.png",
+    "plants/Сactus/Cactus3Sprite.png",
+    "plants/Сactus/Cactus2Sprite.png",
+    "plants/Сactus/Cactus2Attachment.png",
+    "plants/Сactus/Cactus1Attachment.png",
+    "plants/Сactus/Cactus.md",
+    "pots/PotPvZSprite.png",
+    "pots/PotPVZ.md",
+    "pots/Pot1.md",
+    "pots/Pot1Sprite.png",
     "Идеи.md",
+    "Тудушник.md",
     "pots/pvz_pot/pvz.md",
     "pots/pvz_pot/Flower_lvl_1.webp",
-    "pots/PotPVZ.md",
     "pots/pvz_pot",
-    "pots/Pot1Sprite.png",
-    "pots/Pot1.md",
-    "pots/PotPvZSprite.png",
-    "Тудушник.md",
     "db/tables/все таблички.md",
     "db/tables/app_user.md",
     "refs/coldw1nd/interface_main_style3.png",
     "refs/coldw1nd/interface_main_style2.png",
-    "refs/coldw1nd/interface_main_style1.png",
     "db/tables/plants.md",
     "db/tables/card.md",
     "db/tables/decks.md",
@@ -226,14 +230,9 @@
     "отчеты/Rennix5321.md",
     "отчеты/ArgentiLover.md",
     "отчеты",
-    "refs/coldw1nd/interface_main_style4.png",
-    "refs/ArgentiLover/main_font_styles.jpg",
-    "refs/ArgentiLover/logo.jpg",
-    "refs/ArgentiLover/color_scheme.jpg",
     "refs/coldw1nd",
     "refs/ArgentiLover",
     "refs",
-    "plants/Сactus/Cactus.md",
     "plants/Сactus",
     "pots/PotNumberOne.md",
     "pots/PotNumberOne",

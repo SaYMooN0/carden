@@ -1,4 +1,11 @@
 <script lang="ts">
+	import type { PlantPreview } from '../types';
+
+	interface Props {
+		loadedPlants: PlantPreview[];
+	}
+
+	let { loadedPlants }: Props = $props();
 </script>
 
 <div class="carden-container">

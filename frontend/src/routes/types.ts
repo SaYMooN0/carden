@@ -9,5 +9,5 @@ export type PlantPreview = {
     potType: PotType
     cardsCount: number
     creationDate: string
-    plantGrothPoints: number
+    studyProgress: number
 }
