@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PlantPreview } from '../types';
+	import PlantsEmptyState from './PlantsEmptyState.svelte';
 
 	interface Props {
 		loadedPlants: PlantPreview[];
@@ -9,9 +10,12 @@
 </script>
 
 {#if loadedPlants.length === 0}
-	<p>No plants found</p>
+	<PlantsEmptyState />
 {:else}
-	{#each loadedPlants as plant}
-		<p>{plant.name}</p>
-	{/each}
+	<div class="plants-list">
+		{#each loadedPlants as plant}
+			<p>{plant.name}</p>
+		{/each}
+		<div>Add New Plant</div>
+	</div>
 {/if}
