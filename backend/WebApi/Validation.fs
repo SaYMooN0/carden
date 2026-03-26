@@ -13,6 +13,26 @@ let map2 (f: 'a -> 'b -> 'c) (ra: Result<'a, 'e list>) (rb: Result<'b, 'e list>)
     | Ok _, Error eb -> Error eb
     | Error ea, Error eb -> Error(ea @ eb)
 
+let map3 f r1 r2 r3 =
+    match r1, r2, r3 with
+    | Ok v1, Ok v2, Ok v3 -> Ok(f v1 v2 v3)
+
+    | _ ->
+        let errors =
+            [ match r1 with
+              | Error e -> yield! e
+              | _ -> ()
+
+              match r2 with
+              | Error e -> yield! e
+              | _ -> ()
+
+              match r3 with
+              | Error e -> yield! e
+              | _ -> () ]
+
+        Error errors
+
 let withValidatedBody<'raw, 'parsed>
     (parse: 'raw -> Result<'parsed, BackendResponseErr list>)
     (onValid: 'parsed -> HttpFunc -> HttpContext -> HttpFuncResult)

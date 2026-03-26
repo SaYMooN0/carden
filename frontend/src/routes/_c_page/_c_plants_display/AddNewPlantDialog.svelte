@@ -1,13 +1,18 @@
 <script lang="ts">
 	import DialogWithCloseButton from '$lib/components/dialogs/DialogWithCloseButton.svelte';
+	import DefaultErrBlock from '$lib/components/errs/DefaultErrBlock.svelte';
+	import ErrView from '$lib/components/errs/ErrView.svelte';
+	import { Backend, RJO } from '$lib/ts/backend';
 	import { AllPlantSpicies, AllPotTypes, type PlantSpecie, type PotType } from '$lib/ts/base-types';
+	import type { Err } from '$lib/ts/err';
 	import { SpritesManager } from '$lib/ts/sprites-manager';
 
 	let dialog: DialogWithCloseButton = $state()!;
 	let selectedPlantIndex = $state(0);
 	let selectedPotIndex = $state(0);
 	let plantName = $state('');
-
+	let creatingErrs: Err[] = $state([]);
+	let isLoading = $state(false);
 	const selectedPlant: PlantSpecie = $derived(AllPlantSpicies[selectedPlantIndex]);
 	const selectedPot: PotType = $derived(AllPotTypes[selectedPotIndex]);
 	const canSubmit = $derived(plantName.trim().length > 0);
@@ -61,16 +66,28 @@
 		selectedPotIndex = nextIndex(selectedPotIndex, AllPotTypes.length);
 	}
 
-	function handleSubmit(event: SubmitEvent) {
+	async function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
-		if (!canSubmit) return;
-
-		console.log('Add new plant', {
-			name: plantName.trim(),
-			plantSpecie: selectedPlant,
-			potType: selectedPot
-		});
+		if (!canSubmit) {
+			return;
+		}
+		creatingErrs = [];
+		let isLoading = true;
+		const response = await Backend.fetchJsonResponse(
+			'/plants/create',
+			RJO.POST({
+				name: plantName.trim(),
+				plantSpecie: selectedPlant,
+				potType: selectedPot
+			})
+		);
+		isLoading = false;
+		if (response.isSuccess) {
+			dialog.close();
+		} else {
+			creatingErrs = response.errs;
+		}
 	}
 </script>
 
@@ -184,6 +201,7 @@
 			/>
 		</div>
 
+		<DefaultErrBlock errs={creatingErrs} />
 		<div class="actions">
 			<button class="submit-button" type="submit" disabled={!canSubmit}> Create plant </button>
 		</div>
@@ -421,7 +439,7 @@
 		bottom: 0;
 		width: 5rem;
 		border: none;
-		background: transparent;
+		background-color: red;
 		cursor: pointer;
 		z-index: 4;
 	}
@@ -435,15 +453,15 @@
 	}
 
 	.name-label {
-		font-size: 0.95rem;
+		font-size: 1rem;
 		font-weight: 600;
 	}
 
 	.name-input {
 		width: 100%;
-		padding: 0.9rem 1rem;
+		padding: 1rem 1.125rem;
 		border-radius: 1rem;
-		border: 0.12rem solid var(--color-sage);
+		border: 0.125rem solid var(--color-sage);
 		background: var(--color-cream);
 		color: var(--text);
 		font-size: 1rem;

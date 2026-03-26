@@ -115,13 +115,13 @@ let handleCreatePlant: HttpHandler =
                 let repo = ctx.GetService<PlantsRepository>()
 
                 let plant: Plant =
-                    Plant.createNew userId req.Name req.Description DateTimeOffset.UtcNow req.PotType req.PlantSpecie
+                    Plant.createNew userId req.Name DateTimeOffset.UtcNow req.PotType req.PlantSpecie
 
                 let! createRes = repo.InsertNewPlant dbConn plant
 
                 return!
                     match createRes with
-                    | Ok plantId -> constructSuccess {| Id = PlantId.value plantId |} HttpStatusCode.OK next ctx
+                    | Ok() -> constructSuccess {| Id = PlantId.value plant.Id |} HttpStatusCode.OK next ctx
                     | Error msg ->
                         constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
             }))

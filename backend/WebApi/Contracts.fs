@@ -142,13 +142,11 @@ module ParsedGetMyDecksRequest =
 
 type RawCreatePlantDeckRequest =
     { Name: string
-      Description: string
       PlantSpecie: string
       PotType: string }
 
 type ParsedCreatePlantDeckRequest =
     { Name: PlantName
-      Description: PlantDescription
       PlantSpecie: PlantSpecieName
       PotType: PotTypeName }
 
@@ -178,17 +176,11 @@ module RawCreatePlantDeckRequest =
         |> Result.mapError (fun _ -> [ BackendResponseErr.create "Invalid pot type" ])
 
     let parse (req: RawCreatePlantDeckRequest) : Result<ParsedCreatePlantDeckRequest, BackendResponseErr list> =
-        map2
-            (fun (name, description) (plantSpecie, potType) ->
+        map3
+            (fun name plantSpecie potType ->
                 { Name = name
-                  Description = description
                   PlantSpecie = plantSpecie
                   PotType = potType })
-            (map2
-                (fun name description -> name, description)
-                (validateName req.Name)
-                (validateDescription req.Description))
-            (map2
-                (fun plantSpecie potType -> plantSpecie, potType)
-                (validatePlantSpecie req.PlantSpecie)
-                (validatePotType req.PotType))
+            (validateName req.Name)
+            (validatePlantSpecie req.PlantSpecie)
+            (validatePotType req.PotType)

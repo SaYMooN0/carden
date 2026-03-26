@@ -19,7 +19,8 @@ type Card =
       CreationTime: DateTime }
 
 type DeckId = DeckId of Guid
-
+module DeckId =
+    let value (DeckId value) = value
 type Deck =
     { Id: DeckId
       Cards: Card list
@@ -95,7 +96,7 @@ module PlantDescription =
             Ok(PlantDescription value)
 
     let value (PlantDescription value) = value
-
+    let empty = PlantDescription ""
 type PlantName = private PlantName of string
 
 type PlantNameCreationErr =
@@ -133,11 +134,11 @@ type Plant =
     }
 
 module Plant =
-    let createNew ownerId name description (now: DateTimeOffset) potType plantSpecie : Plant =
+    let createNew ownerId name  (now: DateTimeOffset) potType plantSpecie : Plant =
         { Id = PlantId(Guid.CreateVersion7())
           OwnerId = ownerId
           Name = name
-          Description = description
+          Description = PlantDescription.empty
           Deck =
             { Id = DeckId(Guid.CreateVersion7())
               Cards = []

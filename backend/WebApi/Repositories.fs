@@ -326,24 +326,24 @@ type PlantsRepository() =
             return dtos |> Seq.map PlantPreviewDbDto.toDomain |> Seq.toList
         }
 
-    member _.InsertNewPlant (conn: NpgsqlConnection) (plant: Plant) : Task<Result<PlantId, string>> =
+    member _.InsertNewPlant (conn: NpgsqlConnection) (plant: Plant) : Task<Result<unit, string>> =
         task {
             try
                 do! conn.OpenAsync()
                 let! tx = conn.BeginTransactionAsync()
                 use tx = tx
 
-                let deckId = Guid.CreateVersion7()
-                let plantId = Guid.CreateVersion7()
-                let now = DateTime.UtcNow
-
                 let insertDeckSql =
                     """
-                        INSERT INTO deck (Id, LastTimeEdited)
-                        VALUES (@Id, @LastTimeEdited)
+                    INSERT INTO deck ("Id", "LastTimeEdited")
+                    VALUES (@Id, @LastTimeEdited)
                     """
 
-                let! deckRows = conn.ExecuteAsync(insertDeckSql, {| Id = deckId; LastTimeEdited = now |}, tx)
+                let deckDto =
+                    {| Id = DeckId.value plant.Deck.Id
+                       LastTimeEdited = plant.Deck.LastTimeEdited |}
+
+                let! deckRows = conn.ExecuteAsync(insertDeckSql, deckDto, tx)
 
                 if deckRows <> 1 then
                     do! tx.RollbackAsync()
@@ -351,20 +351,30 @@ type PlantsRepository() =
                 else
                     let insertPlantSql =
                         """
-                            INSERT INTO plant
-                                (Id, OwnerId, Name, Description, DeckId, CreationDate, PotType, PlantSpecie)
-                            VALUES
-                                (@Id, @OwnerId, @Name, @Description, @DeckId, @CreationDate, @PotType, @PlantSpecie)
+                        INSERT INTO plant
+                            ("Id", "OwnerId", "Name", "Description", "DeckId", "CreationDate", "PotTypeName", "PlantSpecieName")
+                        VALUES
+                            (@Id, @OwnerId, @Name, @Description, @DeckId, @CreationDate, @PotType, @PlantSpecie)
                         """
 
-                    let! plantRows = conn.ExecuteAsync(insertPlantSql, plant, tx)
+                    let plantDto =
+                        {| Id = PlantId.value plant.Id
+                           OwnerId = AppUserId.value plant.OwnerId
+                           Name = PlantName.value plant.Name
+                           Description = PlantDescription.value plant.Description
+                           DeckId = DeckId.value plant.Deck.Id
+                           CreationDate = plant.CreationDate
+                           PotType = PotTypeName.value plant.PotType
+                           PlantSpecie = PlantSpecieName.value plant.PlantSpecie |}
+
+                    let! plantRows = conn.ExecuteAsync(insertPlantSql, plantDto, tx)
 
                     if plantRows <> 1 then
                         do! tx.RollbackAsync()
                         return Error "Plant insert into db failed"
                     else
                         do! tx.CommitAsync()
-                        return Ok(PlantId plantId)
+                        return Ok()
 
             with ex ->
                 return Error $"Plant creation failed: {ex.Message}"
