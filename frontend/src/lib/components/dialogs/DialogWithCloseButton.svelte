@@ -68,10 +68,8 @@
 		height: 1.5rem;
 		padding: 0.125rem;
 		border: none;
-		border-radius: 0.25rem;
-		background-color: var(--secondary);
-		color: var(--secondary-foreground);
-		box-shadow: var(--shadow-md);
+		border-radius: 50%;
+		color: var(--color-terracotta-hover);
 		cursor: pointer;
 	}
 
@@ -81,8 +79,8 @@
 	}
 
 	.dialog-close-btn:hover {
-		background-color: var(--muted);
-		color: var(--muted-foreground);
+		background-color: var(--red-2);
+		color: var(--red-3);
 	}
 
 	.dialog-close-btn:hover > :global(svg path) {

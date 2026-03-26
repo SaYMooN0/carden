@@ -1,17 +1,15 @@
 <script lang="ts">
 	interface Props {
-		onAdd?: () => void;
-		label?: string;
-		disabled?: boolean;
+		onClick: () => void;
 	}
 
-	let { onAdd, label = 'Add Plant', disabled = false }: Props = $props();
+	let { onClick }: Props = $props();
 </script>
 
-<button class="add-plant-button" type="button" onclick={onAdd} {disabled}>
+<button class="add-plant-button" type="button" onclick={onClick}>
 	<span class="icon-wrap" aria-hidden="true"> +</span>
 
-	<span class="label">{label}</span>
+	<span class="label">Add New Plant</span>
 </button>
 
 <style>
@@ -62,11 +60,6 @@
 		border-radius: 999rem;
 		background: color-mix(in srgb, var(--primary-foreground) 18%, transparent);
 		flex-shrink: 0;
-	}
-
-	.icon-wrap svg {
-		inline-size: 1.125rem;
-		block-size: 1.125rem;
 	}
 
 	.label {

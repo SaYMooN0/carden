@@ -11,14 +11,12 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "db/tables/все таблички.md",
-                "mode": "source",
-                "source": false
+                "file": "plants/Pitcher_plant/PitcherPlant1Attachment.png"
               },
-              "icon": "lucide-file",
-              "title": "все таблички"
+              "icon": "lucide-image",
+              "title": "PitcherPlant1Attachment"
             }
           }
         ]
@@ -31,14 +29,10 @@
             "id": "79bfc6f83610fd24",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "Идеи.md",
-                "mode": "source",
-                "source": false
-              },
-              "icon": "lucide-file",
-              "title": "Идеи"
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Граф"
             }
           }
         ]
@@ -203,34 +197,37 @@
       "bases:Создать новую базу": false
     }
   },
-  "active": "79bfc6f83610fd24",
+  "active": "052780f53b784305",
   "lastOpenFiles": [
+    "plants/Pitcher_plant/PitcherPlant1Attachment.png",
+    "plants/Pitcher_plant/PitcherPlant2Attachment.png",
+    "plants/Pitcher_plant/PitcherPlant3Attachment.png",
+    "plants/Pitcher_plant/PitcherPlant4Attachment.png",
     "plants/Pitcher_plant/PitcherPlant5.png",
     "plants/Pitcher_plant/PitcherPlant5Attachment.png",
-    "plants/Pitcher_plant/PitcherPlant4Attachment.png",
-    "plants/Pitcher_plant/PitcherPlant4.png",
     "plants/Pitcher_plant/PitcherPlant3.png",
-    "plants/Pitcher_plant/PitcherPlant3Attachment.png",
     "plants/Pitcher_plant/PitcherPlant2.png.png",
-    "plants/Pitcher_plant/PitcherPlant2Attachment.png",
-    "plants/Pitcher_plant/PitcherPlant1Attachment.png",
     "plants/Pitcher_plant/PitcherPlant1.png",
-    "plants/Pitcher_plant",
-    "Тудушник.md",
-    "Идеи.md",
-    "отчеты/Кр1/coldw1nd.md",
-    "db/tables/все таблички.md",
-    "db/tables/app_user.md",
-    "db/tables/card.md",
-    "db/tables/unconfirmed_user.md",
-    "plants/Сactus/Cactus3Sprite.png",
+    "plants/Сactus/Cactus1Attachment.png",
     "plants/Сactus/Cactus.md",
+    "Тудушник.md",
+    "db/скрипты созддания табличек.md",
+    "db/scripts/add user.md",
+    "db/scripts/add deck.md",
+    "db/scripts/add card.md",
+    "db/tables/app_user.md",
+    "plants/Pitcher_plant/PitcherPlant4.png",
+    "plants/Pitcher_plant",
+    "pots/PotCoral.md",
     "pots/PotPVZ.md",
-    "pots/Pot1.md",
     "pots/pvz_pot/pvz.md",
+    "pots/Pot1.md",
+    "Идеи.md",
     "pots/pvz_pot",
     "db/tables/plants.md",
+    "db/tables/card.md",
     "db/tables/decks.md",
+    "db/tables/unconfirmed_user.md",
     "отчеты/Кр1/Rennix5321.md",
     "db/tables/pot_types.md",
     "db/tables/plant_species.md",
@@ -247,7 +244,6 @@
     "plants/PlantNumeroUno1/PlantNumeroUno1.md",
     "plants/PlantNumeroUno1",
     "db/tables/table_name_1.md",
-    "pots",
-    "Welcome.md"
+    "pots"
   ]
 }

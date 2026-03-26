@@ -52,9 +52,9 @@ type UsersRepository() =
         task {
             let sql =
                 """
-                    SELECT Id, Email, PasswordHash, RegistrationDate
+                    SELECT "Id", "Email", "PasswordHash", "RegistrationDate"
                     FROM app_user
-                    WHERE Id = @Id
+                    WHERE "Id" = @Id
                 """
 
             let! dto = conn.QuerySingleOrDefaultAsync<AppUserDbDto>(sql, {| Id = AppUserId.value id |})
@@ -65,9 +65,9 @@ type UsersRepository() =
         task {
             let sql =
                 """
-                    SELECT Id, Email, PasswordHash, RegistrationDate
+                    SELECT "Id", "Email", "PasswordHash", "RegistrationDate"
                     FROM app_user
-                    WHERE Email = @Email
+                    WHERE "Email" = @Email
                 """
 
             let! dto = conn.QuerySingleOrDefaultAsync<AppUserDbDto>(sql, {| Email = Email.value email |})
@@ -81,7 +81,7 @@ type UsersRepository() =
                     SELECT EXISTS (
                         SELECT 1
                         FROM app_user
-                        WHERE email = @Email
+                        WHERE "Email" = @Email
                     )
                 """
 
@@ -96,7 +96,7 @@ type UsersRepository() =
                         SELECT EXISTS (
                             SELECT 1
                             FROM app_user
-                            WHERE id = @Id
+                            WHERE "Id" = @Id
                         )
                     """
 
@@ -125,12 +125,16 @@ type UsersRepository() =
                 return Error "User with this email already exists"
         }
 
-    member _.InsertWithinTransaction (conn: NpgsqlConnection) (tx: NpgsqlTransaction) (user: AppUser) : Task<Result<unit, string>> =
+    member _.InsertWithinTransaction
+        (conn: NpgsqlConnection)
+        (tx: NpgsqlTransaction)
+        (user: AppUser)
+        : Task<Result<unit, string>> =
         task {
             try
                 let sql =
                     """
-                        INSERT INTO app_user (Id, Email, PasswordHash, RegistrationDate)
+                        INSERT INTO app_user ("Id", "Email", "PasswordHash", "RegistrationDate")
                         VALUES (@Id, @Email, @PasswordHash, @RegistrationDate)
                     """
 
@@ -186,9 +190,9 @@ type UnconfirmedUsersRepository() =
         task {
             let sql =
                 """
-                    SELECT Id, Email, PasswordHash, ConfirmationCode
+                    SELECT "Id", "Email", "PasswordHash", "ConfirmationCode"
                     FROM unconfirmed_user
-                    WHERE Id = @Id AND ConfirmationCode = @ConfirmationCode
+                    WHERE "Id" = @Id AND "ConfirmationCode" = @ConfirmationCode
                 """
 
             let! dto =
@@ -203,24 +207,21 @@ type UnconfirmedUsersRepository() =
 
     member _.UpsertByEmail (conn: NpgsqlConnection) (user: UnconfirmedUser) : Task<Result<UnconfirmedUser, string>> =
         task {
-            try
-                let sql =
-                    """
-                        INSERT INTO unconfirmed_user (Id, Email, PasswordHash, ConfirmationCode)
+            let sql =
+                """
+                        INSERT INTO unconfirmed_user ("Id", "Email", "PasswordHash", "ConfirmationCode")
                         VALUES (@Id, @Email, @PasswordHash, @ConfirmationCode)
-                        ON CONFLICT (Email)
+                        ON CONFLICT ("Email")
                         DO UPDATE SET
-                            PasswordHash = EXCLUDED.PasswordHash,
-                            ConfirmationCode = EXCLUDED.ConfirmationCode
-                        RETURNING Id, Email, PasswordHash, ConfirmationCode
+                            "PasswordHash" = EXCLUDED."PasswordHash",
+                            "ConfirmationCode" = EXCLUDED."ConfirmationCode"
+                        RETURNING "Id", "Email", "PasswordHash", "ConfirmationCode"
                     """
 
-                let dto = UnconfirmedUserDbDto.fromDomain user
-                let! savedDto = conn.QuerySingleAsync<UnconfirmedUserDbDto>(sql, dto)
+            let dto = UnconfirmedUserDbDto.fromDomain user
+            let! savedDto = conn.QuerySingleAsync<UnconfirmedUserDbDto>(sql, dto)
 
-                return Ok(UnconfirmedUserDbDto.toDomain savedDto)
-            with ex ->
-                return Error $"Unconfirmed user save failed: {ex.Message}"
+            return Ok(UnconfirmedUserDbDto.toDomain savedDto)
         }
 
     member _.DeleteByIdWithinTransaction
@@ -229,21 +230,18 @@ type UnconfirmedUsersRepository() =
         (id: UnconfirmedUserId)
         : Task<Result<unit, string>> =
         task {
-            try
-                let sql =
-                    """
-                        DELETE FROM unconfirmed_user
-                        WHERE Id = @Id
-                    """
+            let sql =
+                """
+                    DELETE FROM unconfirmed_user
+                    WHERE "Id" = @Id
+                """
 
-                let! rows = conn.ExecuteAsync(sql, {| Id = UnconfirmedUserId.value id |}, tx)
+            let! rows = conn.ExecuteAsync(sql, {| Id = UnconfirmedUserId.value id |}, tx)
 
-                if rows = 1 then
-                    return Ok()
-                else
-                    return Error "Unconfirmed user deletion failed"
-            with ex ->
-                return Error $"Unconfirmed user deletion failed: {ex.Message}"
+            if rows = 1 then
+                return Ok()
+            else
+                return Error "Unconfirmed user deletion failed"
         }
 
 [<CLIMutable>]
@@ -298,8 +296,8 @@ type PlantsRepository() =
         task {
             let sortColumn =
                 match sortBy with
-                | DecksSortBy.Name -> "p.Name"
-                | DecksSortBy.CreationDate -> "p.CreationDate"
+                | DecksSortBy.Name -> """ p."Name" """
+                | DecksSortBy.CreationDate -> """ p."CreationDate" """
 
             let sortDirection =
                 match direction with
@@ -309,18 +307,18 @@ type PlantsRepository() =
             let sql =
                 $"""
                     SELECT
-                        p.Id,
-                        p.Name,
-                        p.PlantSpecieName,
-                        p.PotTypeName,
-                        COUNT(c.Id)::int AS CardsCount,
-                        p.CreationDate
+                        p."Id",
+                        p."Name",
+                        p."PlantSpecieName",
+                        p."PotTypeName",
+                        COUNT(c."Id")::int AS "CardsCount",
+                        p."CreationDate"
                     FROM plant p
-                    INNER JOIN deck d ON d.Id = p.DeckId
-                    LEFT JOIN card c ON c.DeckId = d.Id
-                    WHERE p.OwnerId = @OwnerId
-                    GROUP BY p.Id, p.Name, p.PlantSpecieName, p.PotTypeName, p.CreationDate
-                    ORDER BY {sortColumn} {sortDirection}, p.Id ASC
+                    INNER JOIN deck d ON d."Id" = p."DeckId"
+                    LEFT JOIN card c ON c."DeckId" = d."Id"
+                    WHERE p."OwnerId" = @OwnerId
+                    GROUP BY p."Id", p."Name", p."PlantSpecieName", p."PotTypeName", p."CreationDate"
+                    ORDER BY {sortColumn} {sortDirection}, p."Id" ASC
                 """
 
             let! dtos = conn.QueryAsync<PlantPreviewDbDto>(sql, {| OwnerId = AppUserId.value ownerId |})

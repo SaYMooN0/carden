@@ -12,7 +12,7 @@
 				>{data.data.confirmedEmail}</span
 			>
 		</p>
-		<a href="/login">Go to login page</a>
+		<a href="/">Go to login page</a>
 	{:else}
 		<h1 class="error-h">Something went wrong</h1>
 		<DefaultErrBlock errs={data.errs} />

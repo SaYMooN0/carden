@@ -2,10 +2,10 @@
 	import AddPlantButton from './AddPlantButton.svelte';
 
 	interface Props {
-		onAddPlant?: () => void;
+		openAddNewPlantDialog: () => void;
 	}
 
-	let { onAddPlant }: Props = $props();
+	let { openAddNewPlantDialog }: Props = $props();
 
 	const lifecycle = [
 		{
@@ -35,17 +35,8 @@
 				pot, give it a deck, add cards to level up the pot, and repeat the deck to help the plant
 				grow.
 			</p>
-
-			<div class="loop-pills" aria-label="Plant gameplay loop">
-				<span>Plant</span>
-				<span>Pot</span>
-				<span>Deck</span>
-				<span>Cards</span>
-				<span>Growth</span>
-			</div>
-
 			<div class="actions">
-				<AddPlantButton onAdd={onAddPlant} />
+				<AddPlantButton onClick={openAddNewPlantDialog} />
 				<p class="hint">Start with one plant and grow your collection naturally.</p>
 			</div>
 		</div>
@@ -166,22 +157,6 @@
 		font-size: 1rem;
 		line-height: 1.65;
 		color: var(--text-soft);
-	}
-
-	.loop-pills {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.625rem;
-	}
-
-	.loop-pills span {
-		padding: 0.5rem 0.75rem;
-		border: 0.0625rem solid var(--border-color);
-		border-radius: 999rem;
-		background: color-mix(in srgb, var(--color-cream) 72%, transparent);
-		color: var(--text);
-		font-size: 0.875rem;
-		font-weight: 700;
 	}
 
 	.actions {

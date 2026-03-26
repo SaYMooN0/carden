@@ -19,7 +19,6 @@
 		dialog.showModal();
 	}
 
-	
 	export function close() {
 		dialog.close();
 	}
@@ -50,6 +49,8 @@
 		outline: none;
 		overflow: visible;
 		transform-origin: top left;
+		background-color: var(--color-cream);
+		border-radius: 1rem;
 	}
 
 	dialog:open {
