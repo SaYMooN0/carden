@@ -9,7 +9,7 @@ export type PlantPreview = {
     name: string
     plantSpecie: PlantSpecie
     potType: PotType
-    cardsCount: number
     creationDate: string
+    cardsCount: number
     studyProgress: number
 }

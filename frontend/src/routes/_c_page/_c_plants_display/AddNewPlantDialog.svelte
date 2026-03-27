@@ -1,7 +1,6 @@
 <script lang="ts">
 	import DialogWithCloseButton from '$lib/components/dialogs/DialogWithCloseButton.svelte';
 	import DefaultErrBlock from '$lib/components/errs/DefaultErrBlock.svelte';
-	import ErrView from '$lib/components/errs/ErrView.svelte';
 	import { Backend, RJO } from '$lib/ts/backend';
 	import { AllPlantSpicies, AllPotTypes, type PlantSpecie, type PotType } from '$lib/ts/base-types';
 	import type { Err } from '$lib/ts/err';
@@ -169,7 +168,7 @@
 							<div class="item-card">
 								<img
 									class="item-sprite pot-sprite"
-									src={SpritesManager.getPotSprite(potType)}
+									src={SpritesManager.getLvl3PotSprite(potType)}
 									alt={prettify(potType)}
 									draggable="false"
 								/>

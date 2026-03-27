@@ -13,10 +13,10 @@
             "state": {
               "type": "image",
               "state": {
-                "file": "plants/Pitcher_plant/PitcherPlant1Attachment.png"
+                "file": "plants/McPitcherPlant/McPitcherPlant_att_1.png"
               },
               "icon": "lucide-image",
-              "title": "PitcherPlant1Attachment"
+              "title": "McPitcherPlant_att_1"
             }
           }
         ]
@@ -197,31 +197,37 @@
       "bases:Создать новую базу": false
     }
   },
-  "active": "052780f53b784305",
+  "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
-    "plants/Pitcher_plant/PitcherPlant1Attachment.png",
-    "plants/Pitcher_plant/PitcherPlant2Attachment.png",
-    "plants/Pitcher_plant/PitcherPlant3Attachment.png",
-    "plants/Pitcher_plant/PitcherPlant4Attachment.png",
-    "plants/Pitcher_plant/PitcherPlant5.png",
-    "plants/Pitcher_plant/PitcherPlant5Attachment.png",
-    "plants/Pitcher_plant/PitcherPlant3.png",
-    "plants/Pitcher_plant/PitcherPlant2.png.png",
-    "plants/Pitcher_plant/PitcherPlant1.png",
-    "plants/Сactus/Cactus1Attachment.png",
+    "plants/McPitcherPlant/McPitcherPlant_att_2.png",
+    "plants/McPitcherPlant/McPitcherPlant_1.png",
+    "pots/CeramicWithSun/CeramicWithSun_1.png",
+    "pots/PVZ/PVZ_1.png",
+    "pots/pvz_pot/pvz.md",
+    "plants/McPitcherPlant/McPitcherPlant_att_5.png",
+    "plants/McPitcherPlant/McPitcherPlant_att_4.png",
+    "plants/McPitcherPlant/McPitcherPlant_att_3.png",
+    "plants/McPitcherPlant/McPitcherPlant_att_1.png",
+    "plants/McPitcherPlant/McPitcherPlant_5.png",
+    "plants/McPitcherPlant/McPitcherPlant_4.png",
+    "plants/McPitcherPlant/McPitcherPlant_3.png",
+    "plants/McPitcherPlant",
+    "plants/Cactus",
+    "plants",
+    "pots/PVZ",
+    "pots/CeramicWithSun",
+    "pots",
     "plants/Сactus/Cactus.md",
+    "pots/PotPVZ.md",
+    "pots/PotCoral.md",
+    "pots/Pot1.md",
     "Тудушник.md",
     "db/скрипты созддания табличек.md",
     "db/scripts/add user.md",
     "db/scripts/add deck.md",
     "db/scripts/add card.md",
     "db/tables/app_user.md",
-    "plants/Pitcher_plant/PitcherPlant4.png",
     "plants/Pitcher_plant",
-    "pots/PotCoral.md",
-    "pots/PotPVZ.md",
-    "pots/pvz_pot/pvz.md",
-    "pots/Pot1.md",
     "Идеи.md",
     "pots/pvz_pot",
     "db/tables/plants.md",
@@ -236,14 +242,8 @@
     "отчеты/ArgentiLover.md",
     "отчеты",
     "refs/coldw1nd",
-    "refs/ArgentiLover",
-    "refs",
-    "plants/Сactus",
     "pots/PotNumberOne.md",
-    "pots/PotNumberOne",
     "plants/PlantNumeroUno1/PlantNumeroUno1.md",
-    "plants/PlantNumeroUno1",
-    "db/tables/table_name_1.md",
-    "pots"
+    "db/tables/table_name_1.md"
   ]
 }

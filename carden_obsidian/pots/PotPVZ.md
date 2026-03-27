@@ -1,3 +1,0 @@
-- PotPVZ
-- Горшок Plants vs Zombies
-- y: 98
