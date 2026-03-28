@@ -15,8 +15,8 @@ type Card =
     { Id: CardId
       ContentFront: CardContentItem list //обязательно Ordered
       ContentBack: CardContentItem list //обязательно Ordered
-      LastTimeEdited: DateTime
-      CreationTime: DateTime }
+      LastTimeEdited: DateTimeOffset
+      CreationTime: DateTimeOffset }
 
 type DeckId = DeckId of Guid
 module DeckId =
@@ -26,7 +26,6 @@ type Deck =
       Cards: Card list
       LastTimeEdited: DateTimeOffset }
 
-//View(days count)=> determined by day. убедиться что чередуем. скорее всего через остатки от деления  (и инедекс в массиве если массив)
 
 type PlantSpecieName =
     | Cactus
@@ -130,7 +129,6 @@ type Plant =
       PotType: PotTypeName
       PlantSpecie: PlantSpecieName
     // StudyState: DeckStudyState
-    // View()=> currentplantstage (got from current StudyState & PlantSpecie )+ current pot lvl (lvl + deck)
     }
 
 module Plant =

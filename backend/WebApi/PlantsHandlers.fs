@@ -2,6 +2,7 @@ module WebApi.PlantsHandlers
 
 open System
 open System.Net
+open System.Text.Json
 open Domain.Models
 open Microsoft.AspNetCore.Http
 open WebApi.BackendResponse
@@ -29,6 +30,51 @@ module PlantPreviewResponse =
           CardsCount = item.CardsCount
           CreationDate = item.CreationDate.ToIsoString()
           StudyProgress = 1 }
+
+type CardResponse =
+    { Id: Guid
+      ContentFront: JsonElement
+      ContentBack: JsonElement
+      LastTimeEdited: string
+      CreationTime: string }
+
+type DeckResponse =
+    { Id: Guid
+      Cards: CardResponse list
+      LastTimeEdited: string }
+
+type PlantResponse =
+    { Id: Guid
+      Name: string
+      Description: string
+      Deck: DeckResponse
+      CreationDate: string
+      PotType: string
+      PlantSpecie: string }
+
+module PlantResponse =
+    let private parseJsonElement (json: string) : JsonElement =
+        use doc = JsonDocument.Parse(json)
+        doc.RootElement.Clone()
+
+    let fromDbDto (dto: PlantWithCardsDbDto) : PlantResponse =
+        { Id = dto.Plant.Id
+          Name = dto.Plant.Name
+          Description = dto.Plant.Description
+          Deck =
+            { Id = dto.Plant.DeckId
+              LastTimeEdited = dto.Plant.DeckLastTimeEdited.ToIsoString()
+              Cards =
+                dto.Cards
+                |> List.map (fun c ->
+                    { Id = c.Id
+                      ContentFront = parseJsonElement c.ContentFrontJson
+                      ContentBack = parseJsonElement c.ContentBackJson
+                      LastTimeEdited = c.LastTimeEdited.ToIsoString()
+                      CreationTime = c.CreationTime.ToIsoString() }) }
+          CreationDate = dto.Plant.CreationDate.ToIsoString()
+          PotType = dto.Plant.PotTypeName
+          PlantSpecie = dto.Plant.PlantSpecieName }
 
 let private tokenCookieName = "user_tkn"
 
@@ -107,6 +153,27 @@ let handleLoadMyPlants: HttpHandler =
                 return! constructSuccess response HttpStatusCode.OK next ctx
         })
 
+let handleLoadMyPlant (plantId: Guid) : HttpHandler =
+    withAuthenticatedUser (fun userId next ctx ->
+        task {
+            use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
+            let repo = ctx.GetService<PlantsRepository>()
+
+            let! plantOpt = repo.GetByIdForOwner dbConn userId (PlantId plantId)
+
+            match plantOpt with
+            | None ->
+                return!
+                    constructFailure
+                        HttpStatusCode.NotFound
+                        [ BackendResponseErr.create "Plant not found or access denied." ]
+                        next
+                        ctx
+            | Some plant ->
+                let response = PlantResponse.fromDbDto plant
+                return! constructSuccess response HttpStatusCode.OK next ctx
+        })
+
 let handleCreatePlant: HttpHandler =
     withAuthenticatedUser (fun userId ->
         withValidatedBody RawCreatePlantDeckRequest.parse (fun req next ctx ->
@@ -129,4 +196,5 @@ let handleCreatePlant: HttpHandler =
 let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
     choose
         [ GET >=> route "/load-all" >=> handleLoadMyPlants
+          GET >=> routef "/load/%O" (fun plantId -> handleLoadMyPlant plantId)
           POST >=> route "/create" >=> handleCreatePlant ]

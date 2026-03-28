@@ -251,7 +251,7 @@ type PlantPreviewDbDto =
       PlantSpecieName: string
       PotTypeName: string
       CardsCount: int
-      CreationDate: DateTime }
+      CreationDate: DateTimeOffset }
 
 type PlantPreviewDto =
     { Id: PlantId
@@ -259,7 +259,7 @@ type PlantPreviewDto =
       PlantSpecie: PlantSpecieName
       PotType: PotTypeName
       CardsCount: int
-      CreationDate: DateTime }
+      CreationDate: DateTimeOffset }
 
 module PlantPreviewDbDto =
     let toDomain (dto: PlantPreviewDbDto) : PlantPreviewDto =
@@ -285,6 +285,28 @@ module PlantPreviewDbDto =
           CardsCount = dto.CardsCount
           CreationDate = dto.CreationDate }
 
+[<CLIMutable>]
+type PlantDetailsDbDto =
+    { Id: Guid
+      Name: string
+      Description: string
+      DeckId: Guid
+      DeckLastTimeEdited: DateTimeOffset
+      CreationDate: DateTimeOffset
+      PotTypeName: string
+      PlantSpecieName: string }
+
+[<CLIMutable>]
+type PlantCardDetailsDbDto =
+    { Id: Guid
+      ContentFrontJson: string
+      ContentBackJson: string
+      LastTimeEdited: DateTimeOffset
+      CreationTime: DateTimeOffset }
+
+type PlantWithCardsDbDto =
+    { Plant: PlantDetailsDbDto
+      Cards: PlantCardDetailsDbDto list }
 
 type PlantsRepository() =
     member _.GetPreviewsByOwner
@@ -324,6 +346,59 @@ type PlantsRepository() =
             let! dtos = conn.QueryAsync<PlantPreviewDbDto>(sql, {| OwnerId = AppUserId.value ownerId |})
 
             return dtos |> Seq.map PlantPreviewDbDto.toDomain |> Seq.toList
+        }
+
+    member _.GetByIdForOwner
+        (conn: NpgsqlConnection)
+        (ownerId: AppUserId)
+        (plantId: PlantId)
+        : Task<PlantWithCardsDbDto option> =
+        task {
+            let sql =
+                """
+                    SELECT
+                        p."Id",
+                        p."Name",
+                        p."Description",
+                        d."Id" AS "DeckId",
+                        d."LastTimeEdited" AS "DeckLastTimeEdited",
+                        p."CreationDate",
+                        p."PotTypeName",
+                        p."PlantSpecieName"
+                    FROM plant p
+                    INNER JOIN deck d ON d."Id" = p."DeckId"
+                    WHERE p."Id" = @PlantId AND p."OwnerId" = @OwnerId;
+
+                    SELECT
+                        c."Id",
+                        to_json(c."ContentFront")::text AS "ContentFrontJson",
+                        to_json(c."ContentBack")::text AS "ContentBackJson",
+                        c."LastTimeEdited",
+                        c."CreationTime"
+                    FROM card c
+                    INNER JOIN plant p ON p."DeckId" = c."DeckId"
+                    WHERE p."Id" = @PlantId AND p."OwnerId" = @OwnerId
+                    ORDER BY c."CreationTime" ASC, c."Id" ASC;
+                """
+
+            let args =
+                {| PlantId = PlantId.value plantId
+                   OwnerId = AppUserId.value ownerId |}
+
+            let! grid = conn.QueryMultipleAsync(sql, args)
+            use grid = grid
+
+            let! plantDto = grid.ReadSingleOrDefaultAsync<PlantDetailsDbDto>()
+
+            match plantDto |> Option.ofObj with
+            | None -> return None
+            | Some plant ->
+                let! cardDtos = grid.ReadAsync<PlantCardDetailsDbDto>()
+
+                return
+                    Some
+                        { Plant = plant
+                          Cards = cardDtos |> Seq.toList }
         }
 
     member _.InsertNewPlant (conn: NpgsqlConnection) (plant: Plant) : Task<Result<unit, string>> =

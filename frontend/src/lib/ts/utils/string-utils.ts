@@ -1,5 +1,5 @@
 export namespace StringUtils {
-	export function isNullOrWhiteSpace(str: string | null | undefined): boolean {
+	export function isNullOrWhiteSpace(str: string | null | undefined): str is null | undefined | "" {
 		return !str || str.trim().length === 0;
 	}
 

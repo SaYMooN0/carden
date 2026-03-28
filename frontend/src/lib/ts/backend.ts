@@ -1,8 +1,8 @@
-import { type BaseErr, type Err } from "./err";
+import { type BaseErr, type Err, type ErrWithExtra } from "./err";
 
 export type BackendResponse<T> =
     | { isSuccess: true; data: T, statusCode: number }
-    | { isSuccess: false; errs: BaseErr[], statusCode: number };
+    | { isSuccess: false; errs: Err[], statusCode: number };
 
 export type BackendResponseVoid = BackendResponse<void>;
 
@@ -48,7 +48,7 @@ export namespace Backend {
             };
         }
     }
-    function createErrFromResponseIfNotDeserializable(response: Response): Err<"FAILED_TO_FETCH"> {
+    function createErrFromResponseIfNotDeserializable(response: Response): ErrWithExtra<"FAILED_TO_FETCH"> {
 
         const status = response.status;
         if (status === 404) {
@@ -103,7 +103,7 @@ export namespace Backend {
         };
 
     }
-    function createErrFromException(e: unknown): Err<"FAILED_TO_FETCH"> {
+    function createErrFromException(e: unknown): ErrWithExtra<"FAILED_TO_FETCH"> {
         if (e instanceof TypeError && e.message === "Failed to fetch") {
             // Server doesn't respond or no connection
             return {

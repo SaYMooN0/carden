@@ -3,6 +3,7 @@
 	import type { PageProps } from './$types';
 	import DefaultErrBlock from '$lib/components/errs/DefaultErrBlock.svelte';
 	import UserPlantsDisplay from './_c_page/UserPlantsDisplay.svelte';
+	import PageLoadErr from '$lib/components/PageLoadErr.svelte';
 
 	let { data }: PageProps = $props();
 </script>
@@ -13,7 +14,7 @@
 	{:else if data.statusCode === 401}
 		<SignInFormPage />
 	{:else}
-		<DefaultErrBlock errs={data.errs} />
+		<PageLoadErr errs={data.errs} />
 	{/if}
 </div>
 
