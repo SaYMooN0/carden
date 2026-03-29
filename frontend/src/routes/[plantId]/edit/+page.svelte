@@ -1,7 +1,7 @@
 <script lang="ts">
 	import PageLoadErr from '$lib/components/PageLoadErr.svelte';
-	import type { PageProps } from './$types';
 	import EditPlantDeck from './_c_page/EditPlantDeck.svelte';
+	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 </script>

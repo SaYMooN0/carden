@@ -44,8 +44,8 @@ export class EditPlantPageState {
         if (!originalCard) {
             return false;
         }
-        return this.checkIfCardContentItemsListsEqual(card.contentFront, originalCard.contentFront)
-            && this.checkIfCardContentItemsListsEqual(card.contentBack, originalCard.contentBack);
+        return !(this.checkIfCardContentItemsListsEqual(card.contentFront, originalCard.contentFront)
+            && this.checkIfCardContentItemsListsEqual(card.contentBack, originalCard.contentBack));
     }
     saveCurrentCardChanges(): { unexpectedErr: string | null } {
         return { unexpectedErr: null };

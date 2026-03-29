@@ -3,47 +3,54 @@
 
 	interface Props {
 		item: CardContentWithStringId;
-		index: number;
-		group: string;
 		onTextInput: (nextText: string) => void;
 		onRemove: () => void;
 	}
 
-	let { item, index, group, onTextInput, onRemove }: Props = $props();
+	let { item, onTextInput, onRemove }: Props = $props();
 </script>
 
-<div class="content-item">
-	<div class="content-item__toolbar">
-		<div class="content-item__left">
-			<button
-				aria-label="Move content item"
-				class="drag-handle"
-				title="Move content item"
-				type="button"
-			>
-				<span></span>
-				<span></span>
-				<span></span>
-				<span></span>
-				<span></span>
-				<span></span>
-			</button>
+<div class="content-item-wrap" data-item-id={item.stringId}>
+	<div class="content-item">
+		<div class="content-item__toolbar">
+			<div class="content-item__left">
+				<button
+					aria-label="Move content item"
+					class="drag-handle"
+					title="Move content item"
+					type="button"
+				>
+					<span></span>
+					<span></span>
+					<span></span>
+					<span></span>
+					<span></span>
+					<span></span>
+				</button>
 
-			<div class="content-item__label">text item</div>
+				<div class="content-item__label">text item</div>
+			</div>
+
+			<button class="remove-button" type="button" onclick={onRemove}>
+				remove
+			</button>
 		</div>
 
-		<button class="remove-button" type="button" onclick={onRemove}> remove </button>
+		<textarea
+			oninput={(event) => onTextInput((event.currentTarget as HTMLTextAreaElement).value)}
+			placeholder="Write text here..."
+			rows="7"
+			value={item.type === 'TextContentItem' ? item.text : ''}
+		></textarea>
 	</div>
-
-	<textarea
-		oninput={(event) => onTextInput((event.currentTarget as HTMLTextAreaElement).value)}
-		placeholder="Write text here..."
-		rows="7"
-		value={item.type === 'TextContentItem' ? item.text : ''}
-	></textarea>
 </div>
 
 <style>
+	.content-item-wrap {
+		position: relative;
+		user-select: none;
+	}
+
 	.content-item {
 		display: grid;
 		gap: 0.75rem;
@@ -55,16 +62,8 @@
 		transition:
 			transform 0.18s ease,
 			border-color 0.18s ease,
-			opacity 0.18s ease;
-	}
-
-	.content-item.dragging {
-		opacity: 0.72;
-		border-color: var(--color-terracotta);
-	}
-
-	.content-item.source {
-		border-color: var(--color-terracotta-light);
+			box-shadow 0.18s ease,
+			background 0.18s ease;
 	}
 
 	.content-item__toolbar {
@@ -126,7 +125,8 @@
 		font-weight: 700;
 		transition:
 			transform 0.18s ease,
-			background 0.18s ease;
+			background 0.18s ease,
+			opacity 0.18s ease;
 	}
 
 	.remove-button:hover {
@@ -149,5 +149,18 @@
 
 	textarea:focus {
 		border-color: var(--color-terracotta);
+	}
+
+	:global(.sortable-ghost .content-item) {
+		background: var(--color-sage-hover);
+		border-color: var(--color-terracotta-light);
+	}
+
+	:global(.sortable-chosen .content-item) {
+		border-color: var(--color-terracotta);
+	}
+
+	:global(.sortable-drag .content-item) {
+		box-shadow: var(--shadow);
 	}
 </style>

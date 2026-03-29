@@ -1,37 +1,76 @@
 <script lang="ts">
-	import { PointerSensor, DragDropProvider } from '@dnd-kit-svelte/svelte';
+	import { onMount } from 'svelte';
+	import Sortable from 'sortablejs';
 	import SortableTextContentItem from './SortableTextContentItem.svelte';
 	import type { CardContentWithStringId } from './edit-plant-page-state.svelte';
+
+	type EditableSide = 'contentFront' | 'contentBack';
 
 	interface Props {
 		title: string;
 		subtitle: string;
 		group: string;
+		listId: EditableSide;
 		items: CardContentWithStringId[];
 		onUpdateText: (itemId: string, nextText: string) => void;
 		onRemoveItem: (itemId: string) => void;
 		onAddItem: () => void;
-		onReorder: (fromIndex: number, toIndex: number) => void;
+		onMoveItem: (
+			fromSide: EditableSide,
+			toSide: EditableSide,
+			fromIndex: number,
+			toIndex: number
+		) => void;
 	}
 
-	let { title, subtitle, group, items, onUpdateText, onRemoveItem, onAddItem, onReorder }: Props =
-		$props();
+	let {
+		title,
+		subtitle,
+		group,
+		listId,
+		items,
+		onUpdateText,
+		onRemoveItem,
+		onAddItem,
+		onMoveItem
+	}: Props = $props();
 
-	function handleDragEnd(event: {
-		operation: {
-			source: { index: number };
-			target?: { index: number } | null;
-		};
-	}) {
-		const sourceIndex = event.operation.source.index;
-		const targetIndex = event.operation.target?.index;
+	let listElement = $state<HTMLDivElement | null>(null);
 
-		if (targetIndex === undefined || sourceIndex === targetIndex) {
+	onMount(() => {
+		if (!listElement) {
 			return;
 		}
 
-		onReorder(sourceIndex, targetIndex);
-	}
+		const sortable = Sortable.create(listElement, {
+			group,
+			animation: 150,
+			handle: '.drag-handle',
+			ghostClass: 'sortable-ghost',
+			chosenClass: 'sortable-chosen',
+			dragClass: 'sortable-drag',
+			fallbackOnBody: true,
+			swapThreshold: 0.65,
+			onEnd: (event) => {
+				if (event.oldIndex == null || event.newIndex == null) {
+					return;
+				}
+
+				const fromSide = event.from.getAttribute('data-list-id') as EditableSide | null;
+				const toSide = event.to.getAttribute('data-list-id') as EditableSide | null;
+
+				if (!fromSide || !toSide) {
+					return;
+				}
+
+				onMoveItem(fromSide, toSide, event.oldIndex, event.newIndex);
+			}
+		});
+
+		return () => {
+			sortable.destroy();
+		};
+	});
 </script>
 
 <section class="content-column">
@@ -47,12 +86,10 @@
 		</div>
 	</div>
 
-	<DragDropProvider>
-		<div class="content-column__list">
-			{#each items as item, index (item.stringId)}
+	<div class="content-column__scroll-area">
+		<div bind:this={listElement} class="content-column__list" data-list-id={listId}>
+			{#each items as item (item.stringId)}
 				<SortableTextContentItem
-					{group}
-					{index}
 					{item}
 					onRemove={() => onRemoveItem(item.stringId)}
 					onTextInput={(nextText) => onUpdateText(item.stringId, nextText)}
@@ -60,10 +97,11 @@
 			{:else}
 				<div class="content-column__empty">
 					<p>This side has no content items yet.</p>
+					<p>Drag items here from the other side or add a new one.</p>
 				</div>
 			{/each}
 		</div>
-	</DragDropProvider>
+	</div>
 
 	<button class="content-column__add-button" type="button" onclick={onAddItem}>
 		add content item
@@ -76,6 +114,7 @@
 		grid-template-rows: auto minmax(0, 1fr) auto;
 		gap: 1rem;
 		min-height: 0;
+		overflow: hidden;
 		padding: 1rem;
 		background: var(--primary-foreground);
 		border: 0.0625rem solid var(--color-sage);
@@ -118,17 +157,24 @@
 		white-space: nowrap;
 	}
 
+	.content-column__scroll-area {
+		min-height: 0;
+		overflow: hidden;
+	}
+
 	.content-column__list {
 		display: grid;
 		align-content: start;
 		gap: 0.875rem;
-		min-height: 0;
+		min-height: 100%;
+		max-height: 100%;
 		overflow: auto;
 		padding-right: 0.25rem;
 	}
 
 	.content-column__empty {
 		display: grid;
+		gap: 0.375rem;
 		place-items: center;
 		min-block-size: 10rem;
 		padding: 1rem;

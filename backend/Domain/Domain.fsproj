@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Errs.fs" />
+        <Compile Include="CardContentItem.fs" />
         <Compile Include="Models.fs" />
     </ItemGroup>
 

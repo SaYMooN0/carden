@@ -1,6 +1,8 @@
 module WebApi.Contracts
 
 open System
+open Domain
+open Domain.CardContentItem
 open Domain.Models
 open Domain.Models.Email
 open WebApi.BackendResponse
@@ -184,3 +186,106 @@ module RawCreatePlantDeckRequest =
             (validateName req.Name)
             (validatePlantSpecie req.PlantSpecie)
             (validatePotType req.PotType)
+
+type RawCardContentItem =
+    | TextContentItem of text: string
+    | ImageContentItem of image: string
+    | MathAjaxContentItem of expression: string
+
+type ParsedCardTarget =
+    | CreateNewCard
+    | UpdateExistingCard of cardId: Guid
+
+type RawUpsertPlantCardRequest =
+    { CardId: string
+      ContentFront: RawCardContentItem list
+      ContentBack: RawCardContentItem list }
+
+type ParsedUpsertPlantCardRequest =
+    { TargetCard: ParsedCardTarget
+      ContentFront: CardContentItem list
+      ContentBack: CardContentItem list }
+
+module RawUpsertPlantCardRequest =
+
+    let private parseCardTarget (cardIdRaw: string) : Result<ParsedCardTarget, BackendResponseErr list> =
+        if String.IsNullOrWhiteSpace cardIdRaw then
+            Ok CreateNewCard
+        else
+            match Guid.TryParse cardIdRaw with
+            | true, guid -> Ok(UpdateExistingCard guid)
+            | false, _ -> Error [ BackendResponseErr.create "Invalid cardId format." ]
+
+    let private textErrToBackendErr (err: TextContentItemCreationErr) =
+        match err with
+        | TextContentItemCreationErr.Empty -> BackendResponseErr.create "Text content item text must not be empty."
+        | TextContentItemCreationErr.TooLong ->
+            BackendResponseErr.create
+                $"Text content item text must be at most {CardContentItem.TextMaxLength} characters long."
+
+    let private imageErrToBackendErr (err: ImageContentItemCreationErr) =
+        match err with
+        | ImageContentItemCreationErr.Empty -> BackendResponseErr.create "Image content item image must not be empty."
+        | ImageContentItemCreationErr.TooLong ->
+            BackendResponseErr.create
+                $"Image content item image must be at most {CardContentItem.ImageMaxLength} characters long."
+
+    let private mathAjaxErrToBackendErr (err: MathAjaxContentItemCreationErr) =
+        match err with
+        | MathAjaxContentItemCreationErr.Empty ->
+            BackendResponseErr.create "MathAjax content item expression must not be empty."
+        | MathAjaxContentItemCreationErr.TooLong ->
+            BackendResponseErr.create
+                $"MathAjax content item expression must be at most {CardContentItem.MathAjaxMaxLength} characters long."
+
+    let private parseContentItem (item: RawCardContentItem) : Result<CardContentItem, BackendResponseErr list> =
+        match item with
+        | RawCardContentItem.TextContentItem text ->
+            CardContentItem.createText text
+            |> Result.mapError (fun err -> [ textErrToBackendErr err ])
+
+        | RawCardContentItem.ImageContentItem image ->
+            CardContentItem.createImage image
+            |> Result.mapError (fun err -> [ imageErrToBackendErr err ])
+
+        | RawCardContentItem.MathAjaxContentItem expression ->
+            CardContentItem.createMathAjax expression
+            |> Result.mapError (fun err -> [ mathAjaxErrToBackendErr err ])
+
+    let private parseContentList
+        (items: RawCardContentItem list)
+        : Result<CardContentItem list, BackendResponseErr list> =
+        let folder acc next =
+            match acc, parseContentItem next with
+            | Ok parsed, Ok parsedItem -> Ok(parsedItem :: parsed)
+            | Error errs1, Error errs2 -> Error(errs1 @ errs2)
+            | Error errs, Ok _ -> Error errs
+            | Ok _, Error errs -> Error errs
+
+        List.fold folder (Ok []) items |> Result.map List.rev
+
+    let parse (raw: RawUpsertPlantCardRequest) : Result<ParsedUpsertPlantCardRequest, BackendResponseErr list> =
+        let targetRes = parseCardTarget raw.CardId
+        let frontRes = parseContentList raw.ContentFront
+        let backRes = parseContentList raw.ContentBack
+
+        match targetRes, frontRes, backRes with
+        | Ok target, Ok front, Ok back ->
+            Ok
+                { TargetCard = target
+                  ContentFront = front
+                  ContentBack = back }
+
+        | _ ->
+            [ match targetRes with
+              | Error errs -> yield! errs
+              | _ -> ()
+
+              match frontRes with
+              | Error errs -> yield! errs
+              | _ -> ()
+
+              match backRes with
+              | Error errs -> yield! errs
+              | _ -> () ]
+            |> Error

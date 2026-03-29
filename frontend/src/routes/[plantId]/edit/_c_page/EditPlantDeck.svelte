@@ -1,12 +1,10 @@
 <script lang="ts">
 	import type { Plant, CardContentItem, Card } from '$lib/ts/base-types';
-	import {
-		EditPlantPageState,
-		type CardContentWithStringId
-	} from '../edit-plant-page-state.svelte';
-	import SortableTextContentList from '../SortableTextContentList.svelte';
+	import { EditPlantPageState, type CardContentWithStringId } from './edit-plant-page-state.svelte';
+	import SortableTextContentList from './SortableTextContentList.svelte';
 
 	type EditableSide = 'contentFront' | 'contentBack';
+	type PendingNavigation = { type: 'select-card'; cardId: string } | { type: 'new-card' } | null;
 
 	interface Props {
 		plant: Plant;
@@ -14,43 +12,23 @@
 
 	let { plant }: Props = $props();
 	let pageState = $state(new EditPlantPageState(plant));
-	let searchValue = $state('');
+	let pendingNavigation = $state<PendingNavigation>(null);
 
 	const editingCard = $derived(
 		pageState.cardEditingState.state === 'CardEditing' ? pageState.cardEditingState.card : null
 	);
 
-	const selectedCardId = $derived.by(() => {
+	const selectedCardId: string | null = $derived.by(() => {
 		if (pageState.cardEditingState.state === 'CardEditing') {
 			return pageState.cardEditingState.card.id;
 		}
-		if (pageState.cardEditingState.state === 'ExpectedCardNotFound') {
-			return pageState.cardEditingState.cardId;
-		}
-		if (pageState.cardEditingState.state === 'CardReloading') {
+		if (
+			pageState.cardEditingState.state === 'ExpectedCardNotFound' ||
+			pageState.cardEditingState.state === 'CardReloading'
+		) {
 			return pageState.cardEditingState.cardId;
 		}
 		return null;
-	});
-
-	const filteredCards = $derived.by(() => {
-		const query = searchValue.trim().toLowerCase();
-
-		if (!query) {
-			return pageState.plant.deck.cards;
-		}
-
-		return pageState.plant.deck.cards.filter((card, index) => {
-			const haystack = [
-				`card ${index + 1}`,
-				getCardPreview(card.contentFront),
-				getCardPreview(card.contentBack)
-			]
-				.join(' ')
-				.toLowerCase();
-
-			return haystack.includes(query);
-		});
 	});
 
 	const hasUnsavedChanges = $derived.by(() => {
@@ -94,6 +72,14 @@
 		return pageState.plant.deck.cards.findIndex((card) => card.id === cardId) + 1;
 	}
 
+	function formatDateTime(value: string): string {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) {
+			return value;
+		}
+		return date.toLocaleString();
+	}
+
 	function addTextContentItem(side: EditableSide) {
 		if (!editingCard) {
 			return;
@@ -133,20 +119,40 @@
 		editingCard[side] = editingCard[side].filter((item) => item.stringId !== itemId);
 	}
 
-	function reorderTextContentItems(side: EditableSide, fromIndex: number, toIndex: number) {
-		if (!editingCard || fromIndex === toIndex) {
+	function moveTextContentItem(
+		fromSide: EditableSide,
+		toSide: EditableSide,
+		fromIndex: number,
+		toIndex: number
+	) {
+		if (!editingCard) {
 			return;
 		}
 
-		const nextItems = [...editingCard[side]];
-		const [movedItem] = nextItems.splice(fromIndex, 1);
+		if (fromSide === toSide) {
+			const nextItems = [...editingCard[fromSide]];
+			const [movedItem] = nextItems.splice(fromIndex, 1);
+
+			if (!movedItem) {
+				return;
+			}
+
+			nextItems.splice(toIndex, 0, movedItem);
+			editingCard[fromSide] = nextItems;
+			return;
+		}
+
+		const nextSourceItems = [...editingCard[fromSide]];
+		const nextTargetItems = [...editingCard[toSide]];
+		const [movedItem] = nextSourceItems.splice(fromIndex, 1);
 
 		if (!movedItem) {
 			return;
 		}
 
-		nextItems.splice(toIndex, 0, movedItem);
-		editingCard[side] = nextItems;
+		nextTargetItems.splice(toIndex, 0, movedItem);
+		editingCard[fromSide] = nextSourceItems;
+		editingCard[toSide] = nextTargetItems;
 	}
 
 	function persistEditableItems(items: CardContentWithStringId[]): CardContentItem[] {
@@ -174,6 +180,7 @@
 
 		const savedCard = {
 			...editingCard,
+			lastTimeEdited: new Date().toISOString(),
 			contentFront: persistEditableItems(editingCard.contentFront),
 			contentBack: persistEditableItems(editingCard.contentBack)
 		} as Card;
@@ -189,6 +196,55 @@
 
 		pageState.selectCard(editingCard.id);
 	}
+
+	function requestSelectCard(cardId: string) {
+		if (selectedCardId === cardId) {
+			return;
+		}
+
+		if (hasUnsavedChanges) {
+			pendingNavigation = { type: 'select-card', cardId };
+			return;
+		}
+
+		pageState.selectCard(cardId);
+	}
+
+	function requestNewCard() {
+		if (hasUnsavedChanges) {
+			pendingNavigation = { type: 'new-card' };
+			return;
+		}
+
+		pageState.addNewCard();
+	}
+
+	function closePendingNavigation() {
+		pendingNavigation = null;
+	}
+
+	function applyPendingNavigation() {
+		if (!pendingNavigation) {
+			return;
+		}
+
+		if (pendingNavigation.type === 'select-card') {
+			pageState.selectCard(pendingNavigation.cardId);
+		} else {
+			pageState.addNewCard();
+		}
+
+		pendingNavigation = null;
+	}
+
+	function discardAndContinue() {
+		applyPendingNavigation();
+	}
+
+	function saveAndContinue() {
+		saveCurrentCard();
+		applyPendingNavigation();
+	}
 </script>
 
 <svelte:head>
@@ -199,30 +255,20 @@
 	<aside class="sidebar">
 		<div class="sidebar__hero">
 			<div class="sidebar__eyebrow">plant deck editor</div>
-			<h1 class="sidebar__title">{pageState.plant.name}</h1>
+			<h1 class="sidebar__title" title={pageState.plant.name}>{pageState.plant.name}</h1>
 			<p class="sidebar__subtitle">
 				{pageState.plant.deck.cards.length}
 				{pageState.plant.deck.cards.length === 1 ? ' card in deck' : ' cards in deck'}
 			</p>
 		</div>
 
-		<label class="searchbar">
-			<span class="searchbar__icon" aria-hidden="true">
-				<svg viewBox="0 0 24 24">
-					<circle cx="11" cy="11" r="7" />
-					<path d="M20 20L16.5 16.5" />
-				</svg>
-			</span>
-			<input bind:value={searchValue} placeholder="search cards" type="text" />
-		</label>
-
 		<div class="cards-list">
-			{#each filteredCards as card (card.id)}
+			{#each pageState.plant.deck.cards as card (card.id)}
 				<button
 					class:selected={selectedCardId === card.id}
 					class="card-tile"
 					type="button"
-					onclick={() => pageState.selectCard(card.id)}
+					onclick={() => requestSelectCard(card.id)}
 				>
 					<div class="card-tile__top-row">
 						<span class="card-tile__index">card {getCardNumber(card.id)}</span>
@@ -243,12 +289,12 @@
 				</button>
 			{:else}
 				<div class="cards-list__empty">
-					<p>No cards match this search.</p>
+					<p>There are no cards in this deck yet.</p>
 				</div>
 			{/each}
 		</div>
 
-		<button class="create-card-button" type="button" onclick={() => pageState.addNewCard()}>
+		<button class="create-card-button" type="button" onclick={requestNewCard}>
 			add new card
 		</button>
 	</aside>
@@ -264,7 +310,7 @@
 					<button
 						class="primary-button"
 						type="button"
-						onclick={() => pageState.selectCard(pageState.plant.deck.cards[0].id)}
+						onclick={() => requestSelectCard(pageState.plant.deck.cards[0].id)}
 					>
 						open first card
 					</button>
@@ -281,8 +327,8 @@
 				<div>
 					<div class="editor-header__eyebrow">editing card {getCardNumber(editingCard.id)}</div>
 					<h2 class="editor-header__title">Deck card editor</h2>
-					<p class="editor-header__subtitle">
-						Reorder text blocks with the handle and edit each side independently.
+					<p class="editor-header__meta">
+						last edited {formatDateTime(editingCard.lastTimeEdited)}
 					</p>
 				</div>
 
@@ -313,33 +359,57 @@
 
 			<div class="editor-grid">
 				<SortableTextContentList
-					group={`front-${editingCard.id}`}
+					group={`card-${editingCard.id}`}
+					listId="contentFront"
 					items={editingCard.contentFront}
 					title="front side"
 					subtitle="Question, prompt or title"
 					onAddItem={() => addTextContentItem('contentFront')}
 					onRemoveItem={(itemId) => removeTextContentItem('contentFront', itemId)}
-					onReorder={(fromIndex, toIndex) =>
-						reorderTextContentItems('contentFront', fromIndex, toIndex)}
+					onMoveItem={moveTextContentItem}
 					onUpdateText={(itemId, nextText) =>
 						updateTextContentItem('contentFront', itemId, nextText)}
 				/>
 
 				<SortableTextContentList
-					group={`back-${editingCard.id}`}
+					group={`card-${editingCard.id}`}
+					listId="contentBack"
 					items={editingCard.contentBack}
 					title="back side"
 					subtitle="Answer, explanation or extra note"
 					onAddItem={() => addTextContentItem('contentBack')}
 					onRemoveItem={(itemId) => removeTextContentItem('contentBack', itemId)}
-					onReorder={(fromIndex, toIndex) =>
-						reorderTextContentItems('contentBack', fromIndex, toIndex)}
+					onMoveItem={moveTextContentItem}
 					onUpdateText={(itemId, nextText) =>
 						updateTextContentItem('contentBack', itemId, nextText)}
 				/>
 			</div>
 		{/if}
 	</section>
+
+	{#if pendingNavigation}
+		<div class="pending-dialog-backdrop" role="presentation">
+			<div aria-modal="true" class="pending-dialog" role="dialog">
+				<h3 class="pending-dialog__title">Unsaved changes</h3>
+				<p class="pending-dialog__text">
+					If you switch the card now, your current changes will be lost. Save them first or discard
+					them and continue.
+				</p>
+
+				<div class="pending-dialog__actions">
+					<button class="secondary-button" type="button" onclick={closePendingNavigation}>
+						stay here
+					</button>
+					<button class="danger-button" type="button" onclick={discardAndContinue}>
+						discard changes
+					</button>
+					<button class="primary-button" type="button" onclick={saveAndContinue}>
+						save and continue
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -355,13 +425,15 @@
 		display: grid;
 		grid-template-columns: 22rem minmax(0, 1fr);
 		gap: 1.5rem;
-		min-height: 100vh;
+		block-size: 100vh;
 		padding: 1.5rem;
+		overflow: hidden;
 	}
 
 	.sidebar,
 	.editor-shell {
 		min-height: 0;
+		overflow: hidden;
 		background: var(--editor-surface);
 		border: 0.0625rem solid var(--editor-border);
 		border-radius: 1.5rem;
@@ -370,7 +442,7 @@
 
 	.sidebar {
 		display: grid;
-		grid-template-rows: auto auto minmax(0, 1fr) auto;
+		grid-template-rows: auto minmax(0, 1fr) auto;
 		gap: 1rem;
 		padding: 1.25rem;
 	}
@@ -394,47 +466,20 @@
 		font-size: 1.75rem;
 		line-height: 1.1;
 		color: var(--text);
+		text-overflow: ellipsis;
+		overflow: hidden;
+		white-space: nowrap;
 	}
 
 	.sidebar__subtitle,
-	.editor-header__subtitle {
+	.editor-header__meta {
 		font-size: 0.9375rem;
 		line-height: 1.4;
 		color: var(--editor-text-soft);
 	}
 
-	.searchbar {
-		display: grid;
-		grid-template-columns: auto 1fr;
-		align-items: center;
-		gap: 0.75rem;
-		padding: 0.875rem 1rem;
-		background: var(--editor-surface-soft);
-		border: 0.0625rem solid var(--editor-border);
-		border-radius: 1rem;
-	}
-
-	.searchbar__icon {
-		inline-size: 1.125rem;
-		block-size: 1.125rem;
-		color: var(--color-terracotta);
-	}
-
-	.searchbar__icon svg {
-		inline-size: 100%;
-		block-size: 100%;
-		stroke: currentColor;
-		fill: none;
-		stroke-width: 2;
-		stroke-linecap: round;
-		stroke-linejoin: round;
-	}
-
-	.searchbar input {
-		border: 0;
-		outline: none;
-		background: transparent;
-		font-size: 1rem;
+	.editor-header__meta {
+		margin-top: 0.375rem;
 	}
 
 	.cards-list {
@@ -458,6 +503,7 @@
 			transform 0.18s ease,
 			border-color 0.18s ease,
 			box-shadow 0.18s ease;
+		width: 100%;
 	}
 
 	.card-tile:hover {
@@ -532,7 +578,8 @@
 
 	.create-card-button,
 	.primary-button,
-	.secondary-button {
+	.secondary-button,
+	.danger-button {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -573,9 +620,21 @@
 		transform: translateY(-0.0625rem);
 	}
 
+	.danger-button {
+		background: var(--red-1);
+		color: var(--red-5);
+		border: 0.0625rem solid var(--red-3);
+	}
+
+	.danger-button:hover {
+		background: var(--red-2);
+		transform: translateY(-0.0625rem);
+	}
+
 	.create-card-button:disabled,
 	.primary-button:disabled,
-	.secondary-button:disabled {
+	.secondary-button:disabled,
+	.danger-button:disabled {
 		opacity: 0.5;
 		transform: none;
 	}
@@ -609,6 +668,8 @@
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 1.25rem;
 		min-height: 0;
+		height: 100%;
+		overflow: hidden;
 	}
 
 	.empty-state {
@@ -651,5 +712,43 @@
 		font-size: 1rem;
 		line-height: 1.5;
 		color: var(--editor-text-soft);
+	}
+
+	.pending-dialog-backdrop {
+		position: fixed;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		padding: 1.5rem;
+		background: color-mix(in srgb, var(--text) 22%, transparent);
+	}
+
+	.pending-dialog {
+		display: grid;
+		gap: 1rem;
+		inline-size: min(100%, 32rem);
+		padding: 1.5rem;
+		background: var(--primary-foreground);
+		border: 0.0625rem solid var(--color-sage);
+		border-radius: 1.5rem;
+		box-shadow: var(--shadow);
+	}
+
+	.pending-dialog__title {
+		font-size: 1.375rem;
+		line-height: 1.2;
+	}
+
+	.pending-dialog__text {
+		font-size: 1rem;
+		line-height: 1.5;
+		color: var(--color-text-light);
+	}
+
+	.pending-dialog__actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.75rem;
 	}
 </style>
