@@ -21,5 +21,5 @@ export const load: PageLoad = async ({ fetch, params }): Promise<BackendResponse
 			statusCode: 400
 		};
 	}
-	return await Backend.serverFetchJsonResponse<Plant>(fetch, `/plants/load/${plantId}`, { method: "GET" });
+	return await Backend.serverFetchJsonResponse<Plant>(fetch, `/plants/${plantId}/load`, { method: "GET" });
 };

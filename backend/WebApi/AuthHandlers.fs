@@ -2,7 +2,7 @@
 
 open System
 open System.Net
-open Domain.Models
+open Domain.Plants
 open Giraffe
 open Microsoft.AspNetCore.Http
 open WebApi.BackendResponse

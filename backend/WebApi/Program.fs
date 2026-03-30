@@ -68,12 +68,6 @@ let addServices (context: WebHostBuilderContext) (services: IServiceCollection) 
         .AddSingleton<JwtTokenService>()
         
         .AddSingleton<JsonSerializerOptions>(fun _ ->
-            let jsonOptions =
-                JsonFSharpOptions.Default()
-                    .WithUnionInternalTag()
-                    .WithUnionNamedFields()
-                    .WithUnionTagName("type")
-                    .ToJsonSerializerOptions()
             let opts = JsonSerializerOptions(JsonSerializerDefaults.Web)
             opts.Converters.Add(JsonFSharpConverter())
             opts)

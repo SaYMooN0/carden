@@ -1,7 +1,7 @@
 module WebApi.EmailService
 
 open System.Threading.Tasks
-open Domain.Models
+open Domain.Plants
 open MailKit.Net.Smtp
 open MimeKit
 

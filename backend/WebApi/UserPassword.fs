@@ -2,7 +2,7 @@
 
 open System
 open BCrypt.Net
-open Domain.Models
+open Domain.Plants
 
 type UserPassword = private UserPassword of string
 let MinLength = 6

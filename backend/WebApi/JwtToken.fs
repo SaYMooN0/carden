@@ -4,7 +4,7 @@ open System
 open System.IdentityModel.Tokens.Jwt
 open System.Security.Claims
 open System.Security.Cryptography
-open Domain.Models
+open Domain.Plants
 open Microsoft.Extensions.Logging
 open Microsoft.IdentityModel.Tokens
 

@@ -3,8 +3,8 @@ module WebApi.Contracts
 open System
 open Domain
 open Domain.CardContentItem
-open Domain.Models
-open Domain.Models.Email
+open Domain.Plants
+open Domain.Plants.Email
 open WebApi.BackendResponse
 open WebApi.Repositories
 open WebApi.UserPassword

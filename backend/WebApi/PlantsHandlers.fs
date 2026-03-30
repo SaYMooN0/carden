@@ -3,7 +3,7 @@ module WebApi.PlantsHandlers
 open System
 open System.Net
 open System.Text.Json
-open Domain.Models
+open Domain.Plants
 open Microsoft.AspNetCore.Http
 open WebApi.BackendResponse
 open WebApi.JwtToken
@@ -192,38 +192,39 @@ let handleCreatePlant: HttpHandler =
                     | Error msg ->
                         constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
             }))
-let handleUpsertPlantCard (plantId: Guid) : HttpHandler =
-    withAuthenticatedUser (fun userId ->
-        withValidatedBody RawUpsertPlantCardRequest.parse (fun req next ctx ->
-            task {
-                use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
-                let repo = ctx.GetService<PlantsRepository>()
-
-                let! saveRes = repo.UpsertCardForPlantOwner dbConn userId (PlantId plantId) req
-
-                return!
-                    match saveRes with
-                    | Error msg ->
-                        constructFailure
-                            HttpStatusCode.InternalServerError
-                            [ BackendResponseErr.create msg ]
-                            next
-                            ctx
-
-                    | Ok None ->
-                        constructFailure
-                            HttpStatusCode.NotFound
-                            [ BackendResponseErr.create "Plant not found or access denied." ]
-                            next
-                            ctx
-
-                    | Ok(Some savedCard) ->
-                        let response = UpsertPlantCardResponse.fromDbResult savedCard req
-                        constructSuccess response HttpStatusCode.OK next ctx
-            }))
+// let handleUpsertPlantCard (plantId: Guid) : HttpHandler =
+//     withAuthenticatedUser (fun userId ->
+//         withValidatedBody RawUpsertPlantCardRequest.parse (fun req next ctx ->
+//             task {
+//                 use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
+//                 let repo = ctx.GetService<PlantsRepository>()
+//
+//                 let! saveRes = repo.UpsertCardForPlantOwner dbConn userId (PlantId plantId) req
+//
+//                 return!
+//                     match saveRes with
+//                     | Error msg ->
+//                         constructFailure
+//                             HttpStatusCode.InternalServerError
+//                             [ BackendResponseErr.create msg ]
+//                             next
+//                             ctx
+//
+//                     | Ok None ->
+//                         constructFailure
+//                             HttpStatusCode.NotFound
+//                             [ BackendResponseErr.create "Plant not found or access denied." ]
+//                             next
+//                             ctx
+//
+//                     | Ok(Some savedCard) ->
+//                         let response = UpsertPlantCardResponse.fromDbResult savedCard req
+//                         constructSuccess response HttpStatusCode.OK next ctx
+//             }))
 let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
     choose
         [ GET >=> route "/load-all" >=> handleLoadMyPlants
           POST >=> route "/create" >=> handleCreatePlant
           GET >=> routef "/%O/load" (fun plantId -> handleLoadMyPlant plantId)
-          POST >=> routef "/%O/upsert-card" (fun plantId -> handleUpsertPlantCard plantId) ]
+          // POST >=> routef "/%O/upsert-card" (fun plantId -> handleUpsertPlantCard plantId)
+          ]
