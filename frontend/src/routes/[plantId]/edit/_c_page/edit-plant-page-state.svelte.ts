@@ -1,4 +1,4 @@
-import { Backend } from "$lib/ts/backend";
+import { Backend, RJO, type BackendResponse } from "$lib/ts/backend";
 import type { Card, CardContentItem, Plant } from "$lib/ts/base-types";
 import { StringUtils } from "$lib/ts/utils/string-utils";
 
@@ -44,6 +44,18 @@ export class EditPlantPageState {
         this.#plant = plant;
         this.#cardEditingState = { state: "NoCardSelected" };
     }
+    anyUnsavedChangesOnTheCurrentCard: boolean = $derived.by(() => {
+        if (this.#cardEditingState.state !== "CardEditing") {
+            return false;
+        }
+        const card = this.#cardEditingState.card;
+        const originalCard = this.#plant.deck.cards.find(c => c.id === card.id);
+        if (!originalCard) {
+            return false;
+        }
+        return !(this.checkIfCardContentItemsListsEqual(card.contentFront, originalCard.contentFront)
+            && this.checkIfCardContentItemsListsEqual(card.contentBack, originalCard.contentBack));
+    });
     selectCard(cardId: string) {
         const card = this.#plant.deck.cards.find(c => c.id === cardId);
         if (!card) {
@@ -66,20 +78,65 @@ export class EditPlantPageState {
             }
         };
     }
-    anyUnsavedChangesOnTheCurrentCard(): boolean {
+
+    async saveCurrentCardChanges(): Promise<{ isSuccess: true; } | { isSuccess: false; errMsg: string; }> {
         if (this.#cardEditingState.state !== "CardEditing") {
-            return false;
+            return { isSuccess: false, errMsg: "No card is selected" };
         }
-        const card = this.#cardEditingState.card;
-        const originalCard = this.#plant.deck.cards.find(c => c.id === card.id);
-        if (!originalCard) {
-            return false;
+        const cardToSave = this.#cardEditingState.card;
+        const response = await Backend.fetchJsonResponse<Card>(
+            `/plants/${this.#plant.id}/upsert-card`,
+            RJO.PATCH({
+                cardId: cardToSave.id,
+                contentFront: cardToSave.contentFront.map(c => ({ text: c.text })),
+                contentBack: cardToSave.contentBack.map(c => ({ text: c.text })),
+            })
+        );
+        if (!response.isSuccess) {
+            return { isSuccess: false, errMsg: response.errs[0].msg };
         }
-        return !(this.checkIfCardContentItemsListsEqual(card.contentFront, originalCard.contentFront)
-            && this.checkIfCardContentItemsListsEqual(card.contentBack, originalCard.contentBack));
+        const card = response.data;
+        this.#cardEditingState = {
+            state: "CardEditing",
+            card: {
+                ...card,
+                contentFront: card.contentFront.map((c, i) => ({
+                    ...c,
+                    stringId: StringUtils.rndStrWithPref(`cf-${i}-`, 3)
+                }
+                )),
+                contentBack: card.contentBack.map((c, i) => ({
+                    ...c,
+                    stringId: StringUtils.rndStrWithPref(`cb-${i}-`, 3)
+                }))
+            }
+        };
+        return { isSuccess: true };
     }
-    saveCurrentCardChanges(): { unexpectedErr: string | null } {
-        return { unexpectedErr: null };
+    resetCurrentCardChanges() {
+        if (this.#cardEditingState.state !== "CardEditing") {
+            return;
+        }
+        const cardId = this.#cardEditingState.card.id;
+        const originalCard = this.#plant.deck.cards.find(c => c.id === cardId);
+        const cardToSet: CardViewToEdit = originalCard
+            ? {
+                ...originalCard,
+                contentFront: originalCard.contentFront.map((c, i) => ({ ...c, stringId: StringUtils.rndStrWithPref(`cf-${i}-`, 3) })),
+                contentBack: originalCard.contentBack.map((c, i) => ({ ...c, stringId: StringUtils.rndStrWithPref(`cb-${i}-`, 3) }))
+            }
+            : {
+                id: cardId,
+                contentFront: [],
+                contentBack: [],
+                lastTimeEdited: new Date().toISOString(),
+                creationTime: new Date().toISOString(),
+            };
+
+        this.#cardEditingState = {
+            state: "CardEditing",
+            card: cardToSet
+        };
     }
     checkIfCardContentItemsListsEqual(card1: CardContentItem[], card2: CardContentItem[]): boolean {
         return card1.length === card2.length && card1.every((c, i) => {
@@ -126,10 +183,11 @@ export class EditPlantPageState {
         };
     }
 }
+export type CardContentSide = 'contentFront' | 'contentBack';
 
 export type CardContentWithStringId = (CardContentItem & { stringId: string });
 
-export type CardViewToEdit = Omit<Card, 'contentFront' | 'contentBack'> & {
+export type CardViewToEdit = Omit<Card, CardContentSide> & {
     contentFront: CardContentWithStringId[]
     contentBack: CardContentWithStringId[]
 }

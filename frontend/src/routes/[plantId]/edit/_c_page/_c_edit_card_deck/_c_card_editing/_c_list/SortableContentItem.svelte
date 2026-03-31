@@ -1,19 +1,17 @@
 <script lang="ts">
-	import type { CardContentWithStringId } from './edit-plant-page-state.svelte';
-
 	interface Props {
-		item: CardContentWithStringId;
-		onTextInput: (nextText: string) => void;
 		onRemove: () => void;
+		text: string;
+		stringId: string;
 	}
 
-	let { item, onTextInput, onRemove }: Props = $props();
+	let { onRemove, text, stringId }: Props = $props();
 </script>
 
-<div class="content-item-wrap" data-item-id={item.stringId}>
+<div class="content-item-wrap" data-item-id={stringId}>
 	<div class="content-item">
-		<div class="content-item__toolbar">
-			<div class="content-item__left">
+		<div class="content-item-toolbar">
+			<div class="content-item-left">
 				<button
 					aria-label="Move content item"
 					class="drag-handle"
@@ -28,18 +26,13 @@
 					<span></span>
 				</button>
 
-				<div class="content-item__label">text item</div>
+				<div class="content-item-label">text item</div>
 			</div>
 
-			<button class="remove-button" type="button" onclick={onRemove}> remove </button>
+			<button class="remove-button" type="button" onclick={onRemove}>remove</button>
 		</div>
 
-		<textarea
-			oninput={(event) => onTextInput((event.currentTarget as HTMLTextAreaElement).value)}
-			placeholder="Write text here..."
-			rows="7"
-			value={item.text}
-		></textarea>
+		<textarea placeholder="Write text here..." rows="2" bind:value={text}></textarea>
 	</div>
 </div>
 
@@ -54,7 +47,7 @@
 		gap: 0.75rem;
 		padding: 0.875rem;
 		background: var(--primary-foreground);
-		border: 0.0625rem solid var(--color-sage);
+		border: 0.125rem solid var(--color-sage);
 		border-radius: 1rem;
 		box-shadow: var(--shadow);
 		transition:
@@ -64,21 +57,21 @@
 			background 0.18s ease;
 	}
 
-	.content-item__toolbar {
+	.content-item-toolbar {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
 	}
 
-	.content-item__left {
+	.content-item-left {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
 	}
 
-	.content-item__label {
-		font-size: 0.8125rem;
+	.content-item-label {
+		font-size: 0.875rem;
 		font-weight: 700;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -93,7 +86,7 @@
 		inline-size: 2.5rem;
 		block-size: 2.5rem;
 		background: var(--color-cream);
-		border: 0.0625rem solid var(--color-sage);
+		border: 0.125rem solid var(--color-sage);
 		border-radius: 0.875rem;
 		cursor: grab;
 	}
@@ -117,7 +110,7 @@
 		padding-inline: 0.875rem;
 		background: var(--red-1);
 		color: var(--red-5);
-		border: 0.0625rem solid var(--red-3);
+		border: 0.125rem solid var(--red-3);
 		border-radius: 0.875rem;
 		font-size: 0.875rem;
 		font-weight: 700;
@@ -129,7 +122,7 @@
 
 	.remove-button:hover {
 		background: var(--red-2);
-		transform: translateY(-0.0625rem);
+		transform: translateY(-0.125rem);
 	}
 
 	textarea {
@@ -138,7 +131,7 @@
 		padding: 1rem;
 		resize: vertical;
 		background: var(--color-cream);
-		border: 0.0625rem solid var(--color-sage);
+		border: 0.125rem solid var(--color-sage);
 		border-radius: 0.875rem;
 		outline: none;
 		font-size: 1rem;

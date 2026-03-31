@@ -26,8 +26,8 @@
 		min-height: 100%;
 		padding: 2rem;
 		text-align: center;
-		background: var(--editor-surface-soft);
-		border: 0.0625rem dashed var(--editor-border);
+		background: var(--color-cream);
+		border: 0.125rem dashed var(--color-sage);
 		border-radius: 1.5rem;
 	}
 
@@ -52,6 +52,36 @@
 		max-inline-size: 28rem;
 		font-size: 1rem;
 		line-height: 1.5;
-		color: var(--editor-text-soft);
+		color: var(--color-text-light);
+	}
+
+	.primary-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-block-size: 3rem;
+		padding-inline: 1.25rem;
+		border-radius: 1rem;
+		font-size: 1rem;
+		font-weight: 700;
+		transition:
+			transform 0.18s ease,
+			background 0.18s ease,
+			border-color 0.18s ease,
+			opacity 0.18s ease;
+		background: var(--primary);
+		color: var(--primary-foreground);
+		border: 0.125rem solid var(--primary);
+	}
+
+	.primary-button:hover {
+		background: var(--primary-hov);
+		border-color: var(--primary-hov);
+		transform: translateY(-0.125rem);
+	}
+
+	.primary-button:disabled {
+		opacity: 0.5;
+		transform: none;
 	}
 </style>
