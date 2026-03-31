@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Sortable from 'sortablejs';
 	import SortableTextContentItem from './SortableTextContentItem.svelte';
 	import type { CardContentWithStringId } from './edit-plant-page-state.svelte';
 

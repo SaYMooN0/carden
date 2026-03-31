@@ -31,16 +31,14 @@
 				<div class="content-item__label">text item</div>
 			</div>
 
-			<button class="remove-button" type="button" onclick={onRemove}>
-				remove
-			</button>
+			<button class="remove-button" type="button" onclick={onRemove}> remove </button>
 		</div>
 
 		<textarea
 			oninput={(event) => onTextInput((event.currentTarget as HTMLTextAreaElement).value)}
 			placeholder="Write text here..."
 			rows="7"
-			value={item.type === 'TextContentItem' ? item.text : ''}
+			value={item.text}
 		></textarea>
 	</div>
 </div>

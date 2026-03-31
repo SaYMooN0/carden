@@ -13,10 +13,10 @@
             "state": {
               "type": "image",
               "state": {
-                "file": "plants/McPitcherPlant/McPitcherPlant_att_1.png"
+                "file": "plants/McPitcherPlant/McPitcherPlant_1.png"
               },
               "icon": "lucide-image",
-              "title": "McPitcherPlant_att_1"
+              "title": "McPitcherPlant_1"
             }
           }
         ]
@@ -200,17 +200,17 @@
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
     "plants/McPitcherPlant/McPitcherPlant_att_2.png",
-    "plants/McPitcherPlant/McPitcherPlant_1.png",
-    "pots/CeramicWithSun/CeramicWithSun_1.png",
-    "pots/PVZ/PVZ_1.png",
-    "pots/pvz_pot/pvz.md",
+    "plants/McPitcherPlant/McPitcherPlant_3.png",
+    "plants/Cactus/Cactus_1.png",
+    "plants/Cactus/Cactus_2.png",
+    "plants/Cactus/Cactus_5.png",
+    "plants/Cactus/Cactus_3.png",
     "plants/McPitcherPlant/McPitcherPlant_att_5.png",
-    "plants/McPitcherPlant/McPitcherPlant_att_4.png",
     "plants/McPitcherPlant/McPitcherPlant_att_3.png",
     "plants/McPitcherPlant/McPitcherPlant_att_1.png",
+    "plants/McPitcherPlant/McPitcherPlant_2.png",
     "plants/McPitcherPlant/McPitcherPlant_5.png",
-    "plants/McPitcherPlant/McPitcherPlant_4.png",
-    "plants/McPitcherPlant/McPitcherPlant_3.png",
+    "pots/pvz_pot/pvz.md",
     "plants/McPitcherPlant",
     "plants/Cactus",
     "plants",

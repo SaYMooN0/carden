@@ -13,10 +13,7 @@ export type PlantPreview = {
     cardsCount: number
     studyProgress: number
 }
-export type CardContentItem =
-    | { type: "TextContentItem", text: string }
-    | { type: "ImageContentItem", image: string }
-    | { type: "MathAjaxContentItem", expression: string }
+export type CardContentItem = { text: string }
 export type Card = {
     id: string
     contentFront: CardContentItem[]

@@ -1,20 +1,51 @@
+import { Backend } from "$lib/ts/backend";
 import type { Card, CardContentItem, Plant } from "$lib/ts/base-types";
 import { StringUtils } from "$lib/ts/utils/string-utils";
 
+type CardEditingState =
+    | { state: "NoCardSelected"; }
+    | { state: "ExpectedCardNotFound"; cardId: string; }
+    | { state: "CardEditing"; card: CardViewToEdit; }
+    | { state: "CardReloading"; cardId: string; }
+
 export class EditPlantPageState {
 
-    plant: Plant = $state()!;
+    #plant: Plant = $state()!;
     #cardEditingState: CardEditingState = $state({ state: "NoCardSelected" });
+    get plantName() {
+        return this.#plant.name;
+    }
+    get cardsCount() {
+        return this.#plant.deck.cards.length;
+    }
+    #getTextPreview(text: string | null | undefined): string {
+        const trimmed = text?.trim();
+        return !trimmed ?
+            'Empty side'
+            : trimmed.length > 72
+                ? `${trimmed.slice(0, 72)}`
+                : trimmed;
+    }
 
+    get plantDeckCardsPreview(): CardPreview[] {
+        return this.#plant.deck.cards.map((c, i) => {
+            const frontTextPreview = this.#getTextPreview(c.contentFront?.[0]?.text);
+            const backTextPreview = this.#getTextPreview(c.contentBack?.[0]?.text);
+            return { frontTextPreview, backTextPreview, id: c.id, number: i + 1 };
+        });
+    }
+    get firstCardId() {
+        return this.#plant.deck.cards[0].id;
+    }
     get cardEditingState() {
         return this.#cardEditingState;
     }
     constructor(plant: Plant) {
-        this.plant = plant;
+        this.#plant = plant;
         this.#cardEditingState = { state: "NoCardSelected" };
     }
     selectCard(cardId: string) {
-        const card = this.plant.deck.cards.find(c => c.id === cardId);
+        const card = this.#plant.deck.cards.find(c => c.id === cardId);
         if (!card) {
             this.#cardEditingState = { state: "ExpectedCardNotFound", cardId };
             return;
@@ -40,7 +71,7 @@ export class EditPlantPageState {
             return false;
         }
         const card = this.#cardEditingState.card;
-        const originalCard = this.plant.deck.cards.find(c => c.id === card.id);
+        const originalCard = this.#plant.deck.cards.find(c => c.id === card.id);
         if (!originalCard) {
             return false;
         }
@@ -53,19 +84,7 @@ export class EditPlantPageState {
     checkIfCardContentItemsListsEqual(card1: CardContentItem[], card2: CardContentItem[]): boolean {
         return card1.length === card2.length && card1.every((c, i) => {
             const c2 = card2[i];
-            if (c.type !== c2.type) {
-                return false;
-            }
-            if (c.type === "TextContentItem" && c2.type === "TextContentItem") {
-                return c.text === c2.text;
-            }
-            if (c.type === "ImageContentItem" && c2.type === "ImageContentItem") {
-                return c.image === c2.image;
-            }
-            if (c.type === "MathAjaxContentItem" && c2.type === "MathAjaxContentItem") {
-                return c.expression === c2.expression;
-            }
-            return false;
+            return c.text === c2.text;
         });
     }
     addNewCard(): any {
@@ -76,18 +95,48 @@ export class EditPlantPageState {
             lastTimeEdited: new Date().toISOString(),
             creationTime: new Date().toISOString(),
         };
-        this.plant.deck.cards.push(newCard);
+        this.#plant.deck.cards.push(newCard);
         this.selectCard(newCard.id);
     }
+    async reloadCard(cardId: string) {
+        this.#cardEditingState = { state: "CardReloading", cardId };
+        const response = await Backend.fetchJsonResponse<Card>(
+            `/plants/${this.#plant.id}/cards/${cardId}/load`,
+            { method: "GET" }
+        );
+        if (!response.isSuccess) {
+            this.#cardEditingState = { state: "ExpectedCardNotFound", cardId };
+            return;
+        }
+        const card = response.data;
+        this.#cardEditingState = {
+            state: "CardEditing",
+            card: {
+                ...card,
+                contentFront: card.contentFront.map((c, i) => ({
+                    ...c,
+                    stringId: StringUtils.rndStrWithPref(`cf-${i}-`, 3)
+                }
+                )),
+                contentBack: card.contentBack.map((c, i) => ({
+                    ...c,
+                    stringId: StringUtils.rndStrWithPref(`cb-${i}-`, 3)
+                }))
+            }
+        };
+    }
 }
-type CardEditingState =
-    | { state: "NoCardSelected"; }
-    | { state: "ExpectedCardNotFound"; cardId: string; }
-    | { state: "CardEditing"; card: CardViewToEdit; }
-    | { state: "CardReloading"; cardId: string; }
+
 export type CardContentWithStringId = (CardContentItem & { stringId: string });
 
 export type CardViewToEdit = Omit<Card, 'contentFront' | 'contentBack'> & {
     contentFront: CardContentWithStringId[]
     contentBack: CardContentWithStringId[]
+}
+
+export type CardPreview = {
+    frontTextPreview: string
+    backTextPreview: string
+    id: string
+    number: number
 }
