@@ -70,6 +70,7 @@
 <SignInFormInput type="email" fieldName="Email" bind:value={email} />
 <SignInFormInput type="password" fieldName="Password" bind:value={password} />
 <div class="gap" />
+<SignInFormLink text="I don't have an account" onClick={() => changeState('signup')} />
 <DefaultErrBlock {errs} class="login-err-block" />
 <SignInFormConfirmButton text="Log in" onclick={() => confirmLogin()} {isLoading} />
 

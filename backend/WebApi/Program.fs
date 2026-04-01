@@ -10,10 +10,13 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open WebApi
+open WebApi.AppUsersRepository
 open WebApi.BackendResponse
 open WebApi.EmailService
 open WebApi.JwtToken
-open WebApi.Repositories
+open WebApi.PlantsRepositories
+open WebApi.RepositoriesShared
+open WebApi.UnconfirmedUsersRepository
 
 let handleNoMatchedEndpoint: HttpHandler =
     fun next ctx ->
@@ -54,19 +57,19 @@ let addServices (context: WebHostBuilderContext) (services: IServiceCollection) 
 
     services
         .AddSingleton(getTypedConfig<FrontendConfig> context "FrontendConfig")
-        
+
         .AddTransient<ConnectionFactory>()
-        .AddTransient<UsersRepository>()
+        .AddTransient<AppUsersRepository>()
         .AddTransient<PlantsRepository>()
         .AddTransient<UnconfirmedUsersRepository>()
 
         .AddSingleton(getTypedConfig<EmailServiceConfig> context "EmailServiceConfig")
         .AddTransient<EmailService>()
-        
+
         .AddSingleton(getTypedConfig<JwtTokenConfig> context "JwtSettings")
         .AddTransient<UserPassword.PasswordHasher>()
         .AddSingleton<JwtTokenService>()
-        
+
         .AddSingleton<JsonSerializerOptions>(fun _ ->
             let opts = JsonSerializerOptions(JsonSerializerDefaults.Web)
             opts.Converters.Add(JsonFSharpConverter())
@@ -78,7 +81,8 @@ let addServices (context: WebHostBuilderContext) (services: IServiceCollection) 
 let main _ =
     Host
         .CreateDefaultBuilder()
-        .ConfigureWebHostDefaults(fun webHostBuilder -> webHostBuilder.Configure(configureApp).ConfigureServices(addServices) |> ignore)
+        .ConfigureWebHostDefaults(fun webHostBuilder ->
+            webHostBuilder.Configure(configureApp).ConfigureServices(addServices) |> ignore)
         .Build()
         .Run()
 

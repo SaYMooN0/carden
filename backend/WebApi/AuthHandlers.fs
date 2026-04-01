@@ -2,14 +2,18 @@
 
 open System
 open System.Net
+open Domain.Email
 open Domain.Plants
+open Domain.Users
 open Giraffe
 open Microsoft.AspNetCore.Http
+open WebApi.AppUsersRepository
 open WebApi.BackendResponse
-open WebApi.Contracts
+open WebApi.RepositoriesShared
+open WebApi.Requests
 open WebApi.EmailService
 open WebApi.JwtToken
-open WebApi.Repositories
+open WebApi.UnconfirmedUsersRepository
 open WebApi.UserPassword
 open WebApi.Validation
 
@@ -52,7 +56,7 @@ let handlePingAuth: HttpHandler =
                 ctx
         | Ok token ->
             let dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
-            let repo = ctx.GetService<UsersRepository>()
+            let repo = ctx.GetService<AppUsersRepository>()
             let jwtService = ctx.GetService<JwtTokenService>()
 
             match jwtService.UserIdFromJwtToken token with
@@ -87,7 +91,7 @@ let handleSignUp: HttpHandler =
     withValidatedBody RawSignUpRequest.parse (fun req next ctx ->
         task {
             use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
-            let usersRepo = ctx.GetService<UsersRepository>()
+            let usersRepo = ctx.GetService<AppUsersRepository>()
             let unconfirmedUsersRepo = ctx.GetService<UnconfirmedUsersRepository>()
             let emailService = ctx.GetService<EmailService>()
 
@@ -129,7 +133,7 @@ let handleConfirmRegistration: HttpHandler =
     withValidatedBody RawConfirmRegistrationRequest.parse (fun req next ctx ->
         task {
             use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
-            let usersRepo = ctx.GetService<UsersRepository>()
+            let usersRepo = ctx.GetService<AppUsersRepository>()
             let unconfirmedUsersRepo = ctx.GetService<UnconfirmedUsersRepository>()
 
             let! unconfirmedUserOpt = unconfirmedUsersRepo.GetByIdAndConfirmationCode dbConn req.UserId req.ConfirmationCode
@@ -184,7 +188,7 @@ let handleLogin: HttpHandler =
         fun next ctx ->
             task {
                 let dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
-                let repo = ctx.GetService<UsersRepository>()
+                let repo = ctx.GetService<AppUsersRepository>()
                 let! user = repo.GetByEmail dbConn req.Email
 
                 match user with

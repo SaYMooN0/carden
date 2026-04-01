@@ -11,12 +11,14 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "plants/McPitcherPlant/McPitcherPlant_1.png"
+                "file": "db/скрипты созддания табличек.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "McPitcherPlant_1"
+              "icon": "lucide-file",
+              "title": "скрипты созддания табличек"
             }
           }
         ]
@@ -199,6 +201,7 @@
   },
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "plants/McPitcherPlant/McPitcherPlant_1.png",
     "plants/McPitcherPlant/McPitcherPlant_att_2.png",
     "plants/McPitcherPlant/McPitcherPlant_3.png",
     "plants/Cactus/Cactus_1.png",
@@ -209,7 +212,6 @@
     "plants/McPitcherPlant/McPitcherPlant_att_3.png",
     "plants/McPitcherPlant/McPitcherPlant_att_1.png",
     "plants/McPitcherPlant/McPitcherPlant_2.png",
-    "plants/McPitcherPlant/McPitcherPlant_5.png",
     "pots/pvz_pot/pvz.md",
     "plants/McPitcherPlant",
     "plants/Cactus",

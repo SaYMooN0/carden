@@ -3,6 +3,7 @@
 open System
 open BCrypt.Net
 open Domain.Plants
+open Domain.Users
 
 type UserPassword = private UserPassword of string
 let MinLength = 6

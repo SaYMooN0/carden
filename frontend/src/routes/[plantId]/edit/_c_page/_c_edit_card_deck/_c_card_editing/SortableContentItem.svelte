@@ -1,14 +1,16 @@
 <script lang="ts">
+	import type { CardContentWithStringId } from '../../edit-plant-page-state.svelte';
+
 	interface Props {
 		onRemove: () => void;
-		text: string;
-		stringId: string;
+		onTextChange: (text: string) => void;
+		item: CardContentWithStringId;
 	}
 
-	let { onRemove, text, stringId }: Props = $props();
+	let { onRemove, onTextChange, item }: Props = $props();
 </script>
 
-<div class="content-item-wrap" data-item-id={stringId}>
+<div class="content-item-wrap" data-item-id={item.stringId}>
 	<div class="content-item">
 		<div class="content-item-toolbar">
 			<div class="content-item-left">
@@ -32,7 +34,12 @@
 			<button class="remove-button" type="button" onclick={onRemove}>remove</button>
 		</div>
 
-		<textarea placeholder="Write text here..." rows="2" bind:value={text}></textarea>
+		<textarea
+			placeholder="Write text here..."
+			rows="2"
+			value={item.text}
+			oninput={(e) => onTextChange((e.currentTarget as HTMLTextAreaElement).value)}
+		></textarea>
 	</div>
 </div>
 

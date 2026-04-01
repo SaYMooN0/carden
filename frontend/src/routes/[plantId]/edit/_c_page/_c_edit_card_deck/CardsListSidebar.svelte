@@ -95,7 +95,6 @@
 
 	.sidebar-title {
 		font-size: 1.75rem;
-		line-height: 1.1;
 		color: var(--text);
 		text-overflow: ellipsis;
 		overflow: hidden;

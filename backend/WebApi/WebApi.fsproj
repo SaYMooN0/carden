@@ -10,8 +10,12 @@
         <Compile Include="UserPassword.fs" />
         <Compile Include="BackendResponse.fs" />
         <Compile Include="Validation.fs" />
-        <Compile Include="Repositories.fs" />
-        <Compile Include="Contracts.fs" />
+        <Compile Include="RepositoriesShared.fs" />
+        <Compile Include="AppUsersRepository.fs" />
+        <Compile Include="UnconfirmedUsersRepository.fs" />
+        <Compile Include="PlantsRepository.fs" />
+        <Compile Include="Requests.fs" />
+        <Compile Include="Responses.fs" />
         <Compile Include="AuthHandlers.fs"/>
         <Compile Include="PlantsHandlers.fs" />
         <Compile Include="Program.fs" />

@@ -2,79 +2,19 @@ module WebApi.PlantsHandlers
 
 open System
 open System.Net
-open System.Text.Json
+open Domain.CardContentItem
 open Domain.Plants
 open Microsoft.AspNetCore.Http
+open WebApi.AppUsersRepository
 open WebApi.BackendResponse
 open WebApi.JwtToken
-open WebApi.Repositories
+open WebApi.PlantsRepositories
 open Giraffe
-open WebApi.Contracts
+open WebApi.RepositoriesShared
+open WebApi.Requests
+open WebApi.Responses
 open WebApi.Validation
 
-type PlantPreviewResponse =
-    { Id: Guid
-      Name: string
-      PlantSpecie: string
-      PotType: string
-      CardsCount: int
-      CreationDate: string
-      StudyProgress: int }
-
-module PlantPreviewResponse =
-    let fromDomain (item: PlantPreviewDto) : PlantPreviewResponse =
-        { Id = PlantId.value item.Id
-          Name = PlantName.value item.Name
-          PlantSpecie = PlantSpecieName.value item.PlantSpecie
-          PotType = PotTypeName.value item.PotType
-          CardsCount = item.CardsCount
-          CreationDate = item.CreationDate.ToIsoString()
-          StudyProgress = 1 }
-
-type CardResponse =
-    { Id: Guid
-      ContentFront: JsonElement
-      ContentBack: JsonElement
-      LastTimeEdited: string
-      CreationTime: string }
-
-type DeckResponse =
-    { Id: Guid
-      Cards: CardResponse list
-      LastTimeEdited: string }
-
-type PlantResponse =
-    { Id: Guid
-      Name: string
-      Description: string
-      Deck: DeckResponse
-      CreationDate: string
-      PotType: string
-      PlantSpecie: string }
-
-module PlantResponse =
-    let private parseJsonElement (json: string) : JsonElement =
-        use doc = JsonDocument.Parse(json)
-        doc.RootElement.Clone()
-
-    let fromDbDto (dto: PlantWithCardsDbDto) : PlantResponse =
-        { Id = dto.Plant.Id
-          Name = dto.Plant.Name
-          Description = dto.Plant.Description
-          Deck =
-            { Id = dto.Plant.DeckId
-              LastTimeEdited = dto.Plant.DeckLastTimeEdited.ToIsoString()
-              Cards =
-                dto.Cards
-                |> List.map (fun c ->
-                    { Id = c.Id
-                      ContentFront = parseJsonElement c.ContentFrontJson
-                      ContentBack = parseJsonElement c.ContentBackJson
-                      LastTimeEdited = c.LastTimeEdited.ToIsoString()
-                      CreationTime = c.CreationTime.ToIsoString() }) }
-          CreationDate = dto.Plant.CreationDate.ToIsoString()
-          PotType = dto.Plant.PotTypeName
-          PlantSpecie = dto.Plant.PlantSpecieName }
 
 let private tokenCookieName = "user_tkn"
 
@@ -111,7 +51,7 @@ let private withAuthenticatedUser (handler: AppUserId -> HttpHandler) : HttpHand
             | Ok userId ->
                 task {
                     use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
-                    let usersRepo = ctx.GetService<UsersRepository>()
+                    let usersRepo = ctx.GetService<AppUsersRepository>()
                     let! exists = usersRepo.AnyUserWithId dbConn userId
 
                     if exists then
@@ -119,7 +59,7 @@ let private withAuthenticatedUser (handler: AppUserId -> HttpHandler) : HttpHand
                     else
                         return!
                             constructFailure
-                                HttpStatusCode.NotFound
+                                HttpStatusCode.Unauthorized
                                 [ BackendResponseErr.create "Account not found. Please log in again." ]
                                 next
                                 ctx
@@ -192,39 +132,72 @@ let handleCreatePlant: HttpHandler =
                     | Error msg ->
                         constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
             }))
-// let handleUpsertPlantCard (plantId: Guid) : HttpHandler =
-//     withAuthenticatedUser (fun userId ->
-//         withValidatedBody RawUpsertPlantCardRequest.parse (fun req next ctx ->
-//             task {
-//                 use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
-//                 let repo = ctx.GetService<PlantsRepository>()
-//
-//                 let! saveRes = repo.UpsertCardForPlantOwner dbConn userId (PlantId plantId) req
-//
-//                 return!
-//                     match saveRes with
-//                     | Error msg ->
-//                         constructFailure
-//                             HttpStatusCode.InternalServerError
-//                             [ BackendResponseErr.create msg ]
-//                             next
-//                             ctx
-//
-//                     | Ok None ->
-//                         constructFailure
-//                             HttpStatusCode.NotFound
-//                             [ BackendResponseErr.create "Plant not found or access denied." ]
-//                             next
-//                             ctx
-//
-//                     | Ok(Some savedCard) ->
-//                         let response = UpsertPlantCardResponse.fromDbResult savedCard req
-//                         constructSuccess response HttpStatusCode.OK next ctx
-//             }))
+
+let handleReloadPlantCard (plantId: Guid) (cardId: Guid) : HttpHandler =
+    withAuthenticatedUser (fun userId next ctx ->
+        task {
+            use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
+            let repo = ctx.GetService<PlantsRepository>()
+
+            let! cardOpt = repo.GetCardByIdForPlantOwner dbConn userId (PlantId plantId) cardId
+
+            match cardOpt with
+            | None ->
+                return!
+                    constructFailure
+                        HttpStatusCode.NotFound
+                        [ BackendResponseErr.create "Card not found or access denied." ]
+                        next
+                        ctx
+            | Some card -> return! constructSuccess (CardResponse.fromDbDto card) HttpStatusCode.OK next ctx
+        })
+
+let handleSavePlantCard (plantId: Guid) : HttpHandler =
+    withAuthenticatedUser (fun userId ->
+        withValidatedBody RawUpsertPlantCardRequest.parse (fun req next ctx ->
+            task {
+                use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
+                let repo = ctx.GetService<PlantsRepository>()
+
+                let saveReq =
+                    { TargetCardId =
+                        match req.TargetCard with
+                        | CreateNewCard -> None
+                        | UpdateExistingCard cardId -> Some cardId
+                      ContentFront = req.ContentFront |> List.map CardContentItem.value |> List.toArray
+                      ContentBack = req.ContentBack |> List.map CardContentItem.value |> List.toArray
+                      Now = DateTimeOffset.UtcNow }
+
+                let! saveRes = repo.SaveCardForPlantOwner dbConn userId (PlantId plantId) saveReq
+
+                return!
+                    match saveRes with
+                    | Error msg ->
+                        constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+
+                    | Ok SavePlantCardResult.PlantNotFoundOrAccessDenied ->
+                        constructFailure
+                            HttpStatusCode.NotFound
+                            [ BackendResponseErr.create "Plant not found or access denied." ]
+                            next
+                            ctx
+
+                    | Ok SavePlantCardResult.CardNotFoundOrAccessDenied ->
+                        constructFailure
+                            HttpStatusCode.NotFound
+                            [ BackendResponseErr.create "Card not found or access denied." ]
+                            next
+                            ctx
+
+                    | Ok(SavePlantCardResult.Saved savedCard) ->
+                        constructSuccess (CardResponse.fromDbDto savedCard) HttpStatusCode.OK next ctx
+            }))
+
 let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
     choose
         [ GET >=> route "/load-all" >=> handleLoadMyPlants
           POST >=> route "/create" >=> handleCreatePlant
           GET >=> routef "/%O/load" (fun plantId -> handleLoadMyPlant plantId)
-          // POST >=> routef "/%O/upsert-card" (fun plantId -> handleUpsertPlantCard plantId)
-          ]
+          GET
+          >=> routef "/%O/cards/%O/load" (fun (plantId, cardId) -> handleReloadPlantCard plantId cardId)
+          PATCH >=> routef "/%O/save-card" (fun plantId -> handleSavePlantCard plantId) ]

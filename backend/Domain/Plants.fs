@@ -8,11 +8,36 @@ open Domain.PlantName
 type CardId = CardId of Guid
 
 type Card =
-    { Id: CardId
-      ContentFront: CardContentItem list //обязательно Ordered
-      ContentBack: CardContentItem list //обязательно Ordered
-      LastTimeEdited: DateTimeOffset
-      CreationTime: DateTimeOffset }
+    private
+        { Id: CardId
+          ContentFront: CardContentItem list
+          ContentBack: CardContentItem list
+          LastTimeEdited: DateTimeOffset
+          CreationTime: DateTimeOffset }
+
+module Card =
+    [<RequireQualifiedAccess>]
+    type CardCreationErr =
+        | EmptyFrontContent
+        | EmptyBackContent
+
+    let tryCreate
+        (id: CardId)
+        (contentFront: CardContentItem list)
+        (contentBack: CardContentItem list)
+        (now: DateTimeOffset)
+        : Result<Card, CardCreationErr> =
+        if List.isEmpty contentFront then
+            Error CardCreationErr.EmptyFrontContent
+        elif List.isEmpty contentBack then
+            Error CardCreationErr.EmptyBackContent
+        else
+            Ok
+                { Id = id
+                  ContentFront = contentFront
+                  ContentBack = contentBack
+                  CreationTime = now
+                  LastTimeEdited = now }
 
 type DeckId = DeckId of Guid
 

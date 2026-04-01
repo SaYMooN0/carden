@@ -6,8 +6,6 @@
 	import CardsListSidebar from './_c_edit_card_deck/CardsListSidebar.svelte';
 	import { EditPlantPageState } from './edit-plant-page-state.svelte';
 
-	type EditableSide = 'contentFront' | 'contentBack';
-
 	interface Props {
 		plant: Plant;
 	}
@@ -49,8 +47,14 @@
 				header="Select a card to start editing"
 				text="Choose a card on the left and edit its front and back sides."
 				button={{
-					text: 'Open first card',
-					onClick: () => pageState.selectCard(pageState.firstCardId)
+					text: pageState.firstCardId ? 'Open first card' : 'Create first card',
+					onClick: () => {
+						if (pageState.firstCardId) {
+							pageState.selectCard(pageState.firstCardId);
+							return;
+						}
+						pageState.addNewCard();
+					}
 				}}
 			/>
 		{:else if pageState.cardEditingState.state === 'ExpectedCardNotFound'}
@@ -68,7 +72,7 @@
 			<CardLoadingState />
 		{:else if pageState.cardEditingState.state === 'CardEditing'}
 			<CardEditing
-				card={pageState.cardEditingState.card}
+				bind:card={pageState.cardEditingState.card}
 				saveCardChanges={() => pageState.saveCurrentCardChanges()}
 				resetCardChanges={() => pageState.resetCurrentCardChanges()}
 				cardHasUnsavedChanges={pageState.anyUnsavedChangesOnTheCurrentCard}

@@ -1,7 +1,9 @@
 module WebApi.EmailService
 
 open System.Threading.Tasks
+open Domain.Email
 open Domain.Plants
+open Domain.Users
 open MailKit.Net.Smtp
 open MimeKit
 
@@ -31,7 +33,12 @@ type EmailService(config: EmailServiceConfig, frontendConfig: FrontendConfig) =
             return client
         }
 
-    member private this.SendEmailWithHtmlBody (toEmail: Email.Email) (subject: string) (body: string) (ct) : Task<Result<unit, string>> =
+    member private this.SendEmailWithHtmlBody
+        (toEmail: Email)
+        (subject: string)
+        (body: string)
+        (ct)
+        : Task<Result<unit, string>> =
         task {
             try
                 let message = new MimeMessage()
@@ -57,7 +64,7 @@ type EmailService(config: EmailServiceConfig, frontendConfig: FrontendConfig) =
 
 
     member this.SendRegistrationConfirmationLink
-        (email: Email.Email)
+        (email: Email)
         (userId: UnconfirmedUserId)
         (confirmationCode: ConfirmationCode)
         (ct)
