@@ -11,6 +11,8 @@ type CardEditingState =
 export class EditPlantPageState {
     #plant: PlantInEditing = $state()!;
     #cardEditingState: CardEditingState = $state({ state: 'NoCardSelected' });
+    #newCardSelectionWhenUnsavedChangesGuard: { activate: (cardId: string) => void } = $state()!;
+
     private newCardIdPrefix = 'new-card-';
 
     get plantName() {
@@ -29,7 +31,7 @@ export class EditPlantPageState {
         return this.#cardEditingState;
     }
 
-    constructor(plant: Plant) {
+    constructor(plant: Plant, guard: { activate: (cardId: string) => void }) {
         this.#plant = {
             ...plant,
             deck: {
@@ -38,6 +40,7 @@ export class EditPlantPageState {
             }
         };
         this.#cardEditingState = { state: 'NoCardSelected' };
+        this.#newCardSelectionWhenUnsavedChangesGuard = guard;
     }
 
     #getTextPreview(text: string | null | undefined): string {
@@ -77,7 +80,14 @@ export class EditPlantPageState {
         );
     });
 
-    selectCard(cardId: string) {
+    selectCard(cardId: string, options: { ignoreUnsavedChangesGuard: boolean }) {
+        if (this.#cardEditingState.state === 'CardEditing' && cardId === this.#cardEditingState.card.id) {
+            return;
+        }
+        if (!options.ignoreUnsavedChangesGuard && this.anyUnsavedChangesOnTheCurrentCard) {
+            this.#newCardSelectionWhenUnsavedChangesGuard.activate(cardId);
+            return;
+        }
         const card = this.#plant.deck.cards.find((currentCard) => currentCard.id === cardId);
         if (!card) {
             this.#cardEditingState = { state: 'ExpectedCardNotFound', cardId };
@@ -161,7 +171,9 @@ export class EditPlantPageState {
             creationTime: new Date().toISOString()
         };
         this.#plant.deck.cards.push(newCard);
-        this.selectCard(newCard.id);
+        if (!this.anyUnsavedChangesOnTheCurrentCard) {
+            this.selectCard(newCard.id, { ignoreUnsavedChangesGuard: false });
+        }
     }
 
     async reloadCard(cardId: string) {

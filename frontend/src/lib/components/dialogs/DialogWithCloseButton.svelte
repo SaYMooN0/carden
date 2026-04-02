@@ -64,13 +64,15 @@
 		position: absolute;
 		top: 0.75rem;
 		right: 0.75rem;
-		width: 1.5rem;
-		height: 1.5rem;
-		padding: 0.125rem;
+		width: 1.75rem;
+		height: 1.75rem;
 		border: none;
 		border-radius: 50%;
 		color: var(--color-terracotta-hover);
 		cursor: pointer;
+		background-color: transparent;
+		padding: 0.25rem;
+		transition: all 0.06s ease-in;
 	}
 
 	.dialog-close-btn > :global(svg path) {
@@ -79,14 +81,18 @@
 	}
 
 	.dialog-close-btn:hover {
-		background-color: var(--red-2);
+		background-color: var(--red-1);
 		color: var(--red-3);
 	}
 
 	.dialog-close-btn:hover > :global(svg path) {
 		stroke-width: 2.5;
 	}
-
+	.dialog-close-btn:active {
+		background-color: var(--red-2);
+		color: var(--red-4);
+		transform: scale(0.96);
+	}
 	.dialog-close-btn:active > :global(svg path) {
 		stroke-width: 2.2;
 	}

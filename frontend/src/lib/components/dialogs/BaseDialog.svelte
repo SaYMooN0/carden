@@ -68,7 +68,7 @@
 	.dialog-content {
 		position: relative;
 		border-radius: 0.875rem;
-		background-color: var(--back);
+		background-color: var(--color-cream);
 		box-shadow: var(--shadow);
 	}
 

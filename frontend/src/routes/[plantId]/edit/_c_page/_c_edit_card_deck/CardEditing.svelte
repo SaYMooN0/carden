@@ -12,7 +12,12 @@
 		resetCardChanges: () => void;
 	}
 
-	let { card, cardHasUnsavedChanges, saveCardChanges, resetCardChanges }: Props = $props();
+	let {
+		card = $bindable(),
+		cardHasUnsavedChanges,
+		saveCardChanges,
+		resetCardChanges
+	}: Props = $props();
 	let isSaving = $state(false);
 
 	let frontListElement = $state<HTMLDivElement | null>(null);
