@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Plant } from '$lib/ts/base-types';
+	import type { PlantToEdit } from '../shared_types';
 	import CardEditing from './_c_edit_card_deck/CardEditing.svelte';
 	import CardEmptyState from './_c_edit_card_deck/CardEmptyState.svelte';
 	import CardLoadingState from './_c_edit_card_deck/CardLoadingState.svelte';
@@ -8,7 +8,7 @@
 	import { EditPlantPageState } from './edit-plant-page-state.svelte';
 
 	interface Props {
-		plant: Plant;
+		plant: PlantToEdit;
 	}
 
 	let { plant }: Props = $props();

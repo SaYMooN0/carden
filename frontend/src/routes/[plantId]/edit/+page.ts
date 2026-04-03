@@ -1,9 +1,9 @@
 import { Backend, type BackendResponse } from '$lib/ts/backend';
-import type { Plant } from '$lib/ts/base-types';
 import type { PageLoad } from './$types';
+import type { PlantToEdit } from './shared_types';
 export const prerender = false;
 
-export const load: PageLoad = async ({ fetch, params }): Promise<BackendResponse<Plant>> => {
+export const load: PageLoad = async ({ fetch, params }): Promise<BackendResponse<PlantToEdit>> => {
 	const plantId = params.plantId;
 	if (!plantId) {
 		return {
@@ -21,5 +21,5 @@ export const load: PageLoad = async ({ fetch, params }): Promise<BackendResponse
 			statusCode: 400
 		};
 	}
-	return await Backend.serverFetchJsonResponse<Plant>(fetch, `/plants/${plantId}/load`, { method: "GET" });
+	return await Backend.serverFetchJsonResponse<PlantToEdit>(fetch, `/plants/${plantId}/load`, { method: "GET" });
 };

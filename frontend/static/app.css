@@ -1,54 +1,59 @@
-  :root {
-    --text: #1e293b;
-    --color-text-light: #64748b;
-    --font-family: "Chiron GoRound TC", sans-serif;
+:root {
+  --text: #1e293b;
+  --color-text-light: #64748b;
+  --font-family: "Chiron GoRound TC", sans-serif;
 
-    --color-cream: #f5f2e7;
-    --color-sage: #c5d3c1;
-    --color-terracotta: #c57b58;
+  --color-cream: #f5f2e7;
+  --color-cream-strong: #f9f6ef;
+  --color-paper: #fffdf8;
+  --color-sage: #c5d3c1;
+  --color-sage-soft: #eaf1e7;
+  --color-terracotta: #c57b58;
 
-    --color-terracotta-hover: #b36846;
-    --color-terracotta-light: #e09673;
-    --color-sage-hover: #eaf1e7;
+  --color-terracotta-hover: #b36846;
+  --color-terracotta-light: #e09673;
+  --color-sage-hover: #eaf1e7;
 
-    --primary: var(--color-terracotta);
-    --primary-hov: var(--color-terracotta-hover);
-    --primary-foreground: #ffffff;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --primary: var(--color-terracotta);
+  --primary-hov: var(--color-terracotta-hover);
+  --primary-foreground: #ffffff;
+  --shadow: 0 0.25rem 0.375rem rgba(0, 0, 0, 0.1);
 
+  --red-1: #ffe9ea;
+  --red-2: #ffe0e2;
+  --red-3: #f33a3e;
+  --red-4: #e83939;
+  --red-5: #b91d05;
 
-    --red-1: #ffe9ea;
-    --red-2: #ffe0e2;
-    --red-3: #f33a3e;
-    --red-4: #e83939;
-    --red-5: #b91d05;
-  }
+  --color-answer-again: var(--red-4);
+  --color-answer-hard: #d08a44;
+  --color-answer-good: #6e9d68;
+  --color-answer-easy: #4f8bb3;
+}
 
-  body {
-    background-color: var(--color-cream);
-    color: var(--text);
-  }
+body {
+  background-color: var(--color-paper);
+  color: var(--text);
+}
 
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-family);
+}
 
-  * {
-    box-sizing: border-box;
-    padding: 0;
-    margin: 0;
-    font-family: var(--font-family);
+a {
+  text-decoration: none;
+}
 
-  }
+input,
+textarea,
+button {
+  font-family: var(--font-family);
+  color: var(--text);
+}
 
-  a {
-    text-decoration: none;
-  }
-
-  input,
-  textarea {
-    font-family: var(--font-family);
-    color: var(--text);
-
-  }
-
-  .unselectable {
-    user-select: none;
-  }
+.unselectable {
+  user-select: none;
+}
