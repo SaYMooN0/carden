@@ -36,7 +36,7 @@ export namespace SpritesManager {
 
     export const potsYOffset: Record<PotType, Record<typeof potLevels[number], number>> = {
         "CeramicWithSun": { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-        "PVZ": { 1: 0, 2: 46, 3: 46, 4: 46, 5: 46 }
+        "PVZ": { 1: 30, 2: 30, 3: 30, 4: 30, 5: 30 }
     }
     export function getPotYOffsetBasedOnCardsCount(potType: PotType, cardsCount: number): number {
         const lvl = calculatePotSpriteLvlBasedOnCardsCount(cardsCount);

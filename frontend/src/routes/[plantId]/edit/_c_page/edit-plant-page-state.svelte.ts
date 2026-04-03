@@ -1,6 +1,6 @@
 import { Backend, RJO } from '$lib/ts/backend';
-import type { Card, CardContentItem, Deck, Plant } from '$lib/ts/base-types';
 import { StringUtils } from '$lib/ts/utils/string-utils';
+import type { Card, CardContentItem, Deck, PlantToEdit } from '../shared_types';
 
 type CardEditingState =
     | { state: 'NoCardSelected' }
@@ -31,7 +31,7 @@ export class EditPlantPageState {
         return this.#cardEditingState;
     }
 
-    constructor(plant: Plant, guard: { activate: (cardId: string) => void }) {
+    constructor(plant: PlantToEdit, guard: { activate: (cardId: string) => void }) {
         this.#plant = {
             ...plant,
             deck: {
@@ -269,7 +269,7 @@ export class EditPlantPageState {
     }
 }
 
-export type PlantInEditing = Omit<Plant, 'deck'> & {
+export type PlantInEditing = Omit<PlantToEdit, 'deck'> & {
     deck: Omit<Deck, 'cards'> & {
         cards: CardInEditing[];
     };

@@ -75,19 +75,6 @@
 		aspect-ratio: 1/2.25;
 	}
 
-	.sprites-stage::before {
-		content: '';
-		position: absolute;
-		left: 50%;
-		bottom: 0.375rem;
-		width: 5rem;
-		height: 0.75rem;
-		transform: translateX(-50%);
-		border-radius: 999rem;
-		background: var(--plant-ground);
-		filter: drop-shadow(0 0.25rem 0.5rem var(--plant-ground-shadow));
-	}
-
 	.plant-shell {
 		position: absolute;
 		display: block;
@@ -96,6 +83,7 @@
 		z-index: 2;
 		pointer-events: none;
 		top: 0;
+		transform: translateY(calc(var(--plants-y-offset-percent) * 1%));
 	}
 
 	.pot-sprite {
@@ -113,6 +101,7 @@
 		object-fit: contain;
 		user-select: none;
 		-webkit-user-drag: none;
+		width: 100%;
 	}
 
 	.plant-shell > img {
