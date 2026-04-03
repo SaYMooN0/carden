@@ -5,13 +5,85 @@ open Domain.CardContentItem
 open Domain.PlantName
 
 
+[<RequireQualifiedAccess>]
+type CardStudyAnswer =
+    | Again
+    | Hard
+    | Good
+    | Easy
+
+
+type LearningCardStudyState =
+    { DueAt: DateTimeOffset
+      LearningStepIndex: int
+      StartedAt: DateTimeOffset }
+
+
+type ReviewCardStudyState =
+    { DueAt: DateTimeOffset
+      ReviewInterval: TimeSpan
+      LastReviewedAt: DateTimeOffset }
+
+
+type CardStudyState =
+    | Learning of LearningCardStudyState
+    | Review of ReviewCardStudyState
+
+module CardStudyState =
+    let createLearning (dueAt: DateTimeOffset) (learningStepIndex: int) (startedAt: DateTimeOffset) : CardStudyState =
+        Learning
+            { DueAt = dueAt
+              LearningStepIndex = learningStepIndex
+              StartedAt = startedAt }
+
+    let createReview
+        (dueAt: DateTimeOffset)
+        (reviewInterval: TimeSpan)
+        (lastReviewedAt: DateTimeOffset)
+        : CardStudyState =
+        Review
+            { DueAt = dueAt
+              ReviewInterval = reviewInterval
+              LastReviewedAt = lastReviewedAt }
+
+    let dueAt =
+        function
+        | Learning state -> state.DueAt
+        | Review state -> state.DueAt
+
+    let isDue (now: DateTimeOffset) (studyState: CardStudyState) : bool = dueAt studyState <= now
+
+
+module StudyConstants =
+    [<Literal>]
+    let NewCardsPerDay = 10
+
+    [<Literal>]
+    let ReviewCardsPerDay = 50
+
+    let LearningAgainDelay: TimeSpan = TimeSpan.FromMinutes(1.)
+    let LearningHardDelay = TimeSpan.FromMinutes(5.)
+    let LearningGoodDelay = TimeSpan.FromMinutes(10.)
+    let LearningEasyInterval = TimeSpan.FromDays(3.)
+
+    let ReviewAgainDelay = TimeSpan.FromMinutes(10.)
+    let ReviewHardIntervalMultiplier = 1.2
+    let ReviewGoodIntervalMultiplier = 2.0
+    let ReviewEasyIntervalMultiplier = 3.0
+
+
 type CardId = CardId of Guid
+
+module CardId =
+    let value (CardId value) = value
+
 
 type Card =
     private
         { Id: CardId
           ContentFront: CardContentItem list
           ContentBack: CardContentItem list
+          StudyState: CardStudyState option
           LastTimeEdited: DateTimeOffset
           CreationTime: DateTimeOffset }
 
@@ -36,13 +108,42 @@ module Card =
                 { Id = id
                   ContentFront = contentFront
                   ContentBack = contentBack
+                  StudyState = None
                   CreationTime = now
                   LastTimeEdited = now }
+
+    let tryUpdateContent
+        (contentFront: CardContentItem list)
+        (contentBack: CardContentItem list)
+        (now: DateTimeOffset)
+        (card: Card)
+        : Result<Card, CardCreationErr> =
+        if List.isEmpty contentFront then
+            Error CardCreationErr.EmptyFrontContent
+        elif List.isEmpty contentBack then
+            Error CardCreationErr.EmptyBackContent
+        else
+            Ok
+                { card with
+                    ContentFront = contentFront
+                    ContentBack = contentBack
+                    LastTimeEdited = now }
+
+    let withStudyState (studyState: CardStudyState option) (card: Card) : Card = { card with StudyState = studyState }
+
+    let id (card: Card) = card.Id
+    let contentFront (card: Card) = card.ContentFront
+    let contentBack (card: Card) = card.ContentBack
+    let studyState (card: Card) = card.StudyState
+    let lastTimeEdited (card: Card) = card.LastTimeEdited
+    let creationTime (card: Card) = card.CreationTime
+
 
 type DeckId = DeckId of Guid
 
 module DeckId =
     let value (DeckId value) = value
+
 
 type Deck =
     { Id: DeckId
@@ -68,21 +169,22 @@ module PlantSpecieName =
         | "McPitcherPlant" -> Ok McPitcherPlant
         | _ -> Error()
 
+
 type PotTypeName =
-    | CeramicWithSun
+    | Basic
     | PVZ
 
 module PotTypeName =
     let value =
         function
-        | CeramicWithSun -> "CeramicWithSun"
+        | Basic -> "Basic"
         | PVZ -> "PVZ"
 
     let tryCreate (raw: string | null) : Result<PotTypeName, unit> =
         let value = if isNull raw then "" else raw.Trim()
 
         match value with
-        | "CeramicWithSun" -> Ok CeramicWithSun
+        | "Basic" -> Ok Basic
         | "PVZ" -> Ok PVZ
         | _ -> Error()
 
@@ -91,10 +193,31 @@ type PlantId = PlantId of Guid
 module PlantId =
     let value (PlantId value) = value
 
+
 type AppUserId = AppUserId of Guid
 
 module AppUserId =
     let value (AppUserId g) = g
+
+
+type PlantStudyState =
+    { LastCompletedStudyDay: DateOnly option }
+
+module PlantStudyState =
+    let empty: PlantStudyState = { LastCompletedStudyDay = None }
+
+    let canStartStudySession (today: DateOnly) (studyState: PlantStudyState) : bool =
+        studyState.LastCompletedStudyDay <> Some today
+
+    let markStudySessionCompleted (today: DateOnly) (studyState: PlantStudyState) : PlantStudyState =
+        { studyState with
+            LastCompletedStudyDay = Some today }
+
+
+type StudySessionCards =
+    { ReviewCards: Card list
+      NewCards: Card list }
+
 
 type Plant =
     { Id: PlantId
@@ -104,10 +227,12 @@ type Plant =
       CreationDate: DateTimeOffset
       PotType: PotTypeName
       PlantSpecie: PlantSpecieName
-    // StudyState: DeckStudyState
-    }
+      StudyState: PlantStudyState }
 
 module Plant =
+    [<RequireQualifiedAccess>]
+    type StartStudySessionErr = | AlreadyCompletedToday
+
     let createNew ownerId name (now: DateTimeOffset) potType plantSpecie : Plant =
         { Id = PlantId(Guid.CreateVersion7())
           OwnerId = ownerId
@@ -118,4 +243,40 @@ module Plant =
               LastTimeEdited = now }
           CreationDate = now
           PotType = potType
-          PlantSpecie = plantSpecie }
+          PlantSpecie = plantSpecie
+          StudyState = PlantStudyState.empty }
+
+    let canStartStudySession (today: DateOnly) (plant: Plant) : bool =
+        PlantStudyState.canStartStudySession today plant.StudyState
+
+    let markStudySessionCompleted (today: DateOnly) (plant: Plant) : Plant =
+        { plant with
+            StudyState = PlantStudyState.markStudySessionCompleted today plant.StudyState }
+
+    let private getCardsDueForReview (now: DateTimeOffset) (plant: Plant) : Card list =
+        plant.Deck.Cards
+        |> List.choose (fun card ->
+            match Card.studyState card with
+            | Some studyState when CardStudyState.isDue now studyState -> Some(card, CardStudyState.dueAt studyState)
+            | _ -> None)
+        |> List.sortBy snd
+        |> List.map fst
+        |> List.truncate StudyConstants.ReviewCardsPerDay
+
+    let private getNewCardsForStudySession (plant: Plant) : Card list =
+        plant.Deck.Cards
+        |> List.filter (fun card -> Card.studyState card |> Option.isNone)
+        |> List.sortBy Card.creationTime
+        |> List.truncate StudyConstants.NewCardsPerDay
+
+    let tryGetStudySessionCards
+        (today: DateOnly)
+        (now: DateTimeOffset)
+        (plant: Plant)
+        : Result<StudySessionCards, StartStudySessionErr> =
+        if not (canStartStudySession today plant) then
+            Error StartStudySessionErr.AlreadyCompletedToday
+        else
+            Ok
+                { ReviewCards = getCardsDueForReview now plant
+                  NewCards = getNewCardsForStudySession plant }

@@ -71,6 +71,36 @@ type PlantWithCardsDbDto =
     { Plant: PlantDetailsDbDto
       Cards: PlantCardDbDto list }
 
+[<CLIMutable>]
+type StudyPlantDetailsDbDto =
+    { Id: Guid
+      Name: string
+      DeckId: Guid
+      DeckLastTimeEdited: DateTimeOffset
+      CreationDate: DateTimeOffset
+      PotTypeName: string
+      PlantSpecieName: string
+      LastCompletedStudyDay: Nullable<DateOnly> }
+
+[<CLIMutable>]
+type StudyPlantCardDbDto =
+    { Id: Guid
+      ContentFront: string array
+      ContentBack: string array
+      StudyStateType: string
+      StudyDueAt: Nullable<DateTimeOffset>
+      StudyLearningStepIndex: Nullable<int>
+      StudyStartedAt: Nullable<DateTimeOffset>
+      StudyReviewInterval: Nullable<TimeSpan>
+      StudyLastReviewedAt: Nullable<DateTimeOffset>
+      LastTimeEdited: DateTimeOffset
+      CreationTime: DateTimeOffset }
+
+type LoadStudySessionDbDto =
+    { Plant: StudyPlantDetailsDbDto
+      ReviewCards: StudyPlantCardDbDto list
+      NewCards: StudyPlantCardDbDto list }
+
 type SavePlantCardDbRequest =
     { TargetCardId: Guid option
       ContentFront: string array
@@ -81,6 +111,11 @@ type SavePlantCardResult =
     | PlantNotFoundOrAccessDenied
     | CardNotFoundOrAccessDenied
     | Saved of PlantCardDbDto
+
+type LoadStudySessionResult =
+    | PlantNotFoundOrAccessDenied
+    | AlreadyCompletedToday
+    | Loaded of LoadStudySessionDbDto
 
 type PlantsRepository() =
 
@@ -304,7 +339,7 @@ type PlantsRepository() =
                 match ownedDeckIdOpt with
                 | None ->
                     do! tx.RollbackAsync()
-                    return Ok PlantNotFoundOrAccessDenied
+                    return Ok SavePlantCardResult.PlantNotFoundOrAccessDenied
 
                 | Some deckId ->
                     match req.TargetCardId with
@@ -350,7 +385,7 @@ type PlantsRepository() =
 
                             if deckRows <> 1 then
                                 do! tx.RollbackAsync()
-                                return Error "Deck timestamp update failed."
+                                return Error "Deck timestamp update failed"
                             else
                                 do! tx.CommitAsync()
                                 return Ok(Saved savedCard)
@@ -405,4 +440,101 @@ type PlantsRepository() =
 
             with ex ->
                 return Error $"Saving plant card failed: {ex.Message}"
+        }
+
+    member _.GetStudySessionForOwner
+        (conn: NpgsqlConnection)
+        (ownerId: AppUserId)
+        (plantId: PlantId)
+        (today: DateOnly)
+        (now: DateTimeOffset)
+        : Task<LoadStudySessionResult> =
+        task {
+            let sql =
+                """
+                    SELECT
+                        p."Id",
+                        p."Name",
+                        d."Id" AS "DeckId",
+                        d."LastTimeEdited" AS "DeckLastTimeEdited",
+                        p."CreationDate",
+                        p."PotTypeName",
+                        p."PlantSpecieName",
+                        p."LastCompletedStudyDay"
+                    FROM plant p
+                    INNER JOIN deck d ON d."Id" = p."DeckId"
+                    WHERE p."Id" = @PlantId AND p."OwnerId" = @OwnerId;
+
+                    SELECT
+                        c."Id",
+                        c."ContentFront",
+                        c."ContentBack",
+                        c."StudyStateType",
+                        c."StudyDueAt",
+                        c."StudyLearningStepIndex",
+                        c."StudyStartedAt",
+                        c."StudyReviewInterval",
+                        c."StudyLastReviewedAt",
+                        c."LastTimeEdited",
+                        c."CreationTime"
+                    FROM card c
+                    INNER JOIN plant p ON p."DeckId" = c."DeckId"
+                    WHERE p."Id" = @PlantId
+                      AND p."OwnerId" = @OwnerId
+                      AND c."StudyStateType" IS NOT NULL
+                      AND c."StudyDueAt" <= @Now
+                    ORDER BY c."StudyDueAt" ASC, c."CreationTime" ASC, c."Id" ASC
+                    LIMIT @ReviewCardsPerDay;
+
+                    SELECT
+                        c."Id",
+                        c."ContentFront",
+                        c."ContentBack",
+                        c."StudyStateType",
+                        c."StudyDueAt",
+                        c."StudyLearningStepIndex",
+                        c."StudyStartedAt",
+                        c."StudyReviewInterval",
+                        c."StudyLastReviewedAt",
+                        c."LastTimeEdited",
+                        c."CreationTime"
+                    FROM card c
+                    INNER JOIN plant p ON p."DeckId" = c."DeckId"
+                    WHERE p."Id" = @PlantId
+                      AND p."OwnerId" = @OwnerId
+                      AND c."StudyStateType" IS NULL
+                    ORDER BY c."CreationTime" ASC, c."Id" ASC
+                    LIMIT @NewCardsPerDay;
+                """
+
+            let args =
+                {| PlantId = PlantId.value plantId
+                   OwnerId = AppUserId.value ownerId
+                   Now = now
+                   ReviewCardsPerDay = StudyConstants.ReviewCardsPerDay
+                   NewCardsPerDay = StudyConstants.NewCardsPerDay |}
+
+            let! grid = conn.QueryMultipleAsync(sql, args)
+            use grid = grid
+
+            let! plantDto = grid.ReadSingleOrDefaultAsync<StudyPlantDetailsDbDto>()
+
+            match plantDto |> Option.ofObj with
+            | None -> return LoadStudySessionResult.PlantNotFoundOrAccessDenied
+
+            | Some plant when
+                plant.LastCompletedStudyDay.HasValue
+                && plant.LastCompletedStudyDay.Value = today
+                ->
+                return LoadStudySessionResult.AlreadyCompletedToday
+
+            | Some plant ->
+                let! reviewCards = grid.ReadAsync<StudyPlantCardDbDto>()
+                let! newCards = grid.ReadAsync<StudyPlantCardDbDto>()
+
+                return
+                    LoadStudySessionResult.Loaded
+                        { Plant = plant
+                          ReviewCards = reviewCards |> Seq.toList
+                          NewCards = newCards |> Seq.toList }
         }

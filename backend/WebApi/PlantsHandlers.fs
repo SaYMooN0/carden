@@ -15,7 +15,6 @@ open WebApi.Requests
 open WebApi.Responses
 open WebApi.Validation
 
-
 let private tokenCookieName = "user_tkn"
 
 let private getAuthCookie (ctx: HttpContext) : Result<JwtToken, unit> =
@@ -76,6 +75,63 @@ let private tryGetQueryValue (ctx: HttpContext) (key: string) : string option =
             Some valueStr
     | _ -> None
 
+let private toIsoString (value: DateTimeOffset) = value.ToString("O")
+
+let private nullableDateTimeOffsetToIsoString (value: Nullable<DateTimeOffset>) =
+    if value.HasValue then value.Value.ToString("O") else null
+
+let private nullableDateOnlyToString (value: Nullable<DateOnly>) =
+    if value.HasValue then
+        value.Value.ToString("yyyy-MM-dd")
+    else
+        null
+
+let private studyCardDbDtoToResponse (card: StudyPlantCardDbDto) =
+    {| Id = card.Id
+       ContentFront = card.ContentFront
+       ContentBack = card.ContentBack
+       StudyStateType = card.StudyStateType
+       StudyDueAt = nullableDateTimeOffsetToIsoString card.StudyDueAt
+       StudyLearningStepIndex =
+        if card.StudyLearningStepIndex.HasValue then
+            Nullable(card.StudyLearningStepIndex.Value)
+        else
+            Nullable()
+       StudyStartedAt = nullableDateTimeOffsetToIsoString card.StudyStartedAt
+       StudyReviewIntervalSeconds =
+        if card.StudyReviewInterval.HasValue then
+            Nullable(int64 card.StudyReviewInterval.Value.TotalSeconds)
+        else
+            Nullable()
+       StudyLastReviewedAt = nullableDateTimeOffsetToIsoString card.StudyLastReviewedAt
+       LastTimeEdited = toIsoString card.LastTimeEdited
+       CreationTime = toIsoString card.CreationTime |}
+
+let private studyLoadResponse (now: DateTimeOffset) (dto: LoadStudySessionDbDto) =
+    {| Plant =
+        {| Id = dto.Plant.Id
+           Name = dto.Plant.Name
+           DeckId = dto.Plant.DeckId
+           DeckLastTimeEdited = toIsoString dto.Plant.DeckLastTimeEdited
+           CreationDate = toIsoString dto.Plant.CreationDate
+           PotTypeName = dto.Plant.PotTypeName
+           PlantSpecieName = dto.Plant.PlantSpecieName
+           LastCompletedStudyDay = nullableDateOnlyToString dto.Plant.LastCompletedStudyDay |}
+       ServerNow = toIsoString now
+       StudySettings =
+        {| NewCardsPerDay = StudyConstants.NewCardsPerDay
+           ReviewCardsPerDay = StudyConstants.ReviewCardsPerDay
+           LearningAgainDelaySeconds = int64 StudyConstants.LearningAgainDelay.TotalSeconds
+           LearningHardDelaySeconds = int64 StudyConstants.LearningHardDelay.TotalSeconds
+           LearningGoodDelaySeconds = int64 StudyConstants.LearningGoodDelay.TotalSeconds
+           LearningEasyIntervalSeconds = int64 StudyConstants.LearningEasyInterval.TotalSeconds
+           ReviewAgainDelaySeconds = int64 StudyConstants.ReviewAgainDelay.TotalSeconds
+           ReviewHardIntervalMultiplier = StudyConstants.ReviewHardIntervalMultiplier
+           ReviewGoodIntervalMultiplier = StudyConstants.ReviewGoodIntervalMultiplier
+           ReviewEasyIntervalMultiplier = StudyConstants.ReviewEasyIntervalMultiplier |}
+       ReviewCards = dto.ReviewCards |> List.map studyCardDbDtoToResponse
+       NewCards = dto.NewCards |> List.map studyCardDbDtoToResponse |}
+
 let handleLoadMyPlants: HttpHandler =
     withAuthenticatedUser (fun userId next ctx ->
         task {
@@ -112,6 +168,37 @@ let handleLoadMyPlant (plantId: Guid) : HttpHandler =
             | Some plant ->
                 let response = PlantResponse.fromDbDto plant
                 return! constructSuccess response HttpStatusCode.OK next ctx
+        })
+
+let handleLoadStudy (plantId: Guid) : HttpHandler =
+    withAuthenticatedUser (fun userId next ctx ->
+        task {
+            use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
+            let repo = ctx.GetService<PlantsRepository>()
+            let now = DateTimeOffset.UtcNow
+            let today = DateOnly.FromDateTime(now.UtcDateTime)
+
+            let! result = repo.GetStudySessionForOwner dbConn userId (PlantId plantId) today now
+
+            match result with
+            | LoadStudySessionResult.PlantNotFoundOrAccessDenied ->
+                return!
+                    constructFailure
+                        HttpStatusCode.NotFound
+                        [ BackendResponseErr.create "Plant not found or access denied." ]
+                        next
+                        ctx
+
+            | LoadStudySessionResult.AlreadyCompletedToday ->
+                return!
+                    constructFailure
+                        HttpStatusCode.Conflict
+                        [ BackendResponseErr.create "Study session for this plant has already been completed today." ]
+                        next
+                        ctx
+
+            | LoadStudySessionResult.Loaded dto ->
+                return! constructSuccess (studyLoadResponse now dto) HttpStatusCode.OK next ctx
         })
 
 let handleCreatePlant: HttpHandler =
@@ -197,6 +284,7 @@ let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
     choose
         [ GET >=> route "/load-all" >=> handleLoadMyPlants
           POST >=> route "/create" >=> handleCreatePlant
+          GET >=> routef "/%O/load-study" (fun plantId -> handleLoadStudy plantId)
           GET >=> routef "/%O/load" (fun plantId -> handleLoadMyPlant plantId)
           GET
           >=> routef "/%O/cards/%O/load" (fun (plantId, cardId) -> handleReloadPlantCard plantId cardId)
