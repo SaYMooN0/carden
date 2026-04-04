@@ -6,6 +6,7 @@ open Domain.CardContentItem
 open Domain.Email
 open Domain.PlantName
 open Domain.Plants
+open Domain.StudySettings.StudySettings
 open Domain.Users
 open WebApi.BackendResponse
 open WebApi.RepositoriesShared
@@ -276,3 +277,101 @@ module RawUpsertPlantCardRequest =
               | Error errs -> yield! errs
               | _ -> () ]
             |> Error
+
+type RawStudyAnswerDifficulty = string
+
+
+type RawCompleteStudySessionAnswerEventRequest =
+    { CardId: string
+      Difficulty: RawStudyAnswerDifficulty
+      ShownAtOffsetMs: int64
+      AnsweredAtOffsetMs: int64 }
+
+type CompleteStudySessionAnswerEventRequest =
+    { CardId: Guid
+      Difficulty: StudyAnswerDifficulty
+      ShownAtOffsetMs: int64
+      AnsweredAtOffsetMs: int64 }
+
+type RawCompleteStudySessionRequest =
+    { SessionStartedAt: string
+      AnswerEvents: RawCompleteStudySessionAnswerEventRequest list }
+
+type CompleteStudySessionRequest =
+    { SessionStartedAt: DateTimeOffset
+      AnswerEvents: CompleteStudySessionAnswerEventRequest list }
+
+module StudyAnswerDifficulty =
+    let parse (raw: string) =
+        match raw with
+        | "Again" -> Ok Again
+        | "Hard" -> Ok Hard
+        | "Good" -> Ok Good
+        | "Easy" -> Ok Easy
+        | _ -> Error [ BackendResponseErr.create "Invalid difficulty value." ]
+
+module RawCompleteStudySessionRequest =
+    let private parseAnswerEvent
+        (raw: RawCompleteStudySessionAnswerEventRequest)
+        : Result<CompleteStudySessionAnswerEventRequest, BackendResponseErr list> =
+        let errs = ResizeArray<BackendResponseErr>()
+
+        let cardId =
+            match Guid.TryParse raw.CardId with
+            | true, value -> Some value
+            | false, _ ->
+                errs.Add(BackendResponseErr.create "Invalid cardId format.")
+                None
+
+        let difficulty =
+            match StudyAnswerDifficulty.parse raw.Difficulty with
+            | Ok value -> Some value
+            | Error difficultyErrs ->
+                for err in difficultyErrs do
+                    errs.Add(err)
+
+                None
+
+        if raw.ShownAtOffsetMs < 0L then
+            errs.Add(BackendResponseErr.create "shownAtOffsetMs must be greater than or equal to 0.")
+
+        if raw.AnsweredAtOffsetMs < raw.ShownAtOffsetMs then
+            errs.Add(BackendResponseErr.create "answeredAtOffsetMs must be greater than or equal to shownAtOffsetMs.")
+
+        match cardId, difficulty with
+        | Some parsedCardId, Some parsedDifficulty when errs.Count = 0 ->
+            Ok
+                { CardId = parsedCardId
+                  Difficulty = parsedDifficulty
+                  ShownAtOffsetMs = raw.ShownAtOffsetMs
+                  AnsweredAtOffsetMs = raw.AnsweredAtOffsetMs }
+        | _ -> Error(List.ofSeq errs)
+
+    let parse (raw: RawCompleteStudySessionRequest) : Result<CompleteStudySessionRequest, BackendResponseErr list> =
+        let sessionStartedAt =
+            match DateTimeOffset.TryParse raw.SessionStartedAt with
+            | true, value -> Ok value
+            | false, _ -> Error [ BackendResponseErr.create "Invalid sessionStartedAt format." ]
+
+        let parsedEvents = raw.AnswerEvents |> List.map parseAnswerEvent
+
+        let eventErrs =
+            parsedEvents
+            |> List.choose (function
+                | Ok _ -> None
+                | Error errs -> Some errs)
+            |> List.concat
+
+        match sessionStartedAt with
+        | Error errs -> Error(errs @ eventErrs)
+        | Ok parsedSessionStartedAt ->
+            if not eventErrs.IsEmpty then
+                Error eventErrs
+            else
+                Ok
+                    { SessionStartedAt = parsedSessionStartedAt
+                      AnswerEvents =
+                        parsedEvents
+                        |> List.choose (function
+                            | Ok value -> Some value
+                            | Error _ -> None) }

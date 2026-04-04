@@ -30,3 +30,9 @@ module StudySettings =
 
     [<Literal>]
     let ReviewCardsPerDay = 100
+
+    type StudyAnswerDifficulty =
+        | Again
+        | Hard
+        | Good
+        | Easy

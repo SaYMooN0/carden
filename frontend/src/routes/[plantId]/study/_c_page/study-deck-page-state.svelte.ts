@@ -1,57 +1,14 @@
-import type { StudyDeckLoadResponse, StudyLoadedCardResponse, StudySettings } from "../shared_types";
+import { Backend, RJO } from '$lib/ts/backend';
+import type {
+    StudyDeckLoadResponse,
+    StudyLoadedCardResponse,
+    StudySettings
+} from "../shared_types";
 
-export type CurrentCardSide = 'Front' | 'Back';
-export type CardDifficulty = 'Again' | 'Hard' | 'Good' | 'Easy';
 
-
-
-export type LocalCardStudyState =
-    | { kind: 'New' }
-    | {
-        kind: 'Learning';
-        dueAtMs: number;
-        learningStepIndex: number;
-        startedAtMs: number;
-    }
-    | {
-        kind: 'Review';
-        dueAtMs: number;
-        reviewIntervalSeconds: number;
-        lastReviewedAtMs: number;
-    };
-
-export type StudyCard = {
-    id: string;
-    contentFront: string[];
-    contentBack: string[];
-    creationTime: string;
-    lastTimeEdited: string;
-    studyState: LocalCardStudyState;
-};
-
-export type StudyAnswerEvent = {
-    cardId: string;
-    difficulty: CardDifficulty;
-    shownAtOffsetMs: number;
-    answeredAtOffsetMs: number;
-};
-
-export type DeckStudyState =
-    | {
-        state: 'Card';
-        currentSide: CurrentCardSide,
-        currentCard: StudyCard
-    }
-    | {
-        state: 'Finished';
-        newCardsLeft: number;
-        reviewCardsLeft: number;
-        totalAnswersCount: number;
-        uniqueCardsSeenCount: number;
-    };
 
 export class StudyDeckPageState {
-    #plant: { id: string, name: string } = $state()!;
+    #plant: { id: string; name: string } = $state()!;
     #deckStudyState: DeckStudyState = $state()!;
     #onError: (msg: string) => void = $state()!;
     #settings: StudySettings = $state()!;
@@ -64,6 +21,8 @@ export class StudyDeckPageState {
     #sessionStartedClientMs = $state(0);
     #sessionStartedServerMs = $state(0);
     #currentCardShownAtClientMs = $state(0);
+
+    #completionSyncStarted = $state(false);
 
     private initialNewCardIds: string[] = [];
     private initialReviewCardIds: string[] = [];
@@ -112,9 +71,15 @@ export class StudyDeckPageState {
         return this.#answerEvents;
     }
 
-    get completionPayload() {
+    get completionPayload(): CompleteStudySessionRequest {
         return {
-            answerEvents: this.#answerEvents.map((event) => ({ ...event }))
+            sessionStartedAt: new Date(this.#sessionStartedServerMs).toISOString(),
+            answerEvents: this.#answerEvents.map((event) => ({
+                cardId: event.cardId,
+                difficulty: event.difficulty,
+                shownAtOffsetMs: event.shownAtOffsetMs,
+                answeredAtOffsetMs: event.answeredAtOffsetMs
+            }))
         };
     }
 
@@ -138,6 +103,7 @@ export class StudyDeckPageState {
     });
 
     flipCurrentCardToBack() {
+        console.log(this.#deckStudyState);
         if (this.#deckStudyState.state !== 'Card') {
             this.#onError('No card is currently selected.');
             return;
@@ -165,7 +131,6 @@ export class StudyDeckPageState {
         }
 
         const currentCard = this.#deckStudyState.currentCard;
-
         const answeredAtClientMs = Date.now();
 
         this.#answerEvents.push({
@@ -193,6 +158,16 @@ export class StudyDeckPageState {
         this.goToNextCardOrFinish();
     }
 
+    async retryCompletionSync() {
+        if (this.#deckStudyState.state !== 'Finished') {
+            this.#onError('Study session is not finished yet.');
+            return;
+        }
+
+        this.#completionSyncStarted = false;
+        await this.syncCompletedSessionToBackend();
+    }
+
     private normalizeCard(card: StudyLoadedCardResponse): StudyCard {
         return {
             id: card.id,
@@ -218,7 +193,8 @@ export class StudyDeckPageState {
             return {
                 kind: 'Review',
                 dueAtMs: card.studyDueAt ? Date.parse(card.studyDueAt) : this.#sessionStartedServerMs,
-                reviewIntervalSeconds: card.studyReviewIntervalSeconds ?? this.#settings.learningEasyIntervalSeconds,
+                reviewIntervalSeconds:
+                    card.studyReviewIntervalSeconds ?? this.#settings.learningEasyIntervalSeconds,
                 lastReviewedAtMs: card.studyLastReviewedAt
                     ? Date.parse(card.studyLastReviewedAt)
                     : this.#sessionStartedServerMs
@@ -247,8 +223,11 @@ export class StudyDeckPageState {
             newCardsLeft: this.countRemainingCardsByIds(this.initialNewCardIds),
             reviewCardsLeft: this.countRemainingCardsByIds(this.initialReviewCardIds),
             totalAnswersCount: this.#answerEvents.length,
-            uniqueCardsSeenCount: new Set(this.#answerEvents.map((event) => event.cardId)).size
+            uniqueCardsSeenCount: new Set(this.#answerEvents.map((event) => event.cardId)).size,
+            completionSyncState: { state: 'Idle' }
         };
+
+        void this.syncCompletedSessionToBackend();
     }
 
     private setCurrentCard(cardId: string) {
@@ -264,6 +243,51 @@ export class StudyDeckPageState {
         this.#delayedQueue = this.#delayedQueue.filter((item) => item.cardId !== cardId);
         this.#delayedQueue.push({ cardId, dueAtMs });
         this.#delayedQueue.sort((a, b) => a.dueAtMs - b.dueAtMs);
+    }
+
+    private async syncCompletedSessionToBackend() {
+        if (this.#deckStudyState.state !== 'Finished') {
+            return;
+        }
+
+        if (this.#completionSyncStarted) {
+            return;
+        }
+
+        if (this.#answerEvents.length === 0) {
+            this.setCompletionSyncState({ state: 'Saved' });
+            return;
+        }
+
+        this.#completionSyncStarted = true;
+        this.setCompletionSyncState({ state: 'Saving' });
+
+        const response = await Backend.fetchJsonResponse<{
+            completedStudySessionsCount: number;
+        }>(
+            `/plants/${this.#plant.id}/study/complete`,
+            RJO.POST(this.completionPayload)
+        );
+
+        if (!response.isSuccess) {
+            const msg = response.errs[0]?.msg ?? 'Failed to save completed study session.';
+            this.setCompletionSyncState({ state: 'Failed', msg });
+            this.#onError(msg);
+            return;
+        }
+
+        this.setCompletionSyncState({ state: 'Saved' });
+    }
+
+    private setCompletionSyncState(syncState: StudySessionSyncState) {
+        if (this.#deckStudyState.state !== 'Finished') {
+            return;
+        }
+
+        this.#deckStudyState = {
+            ...this.#deckStudyState,
+            completionSyncState: syncState
+        };
     }
 
     private calculateNextStudyState(
@@ -425,10 +449,77 @@ export class StudyDeckPageState {
     }
 
     private countRemainingCardsByIds(ids: string[]): number {
-        const currentCardId = this.#deckStudyState.state === 'Card' ? this.#deckStudyState.currentCard.id : null;
+        const currentCardId =
+            this.#deckStudyState.state === 'Card' ? this.#deckStudyState.currentCard.id : null;
+
         const available = new Set(this.#availableQueue);
         const delayed = new Set(this.#delayedQueue.map((item) => item.cardId));
 
-        return ids.filter((id) => id === currentCardId || available.has(id) || delayed.has(id)).length;
+        return ids.filter((id) => id === currentCardId || available.has(id) || delayed.has(id))
+            .length;
     }
 }
+export type CurrentCardSide = 'Front' | 'Back';
+export type CardDifficulty = 'Again' | 'Hard' | 'Good' | 'Easy';
+
+export type LocalCardStudyState =
+    | { kind: 'New' }
+    | {
+        kind: 'Learning';
+        dueAtMs: number;
+        learningStepIndex: number;
+        startedAtMs: number;
+    }
+    | {
+        kind: 'Review';
+        dueAtMs: number;
+        reviewIntervalSeconds: number;
+        lastReviewedAtMs: number;
+    };
+
+export type StudyCard = {
+    id: string;
+    contentFront: string[];
+    contentBack: string[];
+    creationTime: string;
+    lastTimeEdited: string;
+    studyState: LocalCardStudyState;
+};
+
+export type StudyAnswerEvent = {
+    cardId: string;
+    difficulty: CardDifficulty;
+    shownAtOffsetMs: number;
+    answeredAtOffsetMs: number;
+};
+
+export type StudySessionSyncState =
+    | { state: 'Idle' }
+    | { state: 'Saving' }
+    | { state: 'Saved' }
+    | { state: 'Failed'; msg: string };
+
+export type DeckStudyState =
+    | {
+        state: 'Card';
+        currentSide: CurrentCardSide;
+        currentCard: StudyCard;
+    }
+    | {
+        state: 'Finished';
+        newCardsLeft: number;
+        reviewCardsLeft: number;
+        totalAnswersCount: number;
+        uniqueCardsSeenCount: number;
+        completionSyncState: StudySessionSyncState;
+    };
+
+type CompleteStudySessionRequest = {
+    sessionStartedAt: string;
+    answerEvents: {
+        cardId: string;
+        difficulty: CardDifficulty;
+        shownAtOffsetMs: number;
+        answeredAtOffsetMs: number;
+    }[];
+};

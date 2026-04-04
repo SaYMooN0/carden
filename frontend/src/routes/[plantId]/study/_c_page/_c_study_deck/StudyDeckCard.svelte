@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { toast } from 'svelte-sonner';
+
 	interface Props {
 		frontTexts: string[];
 		backTexts: string[];

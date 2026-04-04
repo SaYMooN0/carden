@@ -4,6 +4,8 @@ open System
 open System.Threading.Tasks
 open Dapper
 open Domain.PlantName
+open Domain.StudySettings
+open Domain.StudySettings.StudySettings
 open Npgsql
 open Domain.Plants
 open WebApi.RepositoriesShared
@@ -125,6 +127,142 @@ type LoadStudySessionResult =
     | PlantNotFoundOrAccessDenied
     | NotEnoughCardsToStudy of cardsCount: int * plantId: PlantId
     | Loaded of LoadStudySessionDbDto
+
+type PersistedCardStudyState =
+    | New
+    | Learning of dueAt: DateTimeOffset * learningStepIndex: int * startedAt: DateTimeOffset
+    | Review of dueAt: DateTimeOffset * reviewIntervalSeconds: int * lastReviewedAt: DateTimeOffset
+
+type StudyCardStateDbDto =
+    { Id: Guid
+      StudyStateType: string option
+      StudyDueAt: DateTimeOffset option
+      StudyLearningStepIndex: int option
+      StudyStartedAt: DateTimeOffset option
+      StudyReviewIntervalSeconds: int option
+      StudyLastReviewedAt: DateTimeOffset option }
+
+type StudyCardStateUpdateDbDto =
+    { Id: Guid
+      StudyStateType: string
+      StudyDueAt: DateTimeOffset option
+      StudyLearningStepIndex: int option
+      StudyStartedAt: DateTimeOffset option
+      StudyReviewIntervalSeconds: int option
+      StudyLastReviewedAt: DateTimeOffset option }
+
+module PersistedCardStudyState =
+    let fromDb (sessionStartedAt: DateTimeOffset) (dto: StudyCardStateDbDto) =
+        match dto.StudyStateType with
+        | Some "Learning" ->
+            Learning(
+                dto.StudyDueAt |> Option.defaultValue sessionStartedAt,
+                dto.StudyLearningStepIndex |> Option.defaultValue 0,
+                dto.StudyStartedAt |> Option.defaultValue sessionStartedAt
+            )
+        | Some "Review" ->
+            Review(
+                dto.StudyDueAt |> Option.defaultValue sessionStartedAt,
+                dto.StudyReviewIntervalSeconds
+                |> Option.defaultValue StudySettings.LearningEasyIntervalSeconds,
+                dto.StudyLastReviewedAt |> Option.defaultValue sessionStartedAt
+            )
+        | _ -> New
+
+    let toDbDto (cardId: Guid) (state: PersistedCardStudyState) =
+        match state with
+        | New ->
+            { Id = cardId
+              StudyStateType = "New"
+              StudyDueAt = None
+              StudyLearningStepIndex = None
+              StudyStartedAt = None
+              StudyReviewIntervalSeconds = None
+              StudyLastReviewedAt = None }
+
+        | Learning(dueAt, learningStepIndex, startedAt) ->
+            { Id = cardId
+              StudyStateType = "Learning"
+              StudyDueAt = Some dueAt
+              StudyLearningStepIndex = Some learningStepIndex
+              StudyStartedAt = Some startedAt
+              StudyReviewIntervalSeconds = None
+              StudyLastReviewedAt = None }
+
+        | Review(dueAt, reviewIntervalSeconds, lastReviewedAt) ->
+            { Id = cardId
+              StudyStateType = "Review"
+              StudyDueAt = Some dueAt
+              StudyLearningStepIndex = None
+              StudyStartedAt = None
+              StudyReviewIntervalSeconds = Some reviewIntervalSeconds
+              StudyLastReviewedAt = Some lastReviewedAt }
+
+module StudyStateTransitions =
+    let private multiplyIntervalSeconds (currentIntervalSeconds: int) (multiplier: float) =
+        max 1 (int (Math.Round(float currentIntervalSeconds * multiplier)))
+
+    let calculateNextState
+        (previousState: PersistedCardStudyState)
+        (difficulty: StudyAnswerDifficulty)
+        (answeredAt: DateTimeOffset)
+        : PersistedCardStudyState =
+        match previousState with
+        | New ->
+            match difficulty with
+            | Again -> Learning(answeredAt.AddSeconds(float LearningAgainDelaySeconds), 0, answeredAt)
+            | Hard -> Learning(answeredAt.AddSeconds(float LearningHardDelaySeconds), 1, answeredAt)
+            | Good -> Learning(answeredAt.AddSeconds(float LearningGoodDelaySeconds), 2, answeredAt)
+            | Easy ->
+                Review(
+                    answeredAt.AddSeconds(float LearningEasyIntervalSeconds),
+                    LearningEasyIntervalSeconds,
+                    answeredAt
+                )
+
+        | Learning(_, previousLearningStepIndex, startedAt) ->
+            match difficulty with
+            | Again -> Learning(answeredAt.AddSeconds(float LearningAgainDelaySeconds), 0, startedAt)
+            | Hard -> Learning(answeredAt.AddSeconds(float LearningHardDelaySeconds), 1, startedAt)
+            | Good ->
+                Learning(
+                    answeredAt.AddSeconds(float LearningGoodDelaySeconds),
+                    max previousLearningStepIndex 2,
+                    startedAt
+                )
+            | Easy ->
+                Review(
+                    answeredAt.AddSeconds(float LearningEasyIntervalSeconds),
+                    LearningEasyIntervalSeconds,
+                    answeredAt
+                )
+
+        | Review(_, previousIntervalSeconds, _) ->
+            match difficulty with
+            | Again -> Learning(answeredAt.AddSeconds(float ReviewAgainDelaySeconds), 0, answeredAt)
+            | Hard ->
+                let nextInterval =
+                    multiplyIntervalSeconds previousIntervalSeconds ReviewHardIntervalMultiplier
+
+                Review(answeredAt.AddSeconds(float nextInterval), nextInterval, answeredAt)
+
+            | Good ->
+                let nextInterval =
+                    multiplyIntervalSeconds previousIntervalSeconds ReviewGoodIntervalMultiplier
+
+                Review(answeredAt.AddSeconds(float nextInterval), nextInterval, answeredAt)
+
+            | Easy ->
+                let nextInterval =
+                    multiplyIntervalSeconds previousIntervalSeconds StudySettings.ReviewEasyIntervalMultiplier
+
+                Review(answeredAt.AddSeconds(float nextInterval), nextInterval, answeredAt)
+
+
+
+type GetStudyCardsForCompletionResult =
+    | PlantNotFoundOrAccessDenied
+    | Success of StudyCardStateDbDto list
 
 type PlantsRepository() =
 
@@ -606,4 +744,128 @@ type PlantsRepository() =
 
             with ex ->
                 return Error $"Deleting plant card failed: {ex.Message}"
+        }
+
+
+    member _.GetStudyCardsForCompletionForUpdate
+        (conn: NpgsqlConnection)
+        (tx: NpgsqlTransaction)
+        (ownerId: AppUserId)
+        (plantId: PlantId)
+        (cardIds: Guid list)
+        : Task<Result<GetStudyCardsForCompletionResult, string>> =
+        task {
+            try
+                let plantExistsSql =
+                    """
+                    SELECT COUNT(1)
+                    FROM plant p
+                    WHERE p."Id" = @PlantId
+                      AND p."OwnerId" = @OwnerId
+                    """
+
+                let! plantExists =
+                    conn.ExecuteScalarAsync<int>(
+                        plantExistsSql,
+                        {| PlantId = PlantId.value plantId
+                           OwnerId = AppUserId.value ownerId |},
+                        tx
+                    )
+
+                if plantExists = 0 then
+                    return Ok PlantNotFoundOrAccessDenied
+                else
+                    let loadCardsSql =
+                        """
+                        SELECT
+                            c."Id",
+                            c."StudyStateType",
+                            c."StudyDueAt",
+                            c."StudyLearningStepIndex",
+                            c."StudyStartedAt",
+                            c."StudyReviewIntervalSeconds",
+                            c."StudyLastReviewedAt"
+                        FROM plant p
+                        INNER JOIN deck d ON d."Id" = p."DeckId"
+                        INNER JOIN card c ON c."DeckId" = d."Id"
+                        WHERE p."Id" = @PlantId
+                          AND p."OwnerId" = @OwnerId
+                          AND c."Id" = ANY(@CardIds)
+                        FOR UPDATE
+                        """
+
+                    let! cards =
+                        conn.QueryAsync<StudyCardStateDbDto>(
+                            loadCardsSql,
+                            {| PlantId = PlantId.value plantId
+                               OwnerId = AppUserId.value ownerId
+                               CardIds = cardIds |> List.toArray |},
+                            tx
+                        )
+
+                    return Ok(Success(List.ofSeq cards))
+            with ex ->
+                return Error ex.Message
+        }
+
+    member _.SaveCompletedStudySession
+        (conn: NpgsqlConnection)
+        (tx: NpgsqlTransaction)
+        (ownerId: AppUserId)
+        (plantId: PlantId)
+        (updatedCards: StudyCardStateUpdateDbDto list)
+        : Task<Result<int, string>> =
+        task {
+            try
+                let updatedCardsCount = List.length updatedCards
+
+                let incrementPlantSql =
+                    """
+                    UPDATE plant
+                    SET "CompletedStudySessionsCount" = "CompletedStudySessionsCount" + 1
+                    WHERE "Id" = @PlantId
+                      AND "OwnerId" = @OwnerId
+                    RETURNING "CompletedStudySessionsCount"
+                    """
+
+                if updatedCardsCount > 0 then
+                    let updateCardSql =
+                        """
+                        UPDATE card
+                        SET
+                            "StudyStateType" = @StudyStateType,
+                            "StudyDueAt" = @StudyDueAt,
+                            "StudyLearningStepIndex" = @StudyLearningStepIndex,
+                            "StudyStartedAt" = @StudyStartedAt,
+                            "StudyReviewIntervalSeconds" = @StudyReviewIntervalSeconds,
+                            "StudyLastReviewedAt" = @StudyLastReviewedAt
+                        WHERE "Id" = @Id
+                        """
+
+                    let! updatedRows = conn.ExecuteAsync(updateCardSql, updatedCards, tx)
+
+                    if updatedRows <> updatedCardsCount then
+                        return Error "Not all study cards were updated."
+                    else
+                        let! completedStudySessionsCount =
+                            conn.ExecuteScalarAsync<int>(
+                                incrementPlantSql,
+                                {| PlantId = PlantId.value plantId
+                                   OwnerId = AppUserId.value ownerId |},
+                                tx
+                            )
+
+                        return Ok completedStudySessionsCount
+                else
+                    let! completedStudySessionsCount =
+                        conn.ExecuteScalarAsync<int>(
+                            incrementPlantSql,
+                            {| PlantId = PlantId.value plantId
+                               OwnerId = AppUserId.value ownerId |},
+                            tx
+                        )
+
+                    return Ok completedStudySessionsCount
+            with ex ->
+                return Error ex.Message
         }

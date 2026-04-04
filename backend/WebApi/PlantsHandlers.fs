@@ -318,6 +318,122 @@ let handleDeletePlantCard (plantId: Guid) (cardId: Guid) : HttpHandler =
                     constructSuccess {| DeletedCardId = cardId |} HttpStatusCode.OK next ctx
         })
 
+type CompleteStudySessionResponse = { CompletedStudySessionsCount: int }
+
+let handleCompleteStudySession (plantId: Guid) : HttpHandler =
+    withAuthenticatedUser (fun userId next ctx ->
+        withValidatedBody
+            RawCompleteStudySessionRequest.parse
+            (fun request next ctx ->
+                task {
+                    use conn = ctx.GetService<ConnectionFactory>().CreateConnection()
+                    let repo = ctx.GetService<PlantsRepository>()
+
+                    try
+                        do! conn.OpenAsync()
+                        let! tx = conn.BeginTransactionAsync()
+                        use tx = tx
+
+                        let distinctCardIds = request.AnswerEvents |> List.map _.CardId |> List.distinct
+
+                        let! loadResult =
+                            repo.GetStudyCardsForCompletionForUpdate conn tx userId (PlantId plantId) distinctCardIds
+
+                        match loadResult with
+                        | Error err ->
+                            do! tx.RollbackAsync()
+                            return! constructFailure HttpStatusCode.InternalServerError [ create err ] next ctx
+
+                        | Ok PlantNotFoundOrAccessDenied ->
+                            do! tx.RollbackAsync()
+
+                            return!
+                                constructFailure
+                                    HttpStatusCode.NotFound
+                                    [ create "Plant not found or access denied." ]
+                                    next
+                                    ctx
+
+                        | Ok(Success cardsFromDb) ->
+                            let statesByCardId =
+                                cardsFromDb
+                                |> List.map (fun card ->
+                                    card.Id, PersistedCardStudyState.fromDb request.SessionStartedAt card)
+                                |> Map.ofList
+
+                            let answeredCardIds = request.AnswerEvents |> List.map _.CardId |> Set.ofList
+
+                            let missingCardIds =
+                                answeredCardIds
+                                |> Set.filter (fun cardId -> not (statesByCardId.ContainsKey cardId))
+                                |> Set.toList
+
+                            if not missingCardIds.IsEmpty then
+                                do! tx.RollbackAsync()
+
+                                return!
+                                    constructFailure
+                                        HttpStatusCode.BadRequest
+                                        [ create "Some answered cards were not found or do not belong to this plant." ]
+                                        next
+                                        ctx
+                            else
+                                let orderedEvents = request.AnswerEvents |> List.sortBy _.AnsweredAtOffsetMs
+
+                                let finalStates =
+                                    orderedEvents
+                                    |> List.fold
+                                        (fun (states: Map<Guid, PersistedCardStudyState>) event ->
+                                            let previousState = states |> Map.find event.CardId
+
+                                            let answeredAt =
+                                                request.SessionStartedAt.AddMilliseconds(
+                                                    float event.AnsweredAtOffsetMs
+                                                )
+
+                                            let nextState =
+                                                StudyStateTransitions.calculateNextState
+                                                    previousState
+                                                    event.Difficulty
+                                                    answeredAt
+
+                                            states |> Map.add event.CardId nextState)
+                                        statesByCardId
+
+                                let updatedCards =
+                                    finalStates
+                                    |> Map.toList
+                                    |> List.choose (fun (cardId, state) ->
+                                        if answeredCardIds.Contains cardId then
+                                            Some(PersistedCardStudyState.toDbDto cardId state)
+                                        else
+                                            None)
+
+                                let! saveResult =
+                                    repo.SaveCompletedStudySession conn tx userId (PlantId plantId) updatedCards
+
+                                match saveResult with
+                                | Error err ->
+                                    do! tx.RollbackAsync()
+
+                                    return!
+                                        constructFailure HttpStatusCode.InternalServerError [ create err ] next ctx
+
+                                | Ok completedStudySessionsCount ->
+                                    do! tx.CommitAsync()
+
+                                    return!
+                                        constructSuccess
+                                            { CompletedStudySessionsCount = completedStudySessionsCount }
+                                            HttpStatusCode.OK
+                                            next
+                                            ctx
+                    with ex ->
+                        return! constructFailure HttpStatusCode.InternalServerError [ create ex.Message ] next ctx
+                })
+            next
+            ctx)
+
 let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
     choose
         [ GET >=> route "/load-all" >=> handleLoadMyPlants
@@ -328,4 +444,5 @@ let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
           >=> routef "/%O/cards/%O/load" (fun (plantId, cardId) -> handleReloadPlantCard plantId cardId)
           PATCH >=> routef "/%O/save-card" (fun plantId -> handleSavePlantCard plantId)
           DELETE
-          >=> routef "/%O/cards/%O/delete" (fun (plantId, cardId) -> handleDeletePlantCard plantId cardId) ]
+          >=> routef "/%O/cards/%O/delete" (fun (plantId, cardId) -> handleDeletePlantCard plantId cardId)
+          POST >=> routef "/%O/study/complete" handleCompleteStudySession ]

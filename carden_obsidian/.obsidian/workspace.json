@@ -11,14 +11,12 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "db/скрипты созддания табличек.md",
-                "mode": "source",
-                "source": false
+                "file": "pots/Coral/Coral_1.png"
               },
-              "icon": "lucide-file",
-              "title": "скрипты созддания табличек"
+              "icon": "lucide-image",
+              "title": "Coral_1"
             }
           }
         ]
@@ -199,8 +197,9 @@
       "bases:Создать новую базу": false
     }
   },
-  "active": "052780f53b784305",
+  "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "db/скрипты созддания табличек.md",
     "отчеты/Кр2/Карден_Отчет2.docx",
     "отчеты/Кр2/~$рден_Отчет2.docx",
     "отчеты/Кр2",
@@ -216,14 +215,12 @@
     "plants/McPitcherPlant/McPitcherPlant_att_1.png",
     "plants/McPitcherPlant/McPitcherPlant_5.png",
     "plants/McPitcherPlant/McPitcherPlant_4.png",
-    "db/скрипты созддания табличек.md",
     "pots/pvz_pot/pvz.md",
     "plants/McPitcherPlant",
     "plants/Cactus",
     "plants",
     "pots/PVZ",
     "pots/CeramicWithSun",
-    "pots",
     "plants/Сactus/Cactus.md",
     "pots/PotPVZ.md",
     "pots/PotCoral.md",

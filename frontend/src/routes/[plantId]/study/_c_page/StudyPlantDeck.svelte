@@ -11,10 +11,10 @@
 	}
 
 	let { studyDeckLoadResponse }: Props = $props();
-	console.log(studyDeckLoadResponse);
 	let pageState = new StudyDeckPageState(studyDeckLoadResponse, (msg) => toast.error(msg));
 
 	function handleCardFlip() {
+		console.log(pageState.deckStudyState);
 		if (
 			pageState.deckStudyState.state === 'Card' &&
 			pageState.deckStudyState.currentSide === 'Front'
@@ -24,6 +24,7 @@
 	}
 </script>
 
+<h1>dsads1111111111111111111111111</h1>
 <div class="study-page-shell">
 	<StudySessionStats
 		plantName={pageState.plantName}
