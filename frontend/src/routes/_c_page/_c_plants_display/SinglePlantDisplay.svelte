@@ -9,7 +9,7 @@
 	let { plant }: Props = $props();
 
 	let plantSpriteWithAttachments = $derived(
-		SpritesManager.calculatePlantSpritesBasedOnStudyProgress(plant.plantSpecie, 222)
+		SpritesManager.calculatePlantSpritesBasedOnStudyProgress(plant.plantSpecie, plant.studyProgress)
 	);
 
 	let plantsYOffsetPercent = $derived(
@@ -38,6 +38,10 @@
 		/>
 	</div>
 
+	<div class="plant-info">
+		<h2 class="plant-name" title={plant.name}>{plant.name}</h2>
+	</div>
+
 	<div class="actions-container">
 		<a class="action-btn action-btn--primary" href={`/${plant.id}/study`}>Study</a>
 		<a class="action-btn action-btn--secondary" href={`/${plant.id}/edit`}>Edit</a>
@@ -46,62 +50,51 @@
 
 <style>
 	.plant-container {
-		--plant-card-bg: var(--color-sage-hover);
-		--plant-card-border: var(--color-sage);
-		--plant-stage-bg: var(--color-cream);
-		--plant-stage-ring: var(--color-sage);
-		--plant-ground: var(--color-sage);
-		--plant-ground-shadow: var(--color-terracotta-light);
-
 		width: 100%;
-		display: grid;
-		gap: 1rem;
-		padding: 1rem;
-		border: 0.125rem solid var(--plant-card-border);
-		border-radius: 1.5rem;
-		background: var(--plant-card-bg);
-		box-shadow: var(--shadow);
 		max-width: 16rem;
+		display: grid;
+		gap: 0.875rem;
+		padding: 1rem;
+		border: 0.125rem solid var(--color-terracotta);
+		border-radius: 1.5rem;
+		box-shadow: var(--shadow);
 	}
 
 	.sprites-stage {
 		position: relative;
 		width: 100%;
-		border: 0.125rem solid var(--plant-stage-ring);
+		aspect-ratio: 1 / 2.25;
 		border-radius: 1.25rem;
-		background: var(--plant-stage-bg);
 		overflow: hidden;
-		width: 100%;
-		aspect-ratio: 1/2.25;
 	}
 
 	.plant-shell {
 		position: absolute;
+		top: 0;
+		z-index: 2;
 		display: block;
 		width: 100%;
 		aspect-ratio: 1 / 1.25;
-		z-index: 2;
 		pointer-events: none;
-		top: 0;
 		transform: translateY(calc(var(--plants-y-offset-percent) * 1%));
 	}
 
 	.pot-sprite {
 		position: absolute;
 		bottom: 0;
+		z-index: 1;
 		width: 100%;
 		aspect-ratio: 1 / 1;
-		z-index: 1;
 		pointer-events: none;
 	}
 
 	.main-plant-sprite,
 	.plant-attachment,
 	.pot-sprite {
+		width: 100%;
 		object-fit: contain;
 		user-select: none;
 		-webkit-user-drag: none;
-		width: 100%;
 	}
 
 	.plant-shell > img {
@@ -109,9 +102,25 @@
 		inset: 0;
 	}
 
+	.plant-info {
+		display: grid;
+		gap: 0.25rem;
+	}
+
+	.plant-name {
+		overflow: hidden;
+		font-size: 1.125rem;
+		line-height: 1.5rem;
+		font-weight: 700;
+		color: var(--text);
+		text-align: center;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
 	.actions-container {
 		display: grid;
-		grid-template-columns: 1fr;
+		grid-template-columns: 1fr 1fr;
 		gap: 0.75rem;
 	}
 
@@ -121,8 +130,8 @@
 		justify-content: center;
 		min-height: 2.75rem;
 		padding: 0.75rem 1rem;
-		border-radius: 999rem;
 		border: 0.125rem solid transparent;
+		border-radius: 999rem;
 		font-size: 1rem;
 		font-weight: 700;
 		text-decoration: none;
@@ -147,9 +156,9 @@
 	}
 
 	.action-btn--secondary {
+		border-color: var(--color-sage);
 		background: var(--color-cream);
 		color: var(--text);
-		border-color: var(--color-sage);
 	}
 
 	.action-btn--secondary:hover {

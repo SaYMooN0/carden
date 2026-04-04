@@ -71,12 +71,10 @@
 	}
 
 	function removeContentItem(side: CardContentSide, itemId: string) {
-		console.log('remove', side, itemId);
 		card[side] = card[side].filter((item) => item.stringId !== itemId);
 	}
 
 	async function addContentItemAndFocus(side: CardContentSide) {
-		console.log('add');
 		const newItemId = crypto.randomUUID();
 		card[side] = [...card[side], { stringId: newItemId, text: '' }];
 		await tick();
@@ -104,7 +102,6 @@
 				moveContentItem(side, side, event.oldIndex, event.newIndex);
 			},
 			onAdd: (event) => {
-				console.log('addadasd');
 				if (event.oldIndex == null || event.newIndex == null) {
 					return;
 				}
@@ -125,7 +122,6 @@
 		if (!frontListElement || !backListElement) {
 			return;
 		}
-		console.log('mount');
 		const frontSortable = createSortable('contentFront', frontListElement);
 		const backSortable = createSortable('contentBack', backListElement);
 

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import SignInFormPage from './_c_page/SignInFormPage.svelte';
 	import type { PageProps } from './$types';
-	import DefaultErrBlock from '$lib/components/errs/DefaultErrBlock.svelte';
 	import UserPlantsDisplay from './_c_page/UserPlantsDisplay.svelte';
 	import PageLoadErr from '$lib/components/PageLoadErr.svelte';
 

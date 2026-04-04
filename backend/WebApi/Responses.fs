@@ -27,46 +27,46 @@ module CardResponse =
           CreationTime = dto.CreationTime.ToIsoString() }
 
 type PlantPreviewResponse =
-        { Id: Guid
-          Name: string
-          PlantSpecie: string
-          PotType: string
-          CardsCount: int
-          CreationDate: string
-          StudyProgress: int }
+    { Id: Guid
+      Name: string
+      PlantSpecie: string
+      PotType: string
+      CardsCount: int
+      CreationDate: string
+      StudyProgress: uint }
 
-    module PlantPreviewResponse =
-        let fromDomain (item: PlantPreviewDto) : PlantPreviewResponse =
-            { Id = PlantId.value item.Id
-              Name = PlantName.value item.Name
-              PlantSpecie = PlantSpecieName.value item.PlantSpecie
-              PotType = PotTypeName.value item.PotType
-              CardsCount = item.CardsCount
-              CreationDate = item.CreationDate.ToIsoString()
-              StudyProgress = 1 }
+module PlantPreviewResponse =
+    let fromDomain (item: PlantPreviewDto) : PlantPreviewResponse =
+        { Id = PlantId.value item.Id
+          Name = PlantName.value item.Name
+          PlantSpecie = PlantSpecieName.value item.PlantSpecie
+          PotType = PotTypeName.value item.PotType
+          CardsCount = item.CardsCount
+          CreationDate = item.CreationDate.ToIsoString()
+          StudyProgress = item.StudySessionsCompleted + uint 1 }
 
 
-    type DeckResponse =
-        { Id: Guid
-          Cards: CardResponse list
-          LastTimeEdited: string }
+type DeckResponse =
+    { Id: Guid
+      Cards: CardResponse list
+      LastTimeEdited: string }
 
-        type PlantResponse =
-            { Id: Guid
-              Name: string
-              Deck: DeckResponse
-              CreationDate: string
-              PotType: string
-              PlantSpecie: string }
+type PlantResponse =
+    { Id: Guid
+      Name: string
+      Deck: DeckResponse
+      CreationDate: string
+      PotType: string
+      PlantSpecie: string }
 
-    module PlantResponse =
-        let fromDbDto (dto: PlantWithCardsDbDto) : PlantResponse =
-            { Id = dto.Plant.Id
-              Name = dto.Plant.Name
-              Deck =
-                { Id = dto.Plant.DeckId
-                  LastTimeEdited = dto.Plant.DeckLastTimeEdited.ToIsoString()
-                  Cards = dto.Cards |> List.map CardResponse.fromDbDto }
-              CreationDate = dto.Plant.CreationDate.ToIsoString()
-              PotType = dto.Plant.PotTypeName
-              PlantSpecie = dto.Plant.PlantSpecieName }
+module PlantResponse =
+    let fromDbDto (dto: PlantWithCardsDbDto) : PlantResponse =
+        { Id = dto.Plant.Id
+          Name = dto.Plant.Name
+          Deck =
+            { Id = dto.Plant.DeckId
+              LastTimeEdited = dto.Plant.DeckLastTimeEdited.ToIsoString()
+              Cards = dto.Cards |> List.map CardResponse.fromDbDto }
+          CreationDate = dto.Plant.CreationDate.ToIsoString()
+          PotType = dto.Plant.PotTypeName
+          PlantSpecie = dto.Plant.PlantSpecieName }

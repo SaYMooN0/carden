@@ -4,6 +4,7 @@ open System
 open System.Net
 open Domain.CardContentItem
 open Domain.Plants
+open Domain.StudySettings
 open Microsoft.AspNetCore.Http
 open WebApi.AppUsersRepository
 open WebApi.BackendResponse
@@ -140,12 +141,25 @@ let private mapStudyCard (card: StudyPlantCardDbDto) =
        LastTimeEdited = toIsoString card.LastTimeEdited
        CreationTime = toIsoString card.CreationTime |}
 
+let studySettingsResponse =
+    {| learningAgainDelaySeconds = StudySettings.LearningAgainDelaySeconds
+       learningEasyIntervalSeconds = StudySettings.LearningEasyIntervalSeconds
+       learningGoodDelaySeconds = StudySettings.LearningGoodDelaySeconds
+       learningHardDelaySeconds = StudySettings.LearningHardDelaySeconds
+       newCardsPerDay = StudySettings.NewCardsPerDay
+       reviewAgainDelaySeconds = StudySettings.ReviewAgainDelaySeconds
+       reviewCardsPerDay = StudySettings.ReviewCardsPerDay
+       reviewEasyIntervalMultiplier = StudySettings.ReviewEasyIntervalMultiplier
+       reviewGoodIntervalMultiplier = StudySettings.ReviewGoodIntervalMultiplier
+       reviewHardIntervalMultiplier = StudySettings.ReviewHardIntervalMultiplier |}
+
 let studyLoadResponse (now: DateTimeOffset) (dto: LoadStudySessionDbDto) =
-    {| Now = now.ToString("O")
-       Plant = mapStudyPlant dto.Plant
-       ReviewCards = dto.ReviewCards |> List.map mapStudyCard
-       NewCards = dto.NewCards |> List.map mapStudyCard
-       LoadedAtCompletedStudySessionsCount = dto.Plant.CompletedStudySessionsCount |}
+    {| serverNow = now.ToString("O")
+       plant = mapStudyPlant dto.Plant
+       reviewCards = dto.ReviewCards |> List.map mapStudyCard
+       newCards = dto.NewCards |> List.map mapStudyCard
+       studySettings = studySettingsResponse
+       loadedAtCompletedStudySessionsCount = dto.Plant.CompletedStudySessionsCount |}
 
 
 let handleLoadMyPlants: HttpHandler =

@@ -8,6 +8,7 @@
     <ItemGroup>
         <Compile Include="CardContentItem.fs" />
         <Compile Include="PlantName.fs" />
+        <Compile Include="StudySettings.fs" />
         <Compile Include="Plants.fs" />
         <Compile Include="Email.fs" />
         <Compile Include="Users.fs" />

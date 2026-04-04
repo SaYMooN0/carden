@@ -11,6 +11,7 @@
 	}
 
 	let { studyDeckLoadResponse }: Props = $props();
+	console.log(studyDeckLoadResponse);
 	let pageState = new StudyDeckPageState(studyDeckLoadResponse, (msg) => toast.error(msg));
 
 	function handleCardFlip() {
