@@ -7,6 +7,7 @@ open Domain.Plants
 open Microsoft.AspNetCore.Http
 open WebApi.AppUsersRepository
 open WebApi.BackendResponse
+open WebApi.BackendResponse.BackendResponseErr
 open WebApi.JwtToken
 open WebApi.PlantsRepositories
 open Giraffe
@@ -107,30 +108,45 @@ let private studyCardDbDtoToResponse (card: StudyPlantCardDbDto) =
        LastTimeEdited = toIsoString card.LastTimeEdited
        CreationTime = toIsoString card.CreationTime |}
 
-let private studyLoadResponse (now: DateTimeOffset) (dto: LoadStudySessionDbDto) =
-    {| Plant =
-        {| Id = dto.Plant.Id
-           Name = dto.Plant.Name
-           DeckId = dto.Plant.DeckId
-           DeckLastTimeEdited = toIsoString dto.Plant.DeckLastTimeEdited
-           CreationDate = toIsoString dto.Plant.CreationDate
-           PotTypeName = dto.Plant.PotTypeName
-           PlantSpecieName = dto.Plant.PlantSpecieName
-           LastCompletedStudyDay = nullableDateOnlyToString dto.Plant.LastCompletedStudyDay |}
-       ServerNow = toIsoString now
-       StudySettings =
-        {| NewCardsPerDay = StudyConstants.NewCardsPerDay
-           ReviewCardsPerDay = StudyConstants.ReviewCardsPerDay
-           LearningAgainDelaySeconds = int64 StudyConstants.LearningAgainDelay.TotalSeconds
-           LearningHardDelaySeconds = int64 StudyConstants.LearningHardDelay.TotalSeconds
-           LearningGoodDelaySeconds = int64 StudyConstants.LearningGoodDelay.TotalSeconds
-           LearningEasyIntervalSeconds = int64 StudyConstants.LearningEasyInterval.TotalSeconds
-           ReviewAgainDelaySeconds = int64 StudyConstants.ReviewAgainDelay.TotalSeconds
-           ReviewHardIntervalMultiplier = StudyConstants.ReviewHardIntervalMultiplier
-           ReviewGoodIntervalMultiplier = StudyConstants.ReviewGoodIntervalMultiplier
-           ReviewEasyIntervalMultiplier = StudyConstants.ReviewEasyIntervalMultiplier |}
-       ReviewCards = dto.ReviewCards |> List.map studyCardDbDtoToResponse
-       NewCards = dto.NewCards |> List.map studyCardDbDtoToResponse |}
+let private mapStudyPlant (plant: StudyPlantDetailsDbDto) =
+    {| Id = plant.Id
+       Name = plant.Name
+       DeckId = plant.DeckId
+       DeckLastTimeEdited = toIsoString plant.DeckLastTimeEdited
+       CreationDate = toIsoString plant.CreationDate
+       PotTypeName = plant.PotTypeName
+       PlantSpecieName = plant.PlantSpecieName
+       CardsCount = plant.CardsCount
+       CompletedStudySessionsCount = plant.CompletedStudySessionsCount |}
+
+let private mapStudyCard (card: StudyPlantCardDbDto) =
+    {| Id = card.Id
+       ContentFront = card.ContentFront
+       ContentBack = card.ContentBack
+       StudyStateType = card.StudyStateType
+       StudyDueAt = nullableDateTimeOffsetToIsoString card.StudyDueAt
+       StudyLearningStepIndex =
+        if card.StudyLearningStepIndex.HasValue then
+            Nullable(card.StudyLearningStepIndex.Value)
+        else
+            Nullable()
+       StudyStartedAt = nullableDateTimeOffsetToIsoString card.StudyStartedAt
+       StudyReviewIntervalSeconds =
+        if card.StudyReviewInterval.HasValue then
+            Nullable(int64 card.StudyReviewInterval.Value.TotalSeconds)
+        else
+            Nullable()
+       StudyLastReviewedAt = nullableDateTimeOffsetToIsoString card.StudyLastReviewedAt
+       LastTimeEdited = toIsoString card.LastTimeEdited
+       CreationTime = toIsoString card.CreationTime |}
+
+let studyLoadResponse (now: DateTimeOffset) (dto: LoadStudySessionDbDto) =
+    {| Now = now.ToString("O")
+       Plant = mapStudyPlant dto.Plant
+       ReviewCards = dto.ReviewCards |> List.map mapStudyCard
+       NewCards = dto.NewCards |> List.map mapStudyCard
+       LoadedAtCompletedStudySessionsCount = dto.Plant.CompletedStudySessionsCount |}
+
 
 let handleLoadMyPlants: HttpHandler =
     withAuthenticatedUser (fun userId next ctx ->
@@ -176,27 +192,22 @@ let handleLoadStudy (plantId: Guid) : HttpHandler =
             use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
             let repo = ctx.GetService<PlantsRepository>()
             let now = DateTimeOffset.UtcNow
-            let today = DateOnly.FromDateTime(now.UtcDateTime)
 
-            let! result = repo.GetStudySessionForOwner dbConn userId (PlantId plantId) today now
+            let! result = repo.GetStudySessionForOwner dbConn userId (PlantId plantId) now
 
             match result with
             | LoadStudySessionResult.PlantNotFoundOrAccessDenied ->
                 return!
-                    constructFailure
-                        HttpStatusCode.NotFound
-                        [ BackendResponseErr.create "Plant not found or access denied." ]
-                        next
-                        ctx
+                    constructFailure HttpStatusCode.NotFound [ create "Plant not found or access denied." ] next ctx
 
-            | LoadStudySessionResult.AlreadyCompletedToday ->
+            | LoadStudySessionResult.NotEnoughCardsToStudy(cardsCount, plantId) ->
                 return!
                     constructFailure
                         HttpStatusCode.Conflict
-                        [ BackendResponseErr.create "Study session for this plant has already been completed today." ]
+                        [ create "Not enough cards to study."
+                          |> SetExtraData.notEnoughCardsToStudy cardsCount plantId ]
                         next
                         ctx
-
             | LoadStudySessionResult.Loaded dto ->
                 return! constructSuccess (studyLoadResponse now dto) HttpStatusCode.OK next ctx
         })
@@ -216,8 +227,7 @@ let handleCreatePlant: HttpHandler =
                 return!
                     match createRes with
                     | Ok() -> constructSuccess {| Id = PlantId.value plant.Id |} HttpStatusCode.OK next ctx
-                    | Error msg ->
-                        constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+                    | Error msg -> constructFailure HttpStatusCode.InternalServerError [ create msg ] next ctx
             }))
 
 let handleReloadPlantCard (plantId: Guid) (cardId: Guid) : HttpHandler =
@@ -230,12 +240,7 @@ let handleReloadPlantCard (plantId: Guid) (cardId: Guid) : HttpHandler =
 
             match cardOpt with
             | None ->
-                return!
-                    constructFailure
-                        HttpStatusCode.NotFound
-                        [ BackendResponseErr.create "Card not found or access denied." ]
-                        next
-                        ctx
+                return! constructFailure HttpStatusCode.NotFound [ create "Card not found or access denied." ] next ctx
             | Some card -> return! constructSuccess (CardResponse.fromDbDto card) HttpStatusCode.OK next ctx
         })
 
@@ -259,26 +264,45 @@ let handleSavePlantCard (plantId: Guid) : HttpHandler =
 
                 return!
                     match saveRes with
-                    | Error msg ->
-                        constructFailure HttpStatusCode.InternalServerError [ BackendResponseErr.create msg ] next ctx
+                    | Error msg -> constructFailure HttpStatusCode.InternalServerError [ create msg ] next ctx
 
                     | Ok SavePlantCardResult.PlantNotFoundOrAccessDenied ->
                         constructFailure
                             HttpStatusCode.NotFound
-                            [ BackendResponseErr.create "Plant not found or access denied." ]
+                            [ create "Plant not found or access denied." ]
                             next
                             ctx
 
                     | Ok SavePlantCardResult.CardNotFoundOrAccessDenied ->
                         constructFailure
                             HttpStatusCode.NotFound
-                            [ BackendResponseErr.create "Card not found or access denied." ]
+                            [ create "Card not found or access denied." ]
                             next
                             ctx
 
                     | Ok(SavePlantCardResult.Saved savedCard) ->
                         constructSuccess (CardResponse.fromDbDto savedCard) HttpStatusCode.OK next ctx
             }))
+
+let handleDeletePlantCard (plantId: Guid) (cardId: Guid) : HttpHandler =
+    withAuthenticatedUser (fun userId next ctx ->
+        task {
+            use dbConn = ctx.GetService<ConnectionFactory>().CreateConnection()
+            let repo = ctx.GetService<PlantsRepository>()
+            let now = DateTimeOffset.UtcNow
+
+            let! deleteRes = repo.DeleteCardForPlantOwner dbConn userId (PlantId plantId) cardId now
+
+            return!
+                match deleteRes with
+                | Error msg -> constructFailure HttpStatusCode.InternalServerError [ create msg ] next ctx
+                | Ok DeletePlantCardResult.PlantNotFoundOrAccessDenied ->
+                    constructFailure HttpStatusCode.NotFound [ create "Plant not found or access denied." ] next ctx
+                | Ok DeletePlantCardResult.CardNotFoundOrAccessDenied ->
+                    constructFailure HttpStatusCode.NotFound [ create "Card not found or access denied." ] next ctx
+                | Ok DeletePlantCardResult.Deleted ->
+                    constructSuccess {| DeletedCardId = cardId |} HttpStatusCode.OK next ctx
+        })
 
 let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
     choose
@@ -288,4 +312,6 @@ let handlers: HttpFunc -> HttpContext -> HttpFuncResult =
           GET >=> routef "/%O/load" (fun plantId -> handleLoadMyPlant plantId)
           GET
           >=> routef "/%O/cards/%O/load" (fun (plantId, cardId) -> handleReloadPlantCard plantId cardId)
-          PATCH >=> routef "/%O/save-card" (fun plantId -> handleSavePlantCard plantId) ]
+          PATCH >=> routef "/%O/save-card" (fun plantId -> handleSavePlantCard plantId)
+          DELETE
+          >=> routef "/%O/cards/%O/delete" (fun (plantId, cardId) -> handleDeletePlantCard plantId cardId) ]

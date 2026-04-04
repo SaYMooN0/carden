@@ -2,7 +2,9 @@
 
 open System
 open System.Net
+open Domain.Plants
 open Giraffe
+open Microsoft.FSharp.Core
 
 
 type BackendResponseErr =
@@ -34,6 +36,13 @@ module BackendResponseErr =
 
         let serverException (ex: Exception) err : BackendResponseErr =
             setExtraData "SERVER_EXCEPTION" {| Exception = ex.Message |} err
+
+        let notEnoughCardsToStudy (cardsCount: int) (plantId: PlantId) err : BackendResponseErr =
+            setExtraData
+                "NOT_ENOUGH_CARDS_TO_STUDY"
+                {| CardsCount = cardsCount
+                   PlantId = PlantId.value plantId |}
+                err
 
 type BackendFailure = BackendFailure of BackendResponseErr list
 

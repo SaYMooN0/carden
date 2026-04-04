@@ -17,6 +17,9 @@
 	/>
 {:else if !data.isSuccess}
 	<PageLoadErr errs={data.errs} />
+	{#if data.statusCode === 401}
+		<button onclick={() => (window.location.href = '/')}>Go to home page</button>
+	{/if}
 {:else}
 	<EditPlantDeck plant={data.data} />
 {/if}

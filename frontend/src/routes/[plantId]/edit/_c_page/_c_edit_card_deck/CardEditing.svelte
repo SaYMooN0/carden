@@ -512,18 +512,4 @@
 		overflow: auto;
 		padding-right: 0.25rem;
 	}
-
-	.content-column-empty-overlay {
-		position: absolute;
-		inset: 0;
-		display: grid;
-		place-items: center;
-		padding: 1rem;
-		border: 0.125rem dashed var(--color-sage);
-		border-radius: 1rem;
-		background: var(--color-cream);
-		color: var(--color-text-light);
-		text-align: center;
-		pointer-events: none;
-	}
 </style>

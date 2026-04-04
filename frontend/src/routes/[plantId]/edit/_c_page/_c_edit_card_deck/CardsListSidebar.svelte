@@ -8,6 +8,7 @@
 		selectedCardId: string | null;
 		selectCard: (cardId: string) => void;
 		addNewCard: () => void;
+		openConfirmCardDeleteDialog: (cardId: string) => void;
 	}
 	let {
 		plantName,
@@ -15,7 +16,8 @@
 		plantDeckCardsPreview,
 		selectedCardId,
 		selectCard,
-		addNewCard
+		addNewCard,
+		openConfirmCardDeleteDialog
 	}: Props = $props();
 	const subtitleText = $derived(
 		`${cardsCount} ${cardsCount === 1 ? ' card in deck' : ' cards in deck'}`
@@ -31,17 +33,32 @@
 
 	<div class="cards-list">
 		{#each plantDeckCardsPreview as card (card.id)}
-			<button
+			<div
 				class:selected={selectedCardId === card.id}
 				class="card-tile"
-				type="button"
 				onclick={() => selectCard(card.id)}
 			>
 				<div class="card-tile-top-row">
 					<span class="card-tile-index">card {card.number}</span>
-					{#if selectedCardId === card.id}
-						<span class="card-tile-selected-badge">editing</span>
-					{/if}
+					<button
+						type="button"
+						onclick={(e) => {
+							e.stopPropagation();
+							openConfirmCardDeleteDialog(card.id);
+						}}
+						class="delete-button"
+						><svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							color="currentColor"
+							fill="none"
+							stroke="currentColor"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<path d="M20 12L4 12" />
+						</svg></button
+					>
 				</div>
 
 				<div class="card-tile-preview-group">
@@ -53,7 +70,7 @@
 					<div class="card-tile-side-label">back</div>
 					<p class="card-tile-preview">{card.backTextPreview}</p>
 				</div>
-			</button>
+			</div>
 		{:else}
 			<div class="cards-list-empty">
 				<p>There are no cards in this deck yet.</p>
@@ -132,9 +149,32 @@
 	}
 
 	.card-tile:hover {
-		transform: translateY(-0.125rem);
 		border-color: var(--color-terracotta-light);
 		box-shadow: var(--shadow);
+	}
+	.delete-button {
+		width: 1.375rem;
+		height: 1.375rem;
+		border-radius: 0.375rem;
+		padding: 0.125rem;
+		background: var(--red-2);
+		color: var(--primary-foreground);
+		border: none;
+		opacity: 0;
+		transition:
+			transform 0.18s ease,
+			background 0.18s ease,
+			border-color 0.18s ease,
+			opacity 0.18s ease;
+		stroke-width: 2;
+		cursor: pointer;
+	}
+	.card-tile:hover .delete-button {
+		opacity: 1;
+	}
+	.delete-button:hover {
+		opacity: 1;
+		background: var(--red-4);
 	}
 
 	.card-tile.selected {
@@ -156,19 +196,6 @@
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 		color: var(--color-text-light);
-	}
-
-	.card-tile-selected-badge {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		min-block-size: 1.75rem;
-		padding-inline: 0.75rem;
-		border-radius: 999rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		background: var(--color-terracotta);
-		color: var(--primary-foreground);
 	}
 
 	.card-tile-preview-group {

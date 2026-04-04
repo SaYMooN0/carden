@@ -4,6 +4,7 @@
 	import CardEmptyState from './_c_edit_card_deck/CardEmptyState.svelte';
 	import CardLoadingState from './_c_edit_card_deck/CardLoadingState.svelte';
 	import CardsListSidebar from './_c_edit_card_deck/CardsListSidebar.svelte';
+	import ConfirmCardDeleteDialog from './_c_edit_card_deck/ConfirmCardDeleteDialog.svelte';
 	import UnsavedChangesWarningDialog from './_c_edit_card_deck/UnsavedChangesWarningDialog.svelte';
 	import { EditPlantPageState } from './edit-plant-page-state.svelte';
 
@@ -13,6 +14,7 @@
 
 	let { plant }: Props = $props();
 	let unsavedChangesWarningDialog: UnsavedChangesWarningDialog = $state()!;
+	let confirmCardDeleteDialog: ConfirmCardDeleteDialog = $state()!;
 
 	let pageState = new EditPlantPageState(plant, {
 		activate: (cardId) => unsavedChangesWarningDialog.open(cardId)
@@ -35,6 +37,11 @@
 <svelte:head>
 	<title>Edit plant deck</title>
 </svelte:head>
+
+<ConfirmCardDeleteDialog
+	bind:this={confirmCardDeleteDialog}
+	deleteCard={(cardId) => pageState.deleteCard(cardId)}
+/>
 <UnsavedChangesWarningDialog
 	bind:this={unsavedChangesWarningDialog}
 	onStay={() => unsavedChangesWarningDialog.close()}
@@ -53,6 +60,7 @@
 		{selectedCardId}
 		selectCard={(cardId) => pageState.selectCard(cardId, { ignoreUnsavedChangesGuard: false })}
 		addNewCard={() => pageState.addNewCard()}
+		openConfirmCardDeleteDialog={(cardId) => confirmCardDeleteDialog.open(cardId)}
 	/>
 	<section class="editor-shell">
 		{#if pageState.cardEditingState.state === 'NoCardSelected'}

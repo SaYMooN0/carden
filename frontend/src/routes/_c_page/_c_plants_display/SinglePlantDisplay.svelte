@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { PlantPreview } from '$lib/ts/base-types';
 	import { SpritesManager } from '$lib/ts/sprites-manager';
+	import type { PlantPreview } from '../shared_types';
 
 	interface Props {
 		plant: PlantPreview;

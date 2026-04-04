@@ -3,9 +3,9 @@
 open System
 open System.Threading.Tasks
 open Dapper
+open Domain.PlantName
 open Npgsql
 open Domain.Plants
-open Domain.PlantName
 open WebApi.RepositoriesShared
 
 type PlantPreviewDto =
@@ -14,7 +14,8 @@ type PlantPreviewDto =
       PlantSpecie: PlantSpecieName
       PotType: PotTypeName
       CardsCount: int
-      CreationDate: DateTimeOffset }
+      CreationDate: DateTimeOffset
+      StudySessionsCompleted: uint }
 
 [<CLIMutable>]
 type PlantPreviewDbDto =
@@ -23,7 +24,8 @@ type PlantPreviewDbDto =
       PlantSpecieName: string
       PotTypeName: string
       CardsCount: int
-      CreationDate: DateTimeOffset }
+      CreationDate: DateTimeOffset
+      CompletedStudySessionsCount: int }
 
 module PlantPreviewDbDto =
     let private parsePlantName (raw: string) =
@@ -47,7 +49,8 @@ module PlantPreviewDbDto =
           PlantSpecie = parsePlantSpecieName dto.PlantSpecieName
           PotType = parsePotTypeName dto.PotTypeName
           CardsCount = dto.CardsCount
-          CreationDate = dto.CreationDate }
+          CreationDate = dto.CreationDate
+          StudySessionsCompleted = uint dto.CompletedStudySessionsCount }
 
 [<CLIMutable>]
 type PlantDetailsDbDto =
@@ -80,7 +83,8 @@ type StudyPlantDetailsDbDto =
       CreationDate: DateTimeOffset
       PotTypeName: string
       PlantSpecieName: string
-      LastCompletedStudyDay: Nullable<DateOnly> }
+      CompletedStudySessionsCount: int
+      CardsCount: int }
 
 [<CLIMutable>]
 type StudyPlantCardDbDto =
@@ -112,9 +116,14 @@ type SavePlantCardResult =
     | CardNotFoundOrAccessDenied
     | Saved of PlantCardDbDto
 
+type DeletePlantCardResult =
+    | PlantNotFoundOrAccessDenied
+    | CardNotFoundOrAccessDenied
+    | Deleted
+
 type LoadStudySessionResult =
     | PlantNotFoundOrAccessDenied
-    | AlreadyCompletedToday
+    | NotEnoughCardsToStudy of cardsCount: int * plantId: PlantId
     | Loaded of LoadStudySessionDbDto
 
 type PlantsRepository() =
@@ -144,12 +153,19 @@ type PlantsRepository() =
                         p."PlantSpecieName",
                         p."PotTypeName",
                         COUNT(c."Id")::int AS "CardsCount",
-                        p."CreationDate"
+                        p."CreationDate",
+                        p."CompletedStudySessionsCount"
                     FROM plant p
                     INNER JOIN deck d ON d."Id" = p."DeckId"
                     LEFT JOIN card c ON c."DeckId" = d."Id"
                     WHERE p."OwnerId" = @OwnerId
-                    GROUP BY p."Id", p."Name", p."PlantSpecieName", p."PotTypeName", p."CreationDate"
+                    GROUP BY
+                        p."Id",
+                        p."Name",
+                        p."PlantSpecieName",
+                        p."PotTypeName",
+                        p."CreationDate",
+                        p."CompletedStudySessionsCount"
                     ORDER BY {sortColumn} {sortDirection}, p."Id" ASC
                 """
 
@@ -422,7 +438,7 @@ type PlantsRepository() =
                         match updatedRows |> Seq.tryHead with
                         | None ->
                             do! tx.RollbackAsync()
-                            return Ok CardNotFoundOrAccessDenied
+                            return Ok SavePlantCardResult.CardNotFoundOrAccessDenied
                         | Some savedCard ->
                             let! deckRows =
                                 conn.ExecuteAsync(
@@ -446,7 +462,6 @@ type PlantsRepository() =
         (conn: NpgsqlConnection)
         (ownerId: AppUserId)
         (plantId: PlantId)
-        (today: DateOnly)
         (now: DateTimeOffset)
         : Task<LoadStudySessionResult> =
         task {
@@ -460,7 +475,12 @@ type PlantsRepository() =
                         p."CreationDate",
                         p."PotTypeName",
                         p."PlantSpecieName",
-                        p."LastCompletedStudyDay"
+                        p."CompletedStudySessionsCount",
+                        (
+                            SELECT COUNT(*)
+                            FROM card c
+                            WHERE c."DeckId" = p."DeckId"
+                        )::int AS "CardsCount"
                     FROM plant p
                     INNER JOIN deck d ON d."Id" = p."DeckId"
                     WHERE p."Id" = @PlantId AND p."OwnerId" = @OwnerId;
@@ -522,11 +542,8 @@ type PlantsRepository() =
             match plantDto |> Option.ofObj with
             | None -> return LoadStudySessionResult.PlantNotFoundOrAccessDenied
 
-            | Some plant when
-                plant.LastCompletedStudyDay.HasValue
-                && plant.LastCompletedStudyDay.Value = today
-                ->
-                return LoadStudySessionResult.AlreadyCompletedToday
+            | Some plant when plant.CardsCount < 10 ->
+                return LoadStudySessionResult.NotEnoughCardsToStudy(plant.CardsCount, plantId)
 
             | Some plant ->
                 let! reviewCards = grid.ReadAsync<StudyPlantCardDbDto>()
@@ -537,4 +554,56 @@ type PlantsRepository() =
                         { Plant = plant
                           ReviewCards = reviewCards |> Seq.toList
                           NewCards = newCards |> Seq.toList }
+        }
+
+    member this.DeleteCardForPlantOwner
+        (conn: NpgsqlConnection)
+        (ownerId: AppUserId)
+        (plantId: PlantId)
+        (cardId: Guid)
+        (now: DateTimeOffset)
+        : Task<Result<DeletePlantCardResult, string>> =
+        task {
+            try
+                do! conn.OpenAsync()
+                let! tx = conn.BeginTransactionAsync()
+                use tx = tx
+
+                let! ownedDeckIdOpt = this.TryGetOwnedDeckId conn ownerId plantId tx
+
+                match ownedDeckIdOpt with
+                | None ->
+                    do! tx.RollbackAsync()
+                    return Ok DeletePlantCardResult.PlantNotFoundOrAccessDenied
+
+                | Some deckId ->
+                    let deleteSql =
+                        """
+                        DELETE FROM card
+                        WHERE "Id" = @CardId
+                          AND "DeckId" = @DeckId
+                        """
+
+                    let! deletedRows = conn.ExecuteAsync(deleteSql, {| CardId = cardId; DeckId = deckId |}, tx)
+
+                    if deletedRows <> 1 then
+                        do! tx.RollbackAsync()
+                        return Ok DeletePlantCardResult.CardNotFoundOrAccessDenied
+                    else
+                        let! deckRows =
+                            conn.ExecuteAsync(
+                                """UPDATE deck SET "LastTimeEdited" = @Now WHERE "Id" = @DeckId""",
+                                {| Now = now; DeckId = deckId |},
+                                tx
+                            )
+
+                        if deckRows <> 1 then
+                            do! tx.RollbackAsync()
+                            return Error "Deck timestamp update failed."
+                        else
+                            do! tx.CommitAsync()
+                            return Ok DeletePlantCardResult.Deleted
+
+            with ex ->
+                return Error $"Deleting plant card failed: {ex.Message}"
         }

@@ -114,22 +114,24 @@
 		align-items: center;
 		justify-content: center;
 		min-block-size: 2.25rem;
-		padding-inline: 0.875rem;
+		padding: 0.5rem 0.75rem;
 		background: var(--red-1);
-		color: var(--red-5);
-		border: 0.125rem solid var(--red-3);
-		border-radius: 0.875rem;
+		color: var(--red-4);
+		border: 0.125rem solid var(--red-4);
+		border-radius: 1000rem;
 		font-size: 0.875rem;
 		font-weight: 700;
 		transition:
 			transform 0.18s ease,
 			background 0.18s ease,
 			opacity 0.18s ease;
+		cursor: pointer;
 	}
 
 	.remove-button:hover {
 		background: var(--red-2);
-		transform: translateY(-0.125rem);
+		border-color: var(--red-5);
+		color: var(--red-5);
 	}
 
 	textarea {

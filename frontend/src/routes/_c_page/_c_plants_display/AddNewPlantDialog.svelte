@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import DialogWithCloseButton from '$lib/components/dialogs/DialogWithCloseButton.svelte';
 	import DefaultErrBlock from '$lib/components/errs/DefaultErrBlock.svelte';
 	import { Backend, RJO } from '$lib/ts/backend';
@@ -73,7 +74,7 @@
 		}
 		creatingErrs = [];
 		let isLoading = true;
-		const response = await Backend.fetchJsonResponse(
+		const response = await Backend.fetchJsonResponse<{ id: string }>(
 			'/plants/create',
 			RJO.POST({
 				name: plantName.trim(),
@@ -84,6 +85,7 @@
 		isLoading = false;
 		if (response.isSuccess) {
 			dialog.close();
+			goto(`/${response.data.id}/edit`);
 		} else {
 			creatingErrs = response.errs;
 		}
@@ -202,7 +204,13 @@
 
 		<DefaultErrBlock errs={creatingErrs} />
 		<div class="actions">
-			<button class="submit-button" type="submit" disabled={!canSubmit}> Create plant </button>
+			<button class="submit-button" type="submit" disabled={!canSubmit}>
+				{#if isLoading}
+					Loading...
+				{:else}
+					Create plant
+				{/if}
+			</button>
 		</div>
 	</form>
 </DialogWithCloseButton>
@@ -292,25 +300,8 @@
 		max-width: 65%;
 		z-index: 2;
 	}
-
-	.preview-meta {
-		display: flex;
-		gap: 0.6rem;
-		flex-wrap: wrap;
-	}
-
-	.meta-pill {
-		display: flex;
-		flex-direction: column;
-		gap: 0.1rem;
-		padding: 0.7rem 0.85rem;
-		border-radius: 1rem;
-		background: rgba(255, 255, 255, 0.6);
-		border: 0.1rem solid var(--color-sage);
-	}
-
 	.meta-label {
-		font-size: 0.72rem;
+		font-size: 0.75rem;
 		color: var(--color-text-light);
 	}
 
@@ -326,13 +317,13 @@
 	}
 
 	.section-title {
-		font-size: 0.98rem;
+		font-size: 1rem;
 		font-weight: 600;
 	}
 
 	.carousel {
 		position: relative;
-		height: 9.5rem;
+		height: 12rem;
 	}
 
 	.carousel-window {
@@ -346,8 +337,7 @@
 		position: absolute;
 		top: 0.35rem;
 		left: 50%;
-		width: 10.5rem;
-		height: 8.5rem;
+		width: 10rem;
 		transform-origin: center center;
 		border: none;
 		background: transparent;
@@ -412,17 +402,16 @@
 
 	.item-sprite {
 		max-width: 100%;
-		max-height: 4.8rem;
 		user-select: none;
 		pointer-events: none;
 	}
 
 	.plant-sprite {
-		width: 4.4rem;
+		aspect-ratio: 1/1.25;
 	}
 
 	.pot-sprite {
-		width: 5rem;
+		aspect-ratio: 1/1;
 	}
 
 	.item-card span {

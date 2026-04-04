@@ -1,9 +1,9 @@
 <script lang="ts">
-	import type { PlantPreview } from '../../lib/ts/base-types';
 	import AddPlantButton from './_c_plants_display/AddPlantButton.svelte';
 	import AddNewPlantDialog from './_c_plants_display/AddNewPlantDialog.svelte';
 	import PlantsEmptyState from './_c_plants_display/PlantsEmptyState.svelte';
 	import SinglePlantDisplay from './_c_plants_display/SinglePlantDisplay.svelte';
+	import type { PlantPreview } from './shared_types';
 
 	interface Props {
 		loadedPlants: PlantPreview[];

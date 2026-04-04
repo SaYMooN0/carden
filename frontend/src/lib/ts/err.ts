@@ -45,4 +45,8 @@ type ErrExtraDataMap = {
     FAILED_TO_FETCH: {
         exception: string;
     };
+    NOT_ENOUGH_CARDS_TO_STUDY: {
+        cardsCount: number;
+        plantId: string;
+    };
 };

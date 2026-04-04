@@ -16,12 +16,11 @@
 	];
 </script>
 
-<div class="answer-buttons-grid">
+<div class="answer-buttons-grid" class:show={isEnabled}>
 	{#each buttons as button}
 		<button
 			type="button"
 			class={`answer-button ${button.className}`}
-			disabled={!isEnabled}
 			onclick={() => onRate(button.difficulty)}
 		>
 			{button.label}
@@ -34,6 +33,19 @@
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: 0.75rem;
+		height: 0;
+		opacity: 0;
+		transition:
+			opacity 0.35s ease,
+			transform 0.6s ease;
+		transform: translateY(2rem);
+		interpolate-size: allow-keywords;
+	}
+
+	.answer-buttons-grid.show {
+		height: auto;
+		opacity: 1;
+		transform: translateY(0);
 	}
 
 	.answer-button {
@@ -48,6 +60,7 @@
 		transition:
 			transform 0.15s ease,
 			opacity 0.15s ease;
+		cursor: pointer;
 	}
 
 	.answer-button:disabled {

@@ -37,7 +37,11 @@ export type StudyAnswerEvent = {
 };
 
 export type DeckStudyState =
-    | { state: 'Card'; cardId: string; currentSide: CurrentCardSide }
+    | {
+        state: 'Card';
+        currentSide: CurrentCardSide,
+        currentCard: StudyCard
+    }
     | {
         state: 'Finished';
         newCardsLeft: number;
@@ -104,26 +108,6 @@ export class StudyDeckPageState {
         return this.#deckStudyState;
     }
 
-    get currentCard(): StudyCard | null {
-        if (this.#deckStudyState.state !== 'Card') {
-            return null;
-        }
-
-        return this.#cardsById[this.#deckStudyState.cardId] ?? null;
-    }
-
-    get currentSide(): CurrentCardSide | null {
-        return this.#deckStudyState.state === 'Card' ? this.#deckStudyState.currentSide : null;
-    }
-
-    get isCurrentCardFrontShown() {
-        return this.#deckStudyState.state === 'Card' && this.#deckStudyState.currentSide === 'Front';
-    }
-
-    get isCurrentCardBackShown() {
-        return this.#deckStudyState.state === 'Card' && this.#deckStudyState.currentSide === 'Back';
-    }
-
     get answerEvents() {
         return this.#answerEvents;
     }
@@ -180,18 +164,12 @@ export class StudyDeckPageState {
             return;
         }
 
-        const currentCardId = this.#deckStudyState.cardId;
-        const currentCard = this.#cardsById[currentCardId];
-
-        if (!currentCard) {
-            this.#onError('Current card was not found.');
-            return;
-        }
+        const currentCard = this.#deckStudyState.currentCard;
 
         const answeredAtClientMs = Date.now();
 
         this.#answerEvents.push({
-            cardId: currentCardId,
+            cardId: currentCard.id,
             difficulty,
             shownAtOffsetMs: this.#currentCardShownAtClientMs - this.#sessionStartedClientMs,
             answeredAtOffsetMs: answeredAtClientMs - this.#sessionStartedClientMs
@@ -203,13 +181,13 @@ export class StudyDeckPageState {
             answeredAtClientMs
         );
 
-        this.#cardsById[currentCardId] = {
+        this.#cardsById[currentCard.id] = {
             ...currentCard,
             studyState: nextStudyState
         };
 
         if (nextStudyState.kind === 'Learning') {
-            this.enqueueDelayedCard(currentCardId, nextStudyState.dueAtMs);
+            this.enqueueDelayedCard(currentCard.id, nextStudyState.dueAtMs);
         }
 
         this.goToNextCardOrFinish();
@@ -277,8 +255,8 @@ export class StudyDeckPageState {
         this.#currentCardShownAtClientMs = Date.now();
         this.#deckStudyState = {
             state: 'Card',
-            cardId,
-            currentSide: 'Front'
+            currentSide: 'Front',
+            currentCard: this.#cardsById[cardId]
         };
     }
 
@@ -447,7 +425,7 @@ export class StudyDeckPageState {
     }
 
     private countRemainingCardsByIds(ids: string[]): number {
-        const currentCardId = this.#deckStudyState.state === 'Card' ? this.#deckStudyState.cardId : null;
+        const currentCardId = this.#deckStudyState.state === 'Card' ? this.#deckStudyState.currentCard.id : null;
         const available = new Set(this.#availableQueue);
         const delayed = new Set(this.#delayedQueue.map((item) => item.cardId));
 

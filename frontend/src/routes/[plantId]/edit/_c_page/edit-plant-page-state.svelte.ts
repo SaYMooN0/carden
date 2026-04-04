@@ -267,6 +267,70 @@ export class EditPlantPageState {
     private isNewCard(card: CardInEditing): boolean {
         return card.id.startsWith(this.newCardIdPrefix);
     }
+    async deleteCard(cardId: string): Promise<{ isSuccess: true } | { isSuccess: false; errMsg: string }> {
+        const cardExists = this.#plant.deck.cards.some((card) => card.id === cardId);
+        if (!cardExists) {
+            return { isSuccess: false, errMsg: 'Card not found' };
+        }
+
+        if (this.isNewCardId(cardId)) {
+            this.removeCardFromPlant(cardId);
+            return { isSuccess: true };
+        }
+
+        const response = await Backend.fetchJsonResponse<unknown>(
+            `/plants/${this.#plant.id}/cards/${cardId}/delete`,
+            { method: 'DELETE' }
+        );
+
+        if (!response.isSuccess) {
+            return { isSuccess: false, errMsg: response.errs[0].msg };
+        }
+
+        this.removeCardFromPlant(cardId);
+        return { isSuccess: true };
+    }
+    private removeCardFromPlant(cardId: string) {
+        const cardIndex = this.#plant.deck.cards.findIndex((card) => card.id === cardId);
+        if (cardIndex === -1) {
+            return;
+        }
+
+        const nextCardId =
+            this.#plant.deck.cards[cardIndex + 1]?.id ?? this.#plant.deck.cards[cardIndex - 1]?.id ?? null;
+
+        this.#plant.deck.cards.splice(cardIndex, 1);
+
+        if (this.#cardEditingState.state === 'CardEditing' && this.#cardEditingState.card.id === cardId) {
+            if (nextCardId) {
+                this.selectCard(nextCardId, { ignoreUnsavedChangesGuard: true });
+            } else {
+                this.#cardEditingState = { state: 'NoCardSelected' };
+            }
+            return;
+        }
+
+        if (this.#cardEditingState.state === 'CardReloading' && this.#cardEditingState.cardId === cardId) {
+            if (nextCardId) {
+                this.selectCard(nextCardId, { ignoreUnsavedChangesGuard: true });
+            } else {
+                this.#cardEditingState = { state: 'NoCardSelected' };
+            }
+            return;
+        }
+
+        if (this.#cardEditingState.state === 'ExpectedCardNotFound' && this.#cardEditingState.cardId === cardId) {
+            if (nextCardId) {
+                this.selectCard(nextCardId, { ignoreUnsavedChangesGuard: true });
+            } else {
+                this.#cardEditingState = { state: 'NoCardSelected' };
+            }
+        }
+    }
+
+    private isNewCardId(cardId: string): boolean {
+        return cardId.startsWith(this.newCardIdPrefix);
+    }
 }
 
 export type PlantInEditing = Omit<PlantToEdit, 'deck'> & {
