@@ -55,10 +55,10 @@
 
 <DialogWithCloseButton bind:this={dialog} dialogId="confirm-card-delete-dialog">
 	<div class="dialog-copy">
-		<div class="dialog-eyebrow">delete card</div>
-		<h3 class="dialog-title">Delete this card?</h3>
+		<div class="dialog-eyebrow">удалить карточку</div>
+		<h3 class="dialog-title">Удалить эту карточку?</h3>
 		<p class="dialog-description">
-			This action cannot be undone. The card will be permanently removed from the deck.
+			Это действие нельзя отменить. Карточка будет навсегда удалена из колоды.
 		</p>
 	</div>
 
@@ -68,12 +68,12 @@
 
 	<div class="dialog-actions">
 		<button class="secondary-button" type="button" onclick={close} disabled={isDeleting}>
-			cancel
+			отмена
 		</button>
 
 		{#if cardToDeleteId}
 			<button class="danger-button" type="button" onclick={handleDelete} disabled={isDeleting}>
-				{isDeleting ? 'deleting...' : 'delete card'}
+				{isDeleting ? 'удаление...' : 'удалить карточку'}
 			</button>
 		{/if}
 	</div>

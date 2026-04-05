@@ -9,10 +9,10 @@
 	let { isEnabled, onRate }: Props = $props();
 
 	const buttons: { difficulty: CardDifficulty; label: string; className: string }[] = [
-		{ difficulty: 'Again', label: 'Again', className: 'answer-button-again' },
-		{ difficulty: 'Hard', label: 'Hard', className: 'answer-button-hard' },
-		{ difficulty: 'Good', label: 'Good', className: 'answer-button-good' },
-		{ difficulty: 'Easy', label: 'Easy', className: 'answer-button-easy' }
+		{ difficulty: 'Again', label: 'Еще раз', className: 'answer-button-again' },
+		{ difficulty: 'Hard', label: 'Сложно', className: 'answer-button-hard' },
+		{ difficulty: 'Good', label: 'Хорошо', className: 'answer-button-good' },
+		{ difficulty: 'Easy', label: 'Легко', className: 'answer-button-easy' }
 	];
 </script>
 

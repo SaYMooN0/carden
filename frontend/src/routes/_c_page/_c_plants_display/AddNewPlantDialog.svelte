@@ -95,20 +95,20 @@
 <DialogWithCloseButton bind:this={dialog} dialogId="add-new-plant-dialog">
 	<form class="root" onsubmit={handleSubmit}>
 		<div class="header">
-			<h2>Add new plant</h2>
-			<p>Create your next study plant by choosing a specie, a pot, and a name.</p>
+			<h2>Добавить новое растение</h2>
+			<p>Выберите вид растения, горшок и придумайте название.</p>
 		</div>
 
 		<div class="section">
 			<div class="section-title">
-				<span>Plant specie</span>
+				<span>Вид растения</span>
 			</div>
 
 			<div class="carousel">
 				<button
 					class="side-hitbox left"
 					type="button"
-					aria-label="Previous plant"
+					aria-label="Предыдущее растение"
 					onclick={selectPrevPlant}
 				></button>
 
@@ -138,7 +138,7 @@
 				<button
 					class="side-hitbox right"
 					type="button"
-					aria-label="Next plant"
+					aria-label="Следующее растение"
 					onclick={selectNextPlant}
 				></button>
 			</div>
@@ -146,14 +146,14 @@
 
 		<div class="section">
 			<div class="section-title">
-				<span>Pot type</span>
+				<span>Горшок</span>
 			</div>
 
 			<div class="carousel">
 				<button
 					class="side-hitbox left"
 					type="button"
-					aria-label="Previous pot"
+					aria-label="Предыдущий горшок"
 					onclick={selectPrevPot}
 				></button>
 
@@ -183,21 +183,21 @@
 				<button
 					class="side-hitbox right"
 					type="button"
-					aria-label="Next pot"
+					aria-label="Следующий горшок"
 					onclick={selectNextPot}
 				></button>
 			</div>
 		</div>
 
 		<div class="section">
-			<label class="name-label" for="plant-name-input">Plant name</label>
+			<label class="name-label" for="plant-name-input">Название растения</label>
 			<input
 				id="plant-name-input"
 				class="name-input"
 				type="text"
 				bind:value={plantName}
 				maxlength="40"
-				placeholder="Enter plant name"
+				placeholder="Введите название растения"
 				autocomplete="off"
 			/>
 		</div>
@@ -206,9 +206,9 @@
 		<div class="actions">
 			<button class="submit-button" type="submit" disabled={!canSubmit}>
 				{#if isLoading}
-					Loading...
+					Загрузка...
 				{:else}
-					Create plant
+					Создать растение
 				{/if}
 			</button>
 		</div>

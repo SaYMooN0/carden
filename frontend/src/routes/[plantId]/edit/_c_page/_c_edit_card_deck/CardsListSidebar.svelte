@@ -19,14 +19,18 @@
 		addNewCard,
 		openConfirmCardDeleteDialog
 	}: Props = $props();
-	const subtitleText = $derived(
-		`${cardsCount} ${cardsCount === 1 ? ' card in deck' : ' cards in deck'}`
-	);
+	const subtitleText = $derived.by(() => {
+		const rule = new Intl.PluralRules('ru-RU').select(cardsCount);
+		let form = 'карточек';
+		if (rule === 'one') form = 'карточка';
+		else if (rule === 'few') form = 'карточки';
+		return `${cardsCount} ${form} в колоде`;
+	});
 </script>
 
 <aside class="sidebar">
 	<div class="sidebar-hero">
-		<div class="sidebar-eyebrow">plant deck editor</div>
+		<div class="sidebar-eyebrow">редактор колоды растения</div>
 		<h1 class="sidebar-title" title={plantName}>{plantName}</h1>
 		<p class="sidebar-subtitle">{subtitleText}</p>
 	</div>
@@ -39,7 +43,7 @@
 				onclick={() => selectCard(card.id)}
 			>
 				<div class="card-tile-top-row">
-					<span class="card-tile-index">card {card.number}</span>
+					<span class="card-tile-index">карточка {card.number}</span>
 					<button
 						type="button"
 						onclick={(e) => {
@@ -62,24 +66,24 @@
 				</div>
 
 				<div class="card-tile-preview-group">
-					<div class="card-tile-side-label">front</div>
+					<div class="card-tile-side-label">лицевая</div>
 					<p class="card-tile-preview">{card.frontTextPreview}</p>
 				</div>
 
 				<div class="card-tile-preview-group">
-					<div class="card-tile-side-label">back</div>
+					<div class="card-tile-side-label">обратная</div>
 					<p class="card-tile-preview">{card.backTextPreview}</p>
 				</div>
 			</div>
 		{:else}
 			<div class="cards-list-empty">
-				<p>There are no cards in this deck yet.</p>
+				<p>В этой колоде пока нет карточек.</p>
 			</div>
 		{/each}
 	</div>
 
 	<button class="create-card-button" type="button" onclick={() => addNewCard()}>
-		Add new card
+		Добавить новую карточку
 	</button>
 </aside>
 

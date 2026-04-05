@@ -268,7 +268,7 @@ export class StudyDeckPageState {
             `/plants/${this.#plant.id}/study/complete`,
             RJO.POST(this.completionPayload)
         );
-
+        console.log(response);
         if (!response.isSuccess) {
             const msg = response.errs[0]?.msg ?? 'Failed to save completed study session.';
             this.setCompletionSyncState({ state: 'Failed', msg });

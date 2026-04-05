@@ -6,21 +6,26 @@
 
 	let { plantId, cardsCount }: Props = $props();
 
-	const cardsLabel = $derived(cardsCount === 1 ? 'card' : 'cards');
+	const cardsLabel = $derived.by(() => {
+		const rule = new Intl.PluralRules('ru-RU').select(cardsCount);
+		if (rule === 'one') return 'карточка';
+		if (rule === 'few') return 'карточки';
+		return 'карточек';
+	});
 </script>
 
 <div class="state-card">
 	<div class="state-copy">
-		<div class="state-eyebrow">study unavailable</div>
-		<h2 class="state-title">Not enough cards to start studying</h2>
+		<div class="state-eyebrow">обучение недоступно</div>
+		<h2 class="state-title">Недостаточно карточек для начала обучения</h2>
 		<p class="state-description">
-			This deck does not have enough cards yet. Right now it has
+			В этой колоде пока недостаточно карточек. Сейчас в ней
 			<span class="state-count">{cardsCount} {cardsLabel}</span>.
 		</p>
 	</div>
 
 	<div class="state-actions">
-		<a class="edit-link" href={`/${plantId}/edit`}>Edit deck</a>
+		<a class="edit-link" href={`/${plantId}/edit`}>Редактировать колоду</a>
 	</div>
 </div>
 

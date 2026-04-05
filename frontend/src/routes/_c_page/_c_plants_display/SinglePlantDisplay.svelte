@@ -43,8 +43,8 @@
 	</div>
 
 	<div class="actions-container">
-		<a class="action-btn action-btn--primary" href={`/${plant.id}/study`}>Study</a>
-		<a class="action-btn action-btn--secondary" href={`/${plant.id}/edit`}>Edit</a>
+		<a class="action-btn action-btn--primary" href={`/${plant.id}/study`}>Учить</a>
+		<a class="action-btn action-btn--secondary" href={`/${plant.id}/edit`}>Редактировать</a>
 	</div>
 </div>
 

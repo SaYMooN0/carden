@@ -10,15 +10,15 @@
 	<PageLoadErr
 		errs={[
 			{
-				msg: 'Invalid plant id',
-				fixSuggestion: 'Please ensure you used a valid link'
+				msg: 'Неверный идентификатор растения',
+				fixSuggestion: 'Пожалуйста, убедитесь, что вы использовали правильную ссылку'
 			}
 		]}
 	/>
 {:else if !data.isSuccess}
 	<PageLoadErr errs={data.errs} />
 	{#if data.statusCode === 401}
-		<button onclick={() => (window.location.href = '/')}>Go to home page</button>
+		<button onclick={() => (window.location.href = '/')}>На главную страницу</button>
 	{/if}
 {:else}
 	<EditPlantDeck plant={data.data} />

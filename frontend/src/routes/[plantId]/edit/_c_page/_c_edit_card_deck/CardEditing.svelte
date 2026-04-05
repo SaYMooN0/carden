@@ -151,15 +151,26 @@
 
 <div class="editor-header">
 	<div>
-		<div class="editor-header-eyebrow">editing card</div>
-		<h2 class="editor-header-title">Deck card editor</h2>
-		<p class="editor-header-meta">last edited {formatDateTime(card.lastTimeEdited)}</p>
+		<div class="editor-header-eyebrow">Редактирование карточки</div>
+		<h2 class="editor-header-title">Редактор карточки колоды</h2>
+		<p class="editor-header-meta">Последнее изменение {formatDateTime(card.lastTimeEdited)}</p>
 	</div>
 
 	<div class="editor-header-actions">
-		<span class:dirty={cardHasUnsavedChanges} class="status-pill">
-			{cardHasUnsavedChanges ? 'unsaved changes' : 'saved'}
-		</span>
+		{#if cardHasUnsavedChanges}
+			<svg
+				class="unsaved-changes-marker"
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 24 24"
+				color="currentColor"
+				fill="none"
+				stroke="currentColor"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M12.0001 4V20M19 8L5.00025 16M18.9997 16L5 8" />
+			</svg>
+		{/if}
 
 		<button
 			class="secondary-button"
@@ -167,7 +178,7 @@
 			type="button"
 			onclick={resetCardChanges}
 		>
-			reset
+			сбросить
 		</button>
 
 		<button
@@ -176,7 +187,7 @@
 			type="button"
 			onclick={saveChanges}
 		>
-			{isSaving ? 'saving...' : 'save card'}
+			{isSaving ? 'сохранение...' : 'сохранить карточку'}
 		</button>
 	</div>
 </div>
@@ -185,13 +196,13 @@
 	<section class="content-column">
 		<div class="content-column-header">
 			<div>
-				<div class="content-column-title">front side</div>
-				<p class="content-column-subtitle">Question, prompt or title</p>
+				<div class="content-column-title">лицевая сторона</div>
+				<p class="content-column-subtitle">Вопрос, подсказка или заголовок</p>
 			</div>
 
 			<div class="content-column-count">
 				{card.contentFront.length}
-				{card.contentFront.length === 1 ? ' item' : ' items'}
+				{card.contentFront.length === 1 ? ' элемент' : ' элементов'}
 			</div>
 		</div>
 
@@ -199,7 +210,7 @@
 			<div
 				class="content-column-list-wrap"
 				class:is-empty={card.contentFront.length === 0}
-				data-empty-text="No content items"
+				data-empty-text="Нет элементов"
 			>
 				<div bind:this={frontListElement} class="content-column-list" data-list-id="contentFront">
 					{#each card.contentFront as item (item.stringId)}
@@ -220,20 +231,20 @@
 			type="button"
 			onclick={() => addContentItemAndFocus('contentFront')}
 		>
-			add content item
+			добавить элемент
 		</button>
 	</section>
 
 	<section class="content-column">
 		<div class="content-column-header">
 			<div>
-				<div class="content-column-title">back side</div>
-				<p class="content-column-subtitle">Answer, explanation or extra note</p>
+				<div class="content-column-title">обратная сторона</div>
+				<p class="content-column-subtitle">Ответ, объяснение или дополнительная заметка</p>
 			</div>
 
 			<div class="content-column-count">
 				{card.contentBack.length}
-				{card.contentBack.length === 1 ? ' item' : ' items'}
+				{card.contentBack.length === 1 ? ' элемент' : ' элементов'}
 			</div>
 		</div>
 
@@ -241,7 +252,7 @@
 			<div
 				class="content-column-list-wrap"
 				class:is-empty={card.contentBack.length === 0}
-				data-empty-text="No content items"
+				data-empty-text="Нет элементов"
 			>
 				<div bind:this={backListElement} class="content-column-list" data-list-id="contentBack">
 					{#each card.contentBack as item (item.stringId)}
@@ -261,7 +272,7 @@
 			type="button"
 			onclick={() => addContentItemAndFocus('contentBack')}
 		>
-			add content item
+			добавить элемент
 		</button>
 	</section>
 </div>
@@ -314,22 +325,17 @@
 		overflow: hidden;
 	}
 
-	.status-pill {
-		display: inline-flex;
+	.unsaved-changes-marker {
 		align-items: center;
 		justify-content: center;
-		min-block-size: 1.75rem;
-		padding-inline: 0.75rem;
+		width: 1.5rem;
+		height: 1.5rem;
 		border-radius: 999rem;
-		font-size: 0.875rem;
-		font-weight: 600;
-		background: var(--color-sage-hover);
-		color: var(--text);
-	}
-
-	.status-pill.dirty {
 		background: var(--color-terracotta);
+
 		color: var(--primary-foreground);
+		stroke-width: 3;
+		padding: 0.25rem;
 	}
 
 	.primary-button,
@@ -338,7 +344,6 @@
 		align-items: center;
 		justify-content: center;
 		min-block-size: 3rem;
-		padding-inline: 1.25rem;
 		border-radius: 1rem;
 		font-size: 1rem;
 		font-weight: 700;
@@ -353,6 +358,7 @@
 		background: var(--primary);
 		color: var(--primary-foreground);
 		border: 0.125rem solid var(--primary);
+		width: 14rem;
 	}
 
 	.primary-button:hover {
@@ -365,6 +371,7 @@
 		background: var(--primary-foreground);
 		color: var(--text);
 		border: 0.125rem solid var(--color-terracotta-light);
+		width: 8rem;
 	}
 
 	.secondary-button:hover {

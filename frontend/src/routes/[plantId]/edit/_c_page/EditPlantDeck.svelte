@@ -35,7 +35,7 @@
 </script>
 
 <svelte:head>
-	<title>Edit plant deck</title>
+	<title>Редактировать колоду растения</title>
 </svelte:head>
 
 <ConfirmCardDeleteDialog
@@ -66,10 +66,10 @@
 		{#if pageState.cardEditingState.state === 'NoCardSelected'}
 			<CardEmptyState
 				icon="✿"
-				header="Select a card to start editing"
-				text="Choose a card on the left and edit its front and back sides."
+				header="Выберите карточку для редактирования"
+				text="Выберите карточку слева и отредактируйте её лицевую и обратную стороны."
 				button={{
-					text: pageState.firstCardId ? 'Open first card' : 'Create first card',
+					text: pageState.firstCardId ? 'Открыть первую карточку' : 'Создать первую карточку',
 					onClick: () => {
 						if (pageState.firstCardId) {
 							pageState.selectCard(pageState.firstCardId, { ignoreUnsavedChangesGuard: false });
@@ -83,10 +83,10 @@
 			{@const notFoundCardId = pageState.cardEditingState.cardId}
 			<CardEmptyState
 				icon="!"
-				header="Card not found"
-				text={`Expected card id: ${notFoundCardId}`}
+				header="Карточка не найдена"
+				text={`Ожидаемый id карточки: ${notFoundCardId}`}
 				button={{
-					text: 'Try to load again',
+					text: 'Попробовать загрузить снова',
 					onClick: () => pageState.reloadCard(notFoundCardId)
 				}}
 			/>
@@ -102,9 +102,9 @@
 		{:else}
 			<CardEmptyState
 				icon="?"
-				header="Unknown state"
-				text="Something went wrong. Please try to reload the page."
-				button={{ text: 'Reload', onClick: () => window.location.reload() }}
+				header="Неизвестное состояние"
+				text="Что-то пошло не так. Пожалуйста, попробуйте перезагрузить страницу."
+				button={{ text: 'Перезагрузить', onClick: () => window.location.reload() }}
 			/>
 		{/if}
 	</section>

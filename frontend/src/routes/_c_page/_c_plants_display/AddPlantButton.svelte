@@ -9,7 +9,7 @@
 <button class="add-plant-button" type="button" onclick={onClick}>
 	<span class="icon-wrap" aria-hidden="true"> +</span>
 
-	<span class="label">Add New Plant</span>
+	<span class="label">Добавить растение</span>
 </button>
 
 <style>

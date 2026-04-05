@@ -47,18 +47,18 @@
 	function validateForm(): Err[] {
 		errs = [];
 		if (StringUtils.isNullOrWhiteSpace(email)) {
-			errs.push({ msg: 'Email is required' });
+			errs.push({ msg: 'Требуется Email' });
 		} else if (!StringUtils.isValidEmail(email)) {
-			errs.push({ msg: 'Email is invalid' });
+			errs.push({ msg: 'Неверный Email' });
 		}
 
 		if (StringUtils.isNullOrWhiteSpace(password)) {
-			errs.push({ msg: 'Password is required' });
+			errs.push({ msg: 'Требуется пароль' });
 		}
 		if (StringUtils.isNullOrWhiteSpace(confirmPassword)) {
-			errs.push({ msg: 'Confirm password is required' });
+			errs.push({ msg: 'Требуется подтверждение пароля' });
 		} else if (password !== confirmPassword) {
-			errs.push({ msg: 'Passwords do not match' });
+			errs.push({ msg: 'Пароли не совпадают' });
 		}
 		return errs;
 	}
@@ -66,17 +66,17 @@
 
 <div class="form-hero">
 	<PlantIcon size="54px" color="var(--color-sage)" />
-	<h2>Create an account</h2>
-	<p>Join Carden to get started</p>
+	<h2>Создать аккаунт</h2>
+	<p>Присоединяйтесь к Carden, чтобы начать</p>
 </div>
 
 <SignInFormInput type="email" fieldName="Email" bind:value={email} />
-<SignInFormInput type="password" fieldName="Password" bind:value={password} />
-<SignInFormInput type="password" fieldName="Confirm password" bind:value={confirmPassword} />
+<SignInFormInput type="password" fieldName="Пароль" bind:value={password} />
+<SignInFormInput type="password" fieldName="Повторите пароль" bind:value={confirmPassword} />
 <div class="gap" />
-<SignInFormLink text="I already have an account" onClick={() => changeState('login')} />
+<SignInFormLink text="У меня уже есть аккаунт" onClick={() => changeState('login')} />
 <DefaultErrBlock {errs} class="sign-up-err-block" />
-<SignInFormConfirmButton text="Sign Up" onclick={() => confirmSignUp()} {isLoading} />
+<SignInFormConfirmButton text="Зарегистрироваться" onclick={() => confirmSignUp()} {isLoading} />
 
 <style>
 	.gap {

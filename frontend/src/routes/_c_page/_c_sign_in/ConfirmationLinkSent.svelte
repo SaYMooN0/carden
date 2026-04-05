@@ -7,8 +7,10 @@
 </script>
 
 <div class="confirmation-link-sent">
-	<p>Confirmation link has been sent to <strong>{email}</strong>.</p>
-	<p class="subtext">Please check your inbox and follow the link to verify your account.</p>
+	<p>Ссылка для подтверждения отправлена на <strong>{email}</strong>.</p>
+	<p class="subtext">
+		Пожалуйста, проверьте почту и перейдите по ссылке для подтверждения аккаунта.
+	</p>
 </div>
 
 <style>

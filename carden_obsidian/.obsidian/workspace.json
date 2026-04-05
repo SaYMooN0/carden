@@ -11,12 +11,14 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "image",
+              "type": "markdown",
               "state": {
-                "file": "pots/Coral/Coral_1.png"
+                "file": "db/скрипты созддания табличек.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-image",
-              "title": "Coral_1"
+              "icon": "lucide-file",
+              "title": "скрипты созддания табличек"
             }
           }
         ]
@@ -199,12 +201,13 @@
   },
   "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "Идеи.md",
+    "Без названия.base",
+    "pots/Coral/Coral_1.png",
     "db/скрипты созддания табличек.md",
     "отчеты/Кр2/Карден_Отчет2.docx",
     "отчеты/Кр2/~$рден_Отчет2.docx",
     "отчеты/Кр2",
-    "Без названия.base",
-    "pots/Coral/Coral_1.png",
     "pots/Coral",
     "plants/McPitcherPlant/McPitcherPlant_2.png",
     "plants/McPitcherPlant/McPitcherPlant_1.png",
@@ -230,7 +233,6 @@
     "db/scripts/add deck.md",
     "db/scripts/add card.md",
     "db/tables/app_user.md",
-    "Идеи.md",
     "db/tables/plants.md",
     "db/tables/card.md",
     "db/tables/decks.md",

@@ -23,8 +23,8 @@
 		{:else if currentState === 'confirmation-sent'}
 			<ConfirmationLinkSent {email} />
 		{:else}
-			<p>unknown state</p>
-			<button onclick={() => changeState('login')}>go back</button>
+			<p>неизвестное состояние</p>
+			<button onclick={() => changeState('login')}>вернуться</button>
 		{/if}
 	</div>
 </div>

@@ -24,7 +24,6 @@
 	}
 </script>
 
-<h1>dsads1111111111111111111111111</h1>
 <div class="study-page-shell">
 	<StudySessionStats
 		plantName={pageState.plantName}
@@ -51,12 +50,11 @@
 				/>
 			{:else if pageState.deckStudyState.state === 'Finished'}
 				<section class="finished-panel">
-					<p class="finished-eyebrow">Done for today</p>
-					<h2>Study session finished</h2>
+					<p class="finished-eyebrow">На сегодня всё</p>
+					<h2>Сеанс обучения завершён</h2>
 					<p>
-						You reviewed <strong>{pageState.deckStudyState.totalAnswersCount}</strong> answers
-						across
-						<strong>{pageState.deckStudyState.uniqueCardsSeenCount}</strong> unique cards.
+						Вы повторили <strong>{pageState.deckStudyState.totalAnswersCount}</strong> ответов по
+						<strong>{pageState.deckStudyState.uniqueCardsSeenCount}</strong> уникальным карточкам.
 					</p>
 				</section>
 			{/if}
@@ -64,23 +62,26 @@
 
 		<aside class="study-side-panel">
 			<section class="side-card">
-				<h2>How it works</h2>
-				<p>Flip the card, then rate how well you remembered it. Cards you miss come back sooner.</p>
+				<h2>Как это работает</h2>
+				<p>
+					Переверните карточку, затем оцените, насколько хорошо вы её помните. Карточки, в которых
+					вы ошибаетесь, возвращаются быстрее.
+				</p>
 			</section>
 
 			<section class="side-card">
-				<h2>Current progress</h2>
+				<h2>Текущий прогресс</h2>
 				<ul class="info-list">
 					<li>
-						<span>New cards left</span>
+						<span>Осталось новых карточек</span>
 						<strong>{pageState.newCardsLeft}</strong>
 					</li>
 					<li>
-						<span>Review cards left</span>
+						<span>Осталось на повторение</span>
 						<strong>{pageState.reviewCardsLeft}</strong>
 					</li>
 					<li>
-						<span>Total answers</span>
+						<span>Всего ответов</span>
 						<strong>{pageState.totalAnswersCount}</strong>
 					</li>
 				</ul>

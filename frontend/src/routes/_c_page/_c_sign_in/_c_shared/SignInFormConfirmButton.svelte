@@ -15,7 +15,7 @@
 	class:loading={isLoading}
 >
 	{#if isLoading}
-		Loading...
+		Загрузка...
 	{:else}
 		{text}
 	{/if}

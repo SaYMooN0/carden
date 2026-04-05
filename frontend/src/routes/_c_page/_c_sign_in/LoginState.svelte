@@ -48,13 +48,13 @@
 		errs = [];
 
 		if (StringUtils.isNullOrWhiteSpace(email)) {
-			errs.push({ msg: 'Email is required' });
+			errs.push({ msg: 'Требуется Email' });
 		} else if (!StringUtils.isValidEmail(email)) {
-			errs.push({ msg: 'Email is invalid' });
+			errs.push({ msg: 'Неверный Email' });
 		}
 
 		if (StringUtils.isNullOrWhiteSpace(password)) {
-			errs.push({ msg: 'Password is required' });
+			errs.push({ msg: 'Требуется пароль' });
 		}
 
 		return errs;
@@ -63,16 +63,16 @@
 
 <div class="form-hero">
 	<PlantIcon size="54px" color="var(--color-sage)" />
-	<h2>Welcome back</h2>
-	<p>Sign in to continue to Carden</p>
+	<h2>С возвращением</h2>
+	<p>Войдите, чтобы продолжить работу с Carden</p>
 </div>
 
 <SignInFormInput type="email" fieldName="Email" bind:value={email} />
-<SignInFormInput type="password" fieldName="Password" bind:value={password} />
+<SignInFormInput type="password" fieldName="Пароль" bind:value={password} />
 <div class="gap" />
-<SignInFormLink text="I don't have an account" onClick={() => changeState('signup')} />
+<SignInFormLink text="У меня нет аккаунта" onClick={() => changeState('signup')} />
 <DefaultErrBlock {errs} class="login-err-block" />
-<SignInFormConfirmButton text="Log in" onclick={() => confirmLogin()} {isLoading} />
+<SignInFormConfirmButton text="Войти" onclick={() => confirmLogin()} {isLoading} />
 
 <style>
 	.gap {

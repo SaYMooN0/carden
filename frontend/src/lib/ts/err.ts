@@ -25,7 +25,10 @@ export namespace ErrUtils {
     }
 
     export function hasExtraData(err: BaseErr): boolean {
-        return "extraData" in err && err.extraData !== undefined && 'id' in (err.extraData as any);
+        return "extraData" in err
+            && err.extraData !== undefined
+            && err.extraData !== null
+            && 'id' in (err.extraData as any);
     }
     export function ensureExtraData<T extends keyof ErrExtraDataMap>(err: BaseErr, id: T): err is ErrWithExtra<T> {
         return hasExtraData(err) && (err as any).extraData.id === id;

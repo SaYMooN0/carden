@@ -20,33 +20,33 @@
 
 <section class="stats-shell">
 	<div class="stats-title-block">
-		<p class="stats-eyebrow">Study session</p>
+		<p class="stats-eyebrow">Сеанс обучения</p>
 		<h1>{plantName}</h1>
 	</div>
 
 	<div class="stats-grid">
 		<article class="stat-card">
-			<span class="stat-label">Still in session</span>
+			<span class="stat-label">Осталось в сеансе</span>
 			<strong>{cardsStillInSessionCount}</strong>
 		</article>
 
 		<article class="stat-card">
-			<span class="stat-label">New left</span>
+			<span class="stat-label">Осталось новых</span>
 			<strong>{newCardsLeft}</strong>
 		</article>
 
 		<article class="stat-card">
-			<span class="stat-label">Review left</span>
+			<span class="stat-label">Осталось повторить</span>
 			<strong>{reviewCardsLeft}</strong>
 		</article>
 
 		<article class="stat-card">
-			<span class="stat-label">Answers</span>
+			<span class="stat-label">Ответы</span>
 			<strong>{totalAnswersCount}</strong>
 		</article>
 
 		<article class="stat-card stat-card-wide">
-			<span class="stat-label">Unique cards seen</span>
+			<span class="stat-label">Просмотрено уникальных карточек</span>
 			<strong>{uniqueCardsSeenCount}</strong>
 		</article>
 	</div>

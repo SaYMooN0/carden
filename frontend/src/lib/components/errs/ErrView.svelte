@@ -31,12 +31,12 @@
 	</div>
 	{#if hasDetails}
 		<label class="err-additional" class:hidden={!showExtra}>
-			Details: {err.details}
+			Детали: {err.details}
 		</label>
 	{/if}
 	{#if hasFixSuggestion}
 		<label class="err-additional" class:hidden={!showExtra}>
-			Fix suggestion: {err.fixSuggestion}
+			Как решить: {err.fixSuggestion}
 		</label>
 	{/if}
 </div>

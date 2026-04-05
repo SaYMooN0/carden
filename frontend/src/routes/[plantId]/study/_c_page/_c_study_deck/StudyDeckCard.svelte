@@ -17,8 +17,8 @@
 	<div class:flipped={isBackShown} class="study-card-inner">
 		<section class="study-card-face study-card-face-front">
 			<div class="study-card-face-header">
-				<span class="face-pill">Front</span>
-				<span class="face-hint">Tap to flip</span>
+				<span class="face-pill">Лицевая</span>
+				<span class="face-hint">Нажмите, чтобы перевернуть</span>
 			</div>
 
 			<div class="study-card-content">
@@ -30,8 +30,8 @@
 
 		<section class="study-card-face study-card-face-back">
 			<div class="study-card-face-header">
-				<span class="face-pill">Back</span>
-				<span class="face-hint">Tap to flip</span>
+				<span class="face-pill">Обратная</span>
+				<span class="face-hint">Нажмите, чтобы перевернуть</span>
 			</div>
 
 			<div class="study-card-content">
