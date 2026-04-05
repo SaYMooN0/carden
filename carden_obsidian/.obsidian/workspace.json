@@ -11,10 +11,14 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "Доп текст к слайдам.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "Новая вкладка"
+              "title": "Доп текст к слайдам"
             }
           }
         ]
@@ -195,8 +199,10 @@
       "bases:Создать новую базу": false
     }
   },
-  "active": "052780f53b784305",
+  "active": "80b3e6dd1788eeb2",
   "lastOpenFiles": [
+    "Carden.pptx",
+    "Доп текст к слайдам.md",
     "pots/Coral/Coral_3.png.0.pdnSave",
     "pots/Coral/Coral_2.png.0.pdnSave",
     "pots/Coral/Coral_1.png.0.pdnSave",
@@ -220,7 +226,6 @@
     "pots/pvz_pot/pvz.md",
     "plants/McPitcherPlant",
     "plants/Cactus",
-    "plants",
     "plants/Сactus/Cactus.md",
     "pots/PotPVZ.md",
     "pots/PotCoral.md",
@@ -241,7 +246,6 @@
     "отчеты/Rennix5321.md",
     "отчеты/ArgentiLover.md",
     "pots/PotNumberOne.md",
-    "plants/PlantNumeroUno1/PlantNumeroUno1.md",
-    "db/tables/table_name_1.md"
+    "plants/PlantNumeroUno1/PlantNumeroUno1.md"
   ]
 }
