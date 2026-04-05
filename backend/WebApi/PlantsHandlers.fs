@@ -4,7 +4,7 @@ open System
 open System.Net
 open Domain.CardContentItem
 open Domain.Plants
-open Domain.StudySettings
+open Domain.Study
 open Microsoft.AspNetCore.Http
 open WebApi.AppUsersRepository
 open WebApi.BackendResponse
@@ -101,8 +101,8 @@ let private studyCardDbDtoToResponse (card: StudyPlantCardDbDto) =
             Nullable()
        StudyStartedAt = nullableDateTimeOffsetToIsoString card.StudyStartedAt
        StudyReviewIntervalSeconds =
-        if card.StudyReviewInterval.HasValue then
-            Nullable(int64 card.StudyReviewInterval.Value.TotalSeconds)
+        if card.StudyReviewIntervalSeconds.HasValue then
+            Nullable(int64 card.StudyReviewIntervalSeconds.Value)
         else
             Nullable()
        StudyLastReviewedAt = nullableDateTimeOffsetToIsoString card.StudyLastReviewedAt
@@ -133,8 +133,8 @@ let private mapStudyCard (card: StudyPlantCardDbDto) =
             Nullable()
        StudyStartedAt = nullableDateTimeOffsetToIsoString card.StudyStartedAt
        StudyReviewIntervalSeconds =
-        if card.StudyReviewInterval.HasValue then
-            Nullable(int64 card.StudyReviewInterval.Value.TotalSeconds)
+        if card.StudyReviewIntervalSeconds.HasValue then
+            Nullable(int64 card.StudyReviewIntervalSeconds.Value)
         else
             Nullable()
        StudyLastReviewedAt = nullableDateTimeOffsetToIsoString card.StudyLastReviewedAt
@@ -146,9 +146,9 @@ let studySettingsResponse =
        learningEasyIntervalSeconds = StudySettings.LearningEasyIntervalSeconds
        learningGoodDelaySeconds = StudySettings.LearningGoodDelaySeconds
        learningHardDelaySeconds = StudySettings.LearningHardDelaySeconds
-       newCardsPerDay = StudySettings.NewCardsPerDay
+       newCardsPerSession = StudySettings.NewCardsPerSession
        reviewAgainDelaySeconds = StudySettings.ReviewAgainDelaySeconds
-       reviewCardsPerDay = StudySettings.ReviewCardsPerDay
+       reviewCardsPerSession = StudySettings.ReviewCardsPerSession
        reviewEasyIntervalMultiplier = StudySettings.ReviewEasyIntervalMultiplier
        reviewGoodIntervalMultiplier = StudySettings.ReviewGoodIntervalMultiplier
        reviewHardIntervalMultiplier = StudySettings.ReviewHardIntervalMultiplier |}

@@ -3,9 +3,11 @@
 open System
 open System.Threading.Tasks
 open Dapper
+open Domain
 open Domain.PlantName
-open Domain.StudySettings
-open Domain.StudySettings.StudySettings
+open Domain.Study
+open Domain.Study.StudySettings
+open Microsoft.FSharp.Linq
 open Npgsql
 open Domain.Plants
 open WebApi.RepositoriesShared
@@ -97,7 +99,7 @@ type StudyPlantCardDbDto =
       StudyDueAt: Nullable<DateTimeOffset>
       StudyLearningStepIndex: Nullable<int>
       StudyStartedAt: Nullable<DateTimeOffset>
-      StudyReviewInterval: Nullable<TimeSpan>
+      StudyReviewIntervalSeconds: Nullable<int>
       StudyLastReviewedAt: Nullable<DateTimeOffset>
       LastTimeEdited: DateTimeOffset
       CreationTime: DateTimeOffset }
@@ -133,39 +135,50 @@ type PersistedCardStudyState =
     | Learning of dueAt: DateTimeOffset * learningStepIndex: int * startedAt: DateTimeOffset
     | Review of dueAt: DateTimeOffset * reviewIntervalSeconds: int * lastReviewedAt: DateTimeOffset
 
+[<CLIMutable>]
 type StudyCardStateDbDto =
     { Id: Guid
-      StudyStateType: string option
-      StudyDueAt: DateTimeOffset option
-      StudyLearningStepIndex: int option
-      StudyStartedAt: DateTimeOffset option
-      StudyReviewIntervalSeconds: int option
-      StudyLastReviewedAt: DateTimeOffset option }
+      StudyStateType: string
+      StudyDueAt: Nullable<DateTimeOffset>
+      StudyLearningStepIndex: Nullable<int>
+      StudyStartedAt: Nullable<DateTimeOffset>
+      StudyReviewIntervalSeconds: Nullable<int>
+      StudyLastReviewedAt: Nullable<DateTimeOffset> }
 
+[<CLIMutable>]
 type StudyCardStateUpdateDbDto =
     { Id: Guid
       StudyStateType: string
-      StudyDueAt: DateTimeOffset option
-      StudyLearningStepIndex: int option
-      StudyStartedAt: DateTimeOffset option
-      StudyReviewIntervalSeconds: int option
-      StudyLastReviewedAt: DateTimeOffset option }
+      StudyDueAt: Nullable<DateTimeOffset>
+      StudyLearningStepIndex: Nullable<int>
+      StudyStartedAt: Nullable<DateTimeOffset>
+      StudyReviewIntervalSeconds: Nullable<int>
+      StudyLastReviewedAt: Nullable<DateTimeOffset> }
 
 module PersistedCardStudyState =
     let fromDb (sessionStartedAt: DateTimeOffset) (dto: StudyCardStateDbDto) =
         match dto.StudyStateType with
-        | Some "Learning" ->
+        | "Learning" ->
             Learning(
-                dto.StudyDueAt |> Option.defaultValue sessionStartedAt,
-                dto.StudyLearningStepIndex |> Option.defaultValue 0,
-                dto.StudyStartedAt |> Option.defaultValue sessionStartedAt
+                dto.StudyDueAt
+                |> Shared.Nullable.toOption
+                |> Option.defaultValue sessionStartedAt,
+                dto.StudyLearningStepIndex |> Shared.Nullable.toOption |> Option.defaultValue 0,
+                dto.StudyStartedAt
+                |> Shared.Nullable.toOption
+                |> Option.defaultValue sessionStartedAt
             )
-        | Some "Review" ->
+        | "Review" ->
             Review(
-                dto.StudyDueAt |> Option.defaultValue sessionStartedAt,
+                dto.StudyDueAt
+                |> Shared.Nullable.toOption
+                |> Option.defaultValue sessionStartedAt,
                 dto.StudyReviewIntervalSeconds
+                |> Shared.Nullable.toOption
                 |> Option.defaultValue StudySettings.LearningEasyIntervalSeconds,
-                dto.StudyLastReviewedAt |> Option.defaultValue sessionStartedAt
+                dto.StudyLastReviewedAt
+                |> Shared.Nullable.toOption
+                |> Option.defaultValue sessionStartedAt
             )
         | _ -> New
 
@@ -174,29 +187,31 @@ module PersistedCardStudyState =
         | New ->
             { Id = cardId
               StudyStateType = "New"
-              StudyDueAt = None
-              StudyLearningStepIndex = None
-              StudyStartedAt = None
-              StudyReviewIntervalSeconds = None
-              StudyLastReviewedAt = None }
+              StudyDueAt = Nullable()
+              StudyLearningStepIndex = Nullable()
+              StudyStartedAt = Nullable()
+              StudyReviewIntervalSeconds = Nullable()
+              StudyLastReviewedAt = Nullable() }
 
         | Learning(dueAt, learningStepIndex, startedAt) ->
             { Id = cardId
               StudyStateType = "Learning"
-              StudyDueAt = Some dueAt
-              StudyLearningStepIndex = Some learningStepIndex
-              StudyStartedAt = Some startedAt
-              StudyReviewIntervalSeconds = None
-              StudyLastReviewedAt = None }
+              StudyDueAt = Nullable(dueAt)
+              StudyLearningStepIndex = Nullable(learningStepIndex)
+              StudyStartedAt = Nullable(startedAt)
+              StudyReviewIntervalSeconds = Nullable()
+              StudyLastReviewedAt = Nullable() }
 
         | Review(dueAt, reviewIntervalSeconds, lastReviewedAt) ->
             { Id = cardId
               StudyStateType = "Review"
-              StudyDueAt = Some dueAt
-              StudyLearningStepIndex = None
-              StudyStartedAt = None
-              StudyReviewIntervalSeconds = Some reviewIntervalSeconds
-              StudyLastReviewedAt = Some lastReviewedAt }
+              StudyDueAt = Nullable(dueAt)
+              StudyLearningStepIndex = Nullable()
+              StudyStartedAt = Nullable()
+              StudyReviewIntervalSeconds = Nullable(reviewIntervalSeconds)
+              StudyLastReviewedAt = Nullable(lastReviewedAt) }
+
+
 
 module StudyStateTransitions =
     let private multiplyIntervalSeconds (currentIntervalSeconds: int) (multiplier: float) =
@@ -257,8 +272,6 @@ module StudyStateTransitions =
                     multiplyIntervalSeconds previousIntervalSeconds StudySettings.ReviewEasyIntervalMultiplier
 
                 Review(answeredAt.AddSeconds(float nextInterval), nextInterval, answeredAt)
-
-
 
 type GetStudyCardsForCompletionResult =
     | PlantNotFoundOrAccessDenied
@@ -631,7 +644,7 @@ type PlantsRepository() =
                         c."StudyDueAt",
                         c."StudyLearningStepIndex",
                         c."StudyStartedAt",
-                        c."StudyReviewInterval",
+                        c."StudyReviewIntervalSeconds",
                         c."StudyLastReviewedAt",
                         c."LastTimeEdited",
                         c."CreationTime"
@@ -640,9 +653,27 @@ type PlantsRepository() =
                     WHERE p."Id" = @PlantId
                       AND p."OwnerId" = @OwnerId
                       AND c."StudyStateType" IS NOT NULL
-                      AND c."StudyDueAt" <= @Now
-                    ORDER BY c."StudyDueAt" ASC, c."CreationTime" ASC, c."Id" ASC
-                    LIMIT @ReviewCardsPerDay;
+                      AND c."StudyStateType" <> 'New'
+                      AND (
+                            c."StudyDueAt" <= @Now
+                            OR NOT EXISTS (
+                                SELECT 1
+                                FROM card c2
+                                INNER JOIN plant p2 ON p2."DeckId" = c2."DeckId"
+                                WHERE p2."Id" = @PlantId
+                                  AND p2."OwnerId" = @OwnerId
+                                  AND c2."StudyStateType" IS NOT NULL
+                                  AND c2."StudyStateType" <> 'New'
+                                  AND c2."StudyDueAt" <= @Now
+                            )
+                          )
+                    ORDER BY
+                        CASE WHEN c."StudyDueAt" <= @Now THEN 0 ELSE 1 END,
+                        c."StudyDueAt" ASC NULLS LAST,
+                        c."StudyLastReviewedAt" ASC NULLS FIRST,
+                        c."CreationTime" ASC,
+                        c."Id" ASC
+                    LIMIT @ReviewCardsPerSession;
 
                     SELECT
                         c."Id",
@@ -652,7 +683,7 @@ type PlantsRepository() =
                         c."StudyDueAt",
                         c."StudyLearningStepIndex",
                         c."StudyStartedAt",
-                        c."StudyReviewInterval",
+                        c."StudyReviewIntervalSeconds",
                         c."StudyLastReviewedAt",
                         c."LastTimeEdited",
                         c."CreationTime"
@@ -660,17 +691,17 @@ type PlantsRepository() =
                     INNER JOIN plant p ON p."DeckId" = c."DeckId"
                     WHERE p."Id" = @PlantId
                       AND p."OwnerId" = @OwnerId
-                      AND c."StudyStateType" IS NULL
+                      AND (c."StudyStateType" IS NULL OR c."StudyStateType" = 'New')
                     ORDER BY c."CreationTime" ASC, c."Id" ASC
-                    LIMIT @NewCardsPerDay;
+                    LIMIT @NewCardsPerSession;
                 """
 
             let args =
                 {| PlantId = PlantId.value plantId
                    OwnerId = AppUserId.value ownerId
                    Now = now
-                   ReviewCardsPerDay = StudyConstants.ReviewCardsPerDay
-                   NewCardsPerDay = StudyConstants.NewCardsPerDay |}
+                   ReviewCardsPerSession = StudyConstants.ReviewCardsPerSession
+                   NewCardsPerSession = StudyConstants.NewCardsPerSession |}
 
             let! grid = conn.QueryMultipleAsync(sql, args)
             use grid = grid
@@ -746,7 +777,6 @@ type PlantsRepository() =
                 return Error $"Deleting plant card failed: {ex.Message}"
         }
 
-
     member _.GetStudyCardsForCompletionForUpdate
         (conn: NpgsqlConnection)
         (tx: NpgsqlTransaction)
@@ -803,7 +833,13 @@ type PlantsRepository() =
                             tx
                         )
 
-                    return Ok(Success(List.ofSeq cards))
+                    let loadedCards = cards |> Seq.toList
+                    let requestedUniqueCardsCount = cardIds |> List.distinct |> List.length
+
+                    if loadedCards.Length <> requestedUniqueCardsCount then
+                        return Error "Some study cards were not found or do not belong to the plant."
+                    else
+                        return Ok(Success loadedCards)
             with ex ->
                 return Error ex.Message
         }

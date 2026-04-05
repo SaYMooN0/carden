@@ -11,14 +11,12 @@
             "id": "80b3e6dd1788eeb2",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "db/скрипты созддания табличек.md",
-                "mode": "source",
-                "source": false
+                "file": "pots/Coral/Coral_3.png"
               },
-              "icon": "lucide-file",
-              "title": "скрипты созддания табличек"
+              "icon": "lucide-image",
+              "title": "Coral_3"
             }
           }
         ]
@@ -199,31 +197,32 @@
       "bases:Создать новую базу": false
     }
   },
-  "active": "80b3e6dd1788eeb2",
+  "active": "052780f53b784305",
   "lastOpenFiles": [
+    "pots/Coral/Coral_3.png.0.pdnSave",
+    "pots/Coral/Coral_2.png.0.pdnSave",
+    "pots/Coral/Coral_1.png.0.pdnSave",
+    "pots/Coral/Coral_2.png",
+    "pots/Coral/Coral_3.png",
+    "pots/Coral/Coral_1.png",
+    "plants/McPitcherPlant/McPitcherPlant_5.png",
+    "plants/McPitcherPlant/McPitcherPlant_att_5.png",
+    "db/скрипты созддания табличек.md",
+    "plants/Cactus/Cactus_att_5.png",
+    "plants/Cactus/Cactus_att_3.png",
+    "plants/Cactus/Cactus_att_2.png",
+    "plants/Cactus/Cactus_att_1.png",
+    "plants/Cactus/Cactus_att_4.png",
     "Идеи.md",
     "Без названия.base",
-    "pots/Coral/Coral_1.png",
-    "db/скрипты созддания табличек.md",
     "отчеты/Кр2/Карден_Отчет2.docx",
     "отчеты/Кр2/~$рден_Отчет2.docx",
     "отчеты/Кр2",
     "pots/Coral",
-    "plants/McPitcherPlant/McPitcherPlant_2.png",
-    "plants/McPitcherPlant/McPitcherPlant_1.png",
-    "plants/McPitcherPlant/McPitcherPlant_att_5.png",
-    "plants/McPitcherPlant/McPitcherPlant_att_4.png",
-    "plants/McPitcherPlant/McPitcherPlant_att_3.png",
-    "plants/McPitcherPlant/McPitcherPlant_att_2.png",
-    "plants/McPitcherPlant/McPitcherPlant_att_1.png",
-    "plants/McPitcherPlant/McPitcherPlant_5.png",
-    "plants/McPitcherPlant/McPitcherPlant_4.png",
     "pots/pvz_pot/pvz.md",
     "plants/McPitcherPlant",
     "plants/Cactus",
     "plants",
-    "pots/PVZ",
-    "pots/CeramicWithSun",
     "plants/Сactus/Cactus.md",
     "pots/PotPVZ.md",
     "pots/PotCoral.md",

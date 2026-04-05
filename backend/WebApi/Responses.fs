@@ -43,7 +43,7 @@ module PlantPreviewResponse =
           PotType = PotTypeName.value item.PotType
           CardsCount = item.CardsCount
           CreationDate = item.CreationDate.ToIsoString()
-          StudyProgress = item.StudySessionsCompleted + uint 1 }
+          StudyProgress = item.StudySessionsCompleted  }
 
 
 type DeckResponse =

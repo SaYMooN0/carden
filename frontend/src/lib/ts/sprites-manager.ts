@@ -16,7 +16,7 @@ export namespace SpritesManager {
 
 
 
-    const potLevels = [1, 2, 3, 4, 5] as const;
+    const potLevels = [1, 2, 3] as const;
     function getPotSpriteForLvl(potType: PotType, level: typeof potLevels[number]): string {
         return `/sprites/pots/${potType}/${potType}_${level}.png`;
     }
@@ -25,8 +25,8 @@ export namespace SpritesManager {
     }
     function calculatePotSpriteLvlBasedOnCardsCount(cardsCount: number): typeof potLevels[number] {
         const lvl = Math.round(cardsCount / 10);
-        if (lvl > 5) {
-            return 5;
+        if (lvl > 3) {
+            return 3;
         }
         if (lvl < 1) {
             return 1;
@@ -35,8 +35,8 @@ export namespace SpritesManager {
     }
 
     export const potsYOffset: Record<PotType, Record<typeof potLevels[number], number>> = {
-        "CeramicWithSun": { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-        "PVZ": { 1: 30, 2: 30, 3: 30, 4: 30, 5: 30 }
+        "Coral": { 1: 0, 2: 0, 3: 0 },
+        "PVZ": { 1: 30, 2: 30, 3: 30 }
     }
     export function getPotYOffsetBasedOnCardsCount(potType: PotType, cardsCount: number): number {
         const lvl = calculatePotSpriteLvlBasedOnCardsCount(cardsCount);
@@ -45,8 +45,10 @@ export namespace SpritesManager {
 
 
 
-    export function calculatePlantSpritesBasedOnStudyProgress(specie: PlantSpecie, studyProgress: number)
-        : { mainSprite: string, attachments: string[] } {
+    export function calculatePlantSpritesBasedOnStudyProgress(
+        specie: PlantSpecie,
+        studyProgress: number
+    ): { mainSprite: string, attachments: string[] } {
         if (studyProgress < 5) {
             const level = (studyProgress + 1) as typeof plantGrowthLevels[number];
             return { mainSprite: getPlantSpriteForLvl(specie, level), attachments: [] };

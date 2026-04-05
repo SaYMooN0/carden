@@ -6,7 +6,8 @@ open Domain.CardContentItem
 open Domain.Email
 open Domain.PlantName
 open Domain.Plants
-open Domain.StudySettings.StudySettings
+open Domain.Study
+open Domain.Study.StudySettings
 open Domain.Users
 open WebApi.BackendResponse
 open WebApi.RepositoriesShared

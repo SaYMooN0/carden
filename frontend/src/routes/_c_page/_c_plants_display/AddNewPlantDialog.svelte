@@ -6,6 +6,7 @@
 	import { AllPlantSpicies, AllPotTypes, type PlantSpecie, type PotType } from '$lib/ts/base-types';
 	import type { Err } from '$lib/ts/err';
 	import { SpritesManager } from '$lib/ts/sprites-manager';
+	import SpriteCarousel from './_c_new_plant_dialog/SpriteCarousel.svelte';
 
 	let dialog: DialogWithCloseButton = $state()!;
 	let selectedPlantIndex = $state(0);
@@ -13,57 +14,28 @@
 	let plantName = $state('');
 	let creatingErrs: Err[] = $state([]);
 	let isLoading = $state(false);
+
+	const plantNameMaxLength = 40;
+
 	const selectedPlant: PlantSpecie = $derived(AllPlantSpicies[selectedPlantIndex]);
 	const selectedPot: PotType = $derived(AllPotTypes[selectedPotIndex]);
-	const canSubmit = $derived(plantName.trim().length > 0);
-
-	export function open() {
-		dialog.open();
-	}
-
-	function mod(n: number, m: number): number {
-		return ((n % m) + m) % m;
-	}
-
-	function prevIndex(current: number, total: number): number {
-		return mod(current - 1, total);
-	}
-
-	function nextIndex(current: number, total: number): number {
-		return mod(current + 1, total);
-	}
+	const canSubmit = $derived(plantName.trim().length > 0 && !isLoading);
 
 	function prettify(value: string): string {
 		return value.replace(/([a-z0-9])([A-Z])/g, '$1 $2');
 	}
 
-	function getRelativeOffset(index: number, selected: number, total: number): number {
-		let diff = index - selected;
-
-		if (diff > total / 2) {
-			diff -= total;
-		}
-		if (diff < -total / 2) {
-			diff += total;
-		}
-
-		return diff;
+	function resetForm() {
+		selectedPlantIndex = 0;
+		selectedPotIndex = 0;
+		plantName = '';
+		creatingErrs = [];
+		isLoading = false;
 	}
 
-	function selectPrevPlant() {
-		selectedPlantIndex = prevIndex(selectedPlantIndex, AllPlantSpicies.length);
-	}
-
-	function selectNextPlant() {
-		selectedPlantIndex = nextIndex(selectedPlantIndex, AllPlantSpicies.length);
-	}
-
-	function selectPrevPot() {
-		selectedPotIndex = prevIndex(selectedPotIndex, AllPotTypes.length);
-	}
-
-	function selectNextPot() {
-		selectedPotIndex = nextIndex(selectedPotIndex, AllPotTypes.length);
+	export function open() {
+		resetForm();
+		dialog.open();
 	}
 
 	async function handleSubmit(event: SubmitEvent) {
@@ -72,8 +44,10 @@
 		if (!canSubmit) {
 			return;
 		}
+
 		creatingErrs = [];
-		let isLoading = true;
+		isLoading = true;
+
 		const response = await Backend.fetchJsonResponse<{ id: string }>(
 			'/plants/create',
 			RJO.POST({
@@ -82,13 +56,17 @@
 				potType: selectedPot
 			})
 		);
+
 		isLoading = false;
+
 		if (response.isSuccess) {
 			dialog.close();
-			goto(`/${response.data.id}/edit`);
-		} else {
-			creatingErrs = response.errs;
+			resetForm();
+			await goto(`/${response.data.id}/edit`);
+			return;
 		}
+
+		creatingErrs = response.errs;
 	}
 </script>
 
@@ -99,95 +77,42 @@
 			<p>Выберите вид растения, горшок и придумайте название.</p>
 		</div>
 
-		<div class="section">
-			<div class="section-title">
-				<span>Вид растения</span>
+		<div class="selection-summary" aria-live="polite">
+			<div class="summary-chip">
+				<span class="summary-label">Растение</span>
+				<span class="summary-value">{prettify(selectedPlant)}</span>
 			</div>
 
-			<div class="carousel">
-				<button
-					class="side-hitbox left"
-					type="button"
-					aria-label="Предыдущее растение"
-					onclick={selectPrevPlant}
-				></button>
-
-				<div class="carousel-window">
-					{#each AllPlantSpicies as specie, index (specie)}
-						{@const offset = getRelativeOffset(index, selectedPlantIndex, AllPlantSpicies.length)}
-
-						<button
-							type="button"
-							class={`carousel-item ${offset === 0 ? 'center' : ''} ${offset === -1 ? 'left' : ''} ${offset === 1 ? 'right' : ''} ${Math.abs(offset) > 1 ? 'hidden' : ''}`}
-							aria-pressed={offset === 0}
-							onclick={() => (selectedPlantIndex = index)}
-						>
-							<div class="item-card">
-								<img
-									class="item-sprite plant-sprite"
-									src={SpritesManager.getLvl5PlantSprite(specie)}
-									alt={prettify(specie)}
-									draggable="false"
-								/>
-								<span>{prettify(specie)}</span>
-							</div>
-						</button>
-					{/each}
-				</div>
-
-				<button
-					class="side-hitbox right"
-					type="button"
-					aria-label="Следующее растение"
-					onclick={selectNextPlant}
-				></button>
+			<div class="summary-chip">
+				<span class="summary-label">Горшок</span>
+				<span class="summary-value">{prettify(selectedPot)}</span>
 			</div>
 		</div>
 
-		<div class="section">
-			<div class="section-title">
-				<span>Горшок</span>
-			</div>
-
-			<div class="carousel">
-				<button
-					class="side-hitbox left"
-					type="button"
-					aria-label="Предыдущий горшок"
-					onclick={selectPrevPot}
-				></button>
-
-				<div class="carousel-window">
-					{#each AllPotTypes as potType, index (potType)}
-						{@const offset = getRelativeOffset(index, selectedPotIndex, AllPotTypes.length)}
-
-						<button
-							type="button"
-							class={`carousel-item ${offset === 0 ? 'center' : ''} ${offset === -1 ? 'left' : ''} ${offset === 1 ? 'right' : ''} ${Math.abs(offset) > 1 ? 'hidden' : ''}`}
-							aria-pressed={offset === 0}
-							onclick={() => (selectedPotIndex = index)}
-						>
-							<div class="item-card">
-								<img
-									class="item-sprite pot-sprite"
-									src={SpritesManager.getLvl3PotSprite(potType)}
-									alt={prettify(potType)}
-									draggable="false"
-								/>
-								<span>{prettify(potType)}</span>
-							</div>
-						</button>
-					{/each}
-				</div>
-
-				<button
-					class="side-hitbox right"
-					type="button"
-					aria-label="Следующий горшок"
-					onclick={selectNextPot}
-				></button>
-			</div>
-		</div>
+		<SpriteCarousel
+			title="Вид растения"
+			items={AllPlantSpicies}
+			bind:selectedIndex={selectedPlantIndex}
+			getKey={(specie) => specie}
+			getLabel={prettify}
+			getImageSrc={(specie) => SpritesManager.getLvl5PlantSprite(specie)}
+			itemAspectRatio={0.8}
+			itemWidth="10rem"
+			previousAriaLabel="Предыдущее растение"
+			nextAriaLabel="Следующее растение"
+		/>
+		<SpriteCarousel
+			title="Горшок"
+			items={AllPotTypes}
+			bind:selectedIndex={selectedPotIndex}
+			getKey={(potType: PotType) => potType}
+			getLabel={(potType: PotType) => prettify(potType)}
+			getImageSrc={(potType: PotType) => SpritesManager.getLvl3PotSprite(potType)}
+			itemAspectRatio={1}
+			itemWidth="10rem"
+			previousAriaLabel="Предыдущий горшок"
+			nextAriaLabel="Следующий горшок"
+		/>
 
 		<div class="section">
 			<label class="name-label" for="plant-name-input">Название растения</label>
@@ -196,13 +121,14 @@
 				class="name-input"
 				type="text"
 				bind:value={plantName}
-				maxlength="40"
+				maxlength={plantNameMaxLength}
 				placeholder="Введите название растения"
 				autocomplete="off"
 			/>
 		</div>
 
 		<DefaultErrBlock errs={creatingErrs} />
+
 		<div class="actions">
 			<button class="submit-button" type="submit" disabled={!canSubmit}>
 				{#if isLoading}
@@ -217,7 +143,6 @@
 
 <style>
 	.root {
-		width: 32rem;
 		display: flex;
 		flex-direction: column;
 		gap: 1.25rem;
@@ -227,217 +152,57 @@
 	.header {
 		display: flex;
 		flex-direction: column;
-		gap: 0.35rem;
+		gap: 0.375rem;
 	}
 
 	.header h2 {
-		font-size: 1.6rem;
+		margin: 0;
+		font-size: 1.625rem;
 		font-weight: 700;
 		line-height: 1.2;
-		margin: 0;
 	}
 
 	.header p {
 		margin: 0;
 		font-size: 0.95rem;
-		line-height: 1.45;
+		line-height: 1.5;
 		color: var(--color-text-light);
 	}
 
-	.preview-card {
+	.selection-summary {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+	}
+
+	.summary-chip {
+		flex: 1 1 12rem;
 		display: flex;
 		flex-direction: column;
-		gap: 0.85rem;
-		padding: 1rem;
-		border-radius: 1.5rem;
-		background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-sage-hover) 100%);
-		border: 0.1rem solid var(--color-sage);
+		gap: 0.25rem;
+		padding: 0.875rem 1rem;
+		border-radius: 1rem;
+		border: 0.125rem solid var(--color-sage);
+		background: var(--color-sage-hover);
 		box-shadow: var(--shadow);
 	}
 
-	.preview-scene {
-		position: relative;
-		height: 15rem;
-		border-radius: 1.2rem;
-		background:
-			radial-gradient(circle at top, rgba(255, 255, 255, 0.95) 0%, transparent 60%),
-			var(--color-cream);
-		overflow: hidden;
-	}
-
-	.preview-scene::after {
-		content: '';
-		position: absolute;
-		left: 50%;
-		bottom: 1rem;
-		transform: translateX(-50%);
-		width: 9rem;
-		height: 0.9rem;
-		border-radius: 999rem;
-		background: rgba(0, 0, 0, 0.12);
-		filter: blur(0.4rem);
-	}
-
-	.plant-preview,
-	.pot-preview {
-		position: absolute;
-		left: 50%;
-		transform: translateX(-50%);
-		user-select: none;
-		pointer-events: none;
-	}
-
-	.plant-preview {
-		bottom: 4rem;
-		width: 9rem;
-		max-width: 60%;
-		z-index: 1;
-	}
-
-	.pot-preview {
-		bottom: 1.25rem;
-		width: 10rem;
-		max-width: 65%;
-		z-index: 2;
-	}
-	.meta-label {
+	.summary-label {
 		font-size: 0.75rem;
+		font-weight: 600;
 		color: var(--color-text-light);
 	}
 
-	.meta-value {
-		font-size: 0.92rem;
-		font-weight: 600;
+	.summary-value {
+		font-size: 0.95rem;
+		font-weight: 700;
+		line-height: 1.3;
 	}
 
 	.section {
 		display: flex;
 		flex-direction: column;
-		gap: 0.65rem;
-	}
-
-	.section-title {
-		font-size: 1rem;
-		font-weight: 600;
-	}
-
-	.carousel {
-		position: relative;
-		height: 12rem;
-	}
-
-	.carousel-window {
-		position: relative;
-		height: 100%;
-		overflow: hidden;
-		border-radius: 1.35rem;
-	}
-
-	.carousel-item {
-		position: absolute;
-		top: 0.35rem;
-		left: 50%;
-		width: 10rem;
-		transform-origin: center center;
-		border: none;
-		background: transparent;
-		padding: 0;
-		cursor: pointer;
-		transition:
-			transform 0.28s ease,
-			opacity 0.28s ease,
-			filter 0.28s ease;
-	}
-
-	.carousel-item.hidden {
-		opacity: 0;
-		pointer-events: none;
-		transform: translateX(-50%) scale(0.7);
-	}
-
-	.carousel-item.center {
-		transform: translateX(-50%) scale(1);
-		z-index: 3;
-		opacity: 1;
-	}
-
-	.carousel-item.left {
-		transform: translateX(calc(-50% - 7.4rem)) scale(0.82);
-		z-index: 2;
-		opacity: 0.82;
-	}
-
-	.carousel-item.right {
-		transform: translateX(calc(-50% + 7.4rem)) scale(0.82);
-		z-index: 2;
-		opacity: 0.82;
-	}
-
-	.item-card {
-		width: 100%;
-		height: 100%;
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		gap: 0.55rem;
-		padding: 0.8rem;
-		border-radius: 1.35rem;
-		background: var(--color-cream);
-		border: 0.12rem solid var(--color-sage);
-		box-shadow: var(--shadow);
-		transition:
-			border-color 0.2s ease,
-			background-color 0.2s ease;
-	}
-
-	.carousel-item.center .item-card {
-		border-color: var(--primary);
-		background: var(--color-sage-hover);
-	}
-
-	.carousel-item:not(.hidden):hover .item-card {
-		background: var(--color-sage-hover);
-	}
-
-	.item-sprite {
-		max-width: 100%;
-		user-select: none;
-		pointer-events: none;
-	}
-
-	.plant-sprite {
-		aspect-ratio: 1/1.25;
-	}
-
-	.pot-sprite {
-		aspect-ratio: 1/1;
-	}
-
-	.item-card span {
-		font-size: 0.88rem;
-		font-weight: 600;
-		text-align: center;
-		line-height: 1.2;
-	}
-
-	.side-hitbox {
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		width: 5rem;
-		border: none;
-		background-color: red;
-		cursor: pointer;
-		z-index: 4;
-	}
-
-	.side-hitbox.left {
-		left: 0;
-	}
-
-	.side-hitbox.right {
-		right: 0;
+		gap: 0.625rem;
 	}
 
 	.name-label {
@@ -472,16 +237,16 @@
 	}
 
 	.submit-button {
+		min-width: 10.5rem;
+		padding: 0.875rem 1.25rem;
 		border: none;
 		border-radius: 999rem;
-		padding: 0.9rem 1.2rem;
-		min-width: 10rem;
-		font-size: 0.98rem;
-		font-weight: 700;
 		background: var(--primary);
 		color: var(--primary-foreground);
-		cursor: pointer;
+		font-size: 1rem;
+		font-weight: 700;
 		box-shadow: var(--shadow);
+		cursor: pointer;
 		transition:
 			transform 0.18s ease,
 			opacity 0.18s ease,
@@ -489,7 +254,7 @@
 	}
 
 	.submit-button:hover:enabled {
-		transform: translateY(-0.08rem);
+		transform: translateY(-0.125rem);
 		background: var(--primary-hov);
 	}
 

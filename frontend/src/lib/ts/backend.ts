@@ -25,7 +25,6 @@ export namespace Backend {
 
             const text = await response.text();
 
-            console.log(text);
             try {
                 const parsed = JSON.parse(text) as Omit<BackendResponse<T>, "statusCode">;
                 const data: BackendResponse<T> = { ...parsed, statusCode: response.status } as BackendResponse<T>;

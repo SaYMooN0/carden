@@ -239,7 +239,7 @@
 		<div class="content-column-header">
 			<div>
 				<div class="content-column-title">обратная сторона</div>
-				<p class="content-column-subtitle">Ответ, объяснение или дополнительная заметка</p>
+				<p class="content-column-subtitle">Ответ, объяснение или доп. заметка</p>
 			</div>
 
 			<div class="content-column-count">

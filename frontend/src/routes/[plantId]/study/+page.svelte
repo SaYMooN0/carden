@@ -6,7 +6,7 @@
 	import StudyPlantDeck from './_c_page/StudyPlantDeck.svelte';
 
 	let { data }: PageProps = $props();
-	console.log(11);
+	console.log(data);
 </script>
 
 {#if !data.isSuccess && ErrUtils.ensureExtraData(data.errs[0], 'NOT_ENOUGH_CARDS_TO_STUDY')}
@@ -14,7 +14,6 @@
 		plantId={data.errs[0].extraData.data.plantId}
 		cardsCount={data.errs[0].extraData.data.cardsCount}
 	/>
-	<h1>1</h1>
 {:else if data.errs?.some((err) => err.extraData?.id === 'INVALID_PLANT_ID')}
 	<PageLoadErr
 		errs={[

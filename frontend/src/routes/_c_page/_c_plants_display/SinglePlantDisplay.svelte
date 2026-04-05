@@ -40,6 +40,11 @@
 
 	<div class="plant-info">
 		<h2 class="plant-name" title={plant.name}>{plant.name}</h2>
+
+		<div class="plant-meta">
+			<span class="meta-pill">Карточек: {plant.cardsCount}</span>
+			<span class="meta-pill">Прогресс: {plant.studyProgress}</span>
+		</div>
 	</div>
 
 	<div class="actions-container">
@@ -53,11 +58,22 @@
 		width: 100%;
 		max-width: 16rem;
 		display: grid;
-		gap: 0.875rem;
+		gap: 1rem;
 		padding: 1rem;
-		border: 0.125rem solid var(--color-terracotta);
+		border: 0.125rem solid var(--color-sage);
 		border-radius: 1.5rem;
+		background: var(--color-cream);
 		box-shadow: var(--shadow);
+		transition:
+			transform 0.2s ease,
+			border-color 0.2s ease,
+			background-color 0.2s ease;
+	}
+
+	.plant-container:hover {
+		transform: translateY(-0.125rem);
+		border-color: var(--color-terracotta-light);
+		background: var(--color-cream);
 	}
 
 	.sprites-stage {
@@ -66,8 +82,8 @@
 		aspect-ratio: 1 / 2.25;
 		border-radius: 1.25rem;
 		overflow: hidden;
+		background: var(--color-cream);
 	}
-
 	.plant-shell {
 		position: absolute;
 		top: 0;
@@ -104,13 +120,13 @@
 
 	.plant-info {
 		display: grid;
-		gap: 0.25rem;
+		gap: 0.5rem;
 	}
 
 	.plant-name {
 		overflow: hidden;
 		font-size: 1.125rem;
-		line-height: 1.5rem;
+		line-height: 1.375rem;
 		font-weight: 700;
 		color: var(--text);
 		text-align: center;
@@ -118,10 +134,28 @@
 		white-space: nowrap;
 	}
 
+	.plant-meta {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.5rem;
+	}
+
+	.meta-pill {
+		padding: 0.375rem 0.75rem;
+		border-radius: 999rem;
+		background: var(--color-sage-hover);
+		border: 0.125rem solid var(--color-sage);
+		font-size: 0.75rem;
+		font-weight: 600;
+		line-height: 1rem;
+		color: var(--color-text-light);
+	}
+
 	.actions-container {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0.75rem;
+		grid-template-columns: 1fr;
+		gap: 0.625rem;
 	}
 
 	.action-btn {
@@ -139,7 +173,8 @@
 		transition:
 			transform 0.2s ease,
 			background-color 0.2s ease,
-			border-color 0.2s ease;
+			border-color 0.2s ease,
+			color 0.2s ease;
 	}
 
 	.action-btn:hover {

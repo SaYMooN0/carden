@@ -36,23 +36,41 @@ export class StudyDeckPageState {
 
         const normalizedReviewCards = data.reviewCards.map((card) => this.normalizeCard(card));
         const normalizedNewCards = data.newCards.map((card) => this.normalizeCard(card));
+        const allCards = [...normalizedReviewCards, ...normalizedNewCards];
 
         this.initialReviewCardIds = normalizedReviewCards.map((card) => card.id);
         this.initialNewCardIds = normalizedNewCards.map((card) => card.id);
 
-        for (const card of [...normalizedReviewCards, ...normalizedNewCards]) {
+        for (const card of allCards) {
             this.#cardsById[card.id] = card;
         }
 
-        this.#availableQueue = [
-            ...normalizedReviewCards.map((card) => card.id),
-            ...normalizedNewCards.map((card) => card.id)
-        ];
+        const allQueue = allCards.map((card) => card.id);
 
         this.#delayedQueue = [];
         this.#answerEvents = [];
 
-        this.goToNextCardOrFinish();
+        if (allQueue.length > 0) {
+            const firstCardId = allQueue[0];
+            this.#availableQueue = allQueue.slice(1);
+            this.#currentCardShownAtClientMs = Date.now();
+
+            this.#deckStudyState = {
+                state: 'Card',
+                currentSide: 'Front',
+                currentCard: this.#cardsById[firstCardId]
+            };
+        } else {
+            this.#availableQueue = [];
+            this.#deckStudyState = {
+                state: 'Finished',
+                newCardsLeft: 0,
+                reviewCardsLeft: 0,
+                totalAnswersCount: 0,
+                uniqueCardsSeenCount: 0,
+                completionSyncState: { state: 'Saving' }
+            };
+        }
     }
 
     get plantName() {
