@@ -13,6 +13,7 @@
 	<NotEnoughCardsToStudyState
 		plantId={data.errs[0].extraData.data.plantId}
 		cardsCount={data.errs[0].extraData.data.cardsCount}
+		minCardsToStudyCount={data.errs[0].extraData.data.minCardsToStudyCount}
 	/>
 {:else if data.errs?.some((err) => err.extraData?.id === 'INVALID_PLANT_ID')}
 	<PageLoadErr

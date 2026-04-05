@@ -76,25 +76,121 @@ type EmailService(config: EmailServiceConfig, frontendConfig: FrontendConfig) =
 
             let body =
                 $"""
-                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1e293b;">
-                        <h2 style="color: #4f46e5;">Confirm your email address</h2>
-                        <p>
-                            Thank you for creating an account. Please confirm your email address to activate it.
-                        </p>
-                        <p style="margin: 1.5rem 0;">
-                            <a href="{link}"
-                               style="background-color: #4f46e5; color: #ffffff; text-decoration: none;
-                                      padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: bold;">
-                                Confirm Email
-                            </a>
-                        </p>
-                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1.5rem 0;" />
-                        <p style="font-size: 0.85rem; color: #64748b;">
-                            If the button above does not work, copy and paste this link into your browser:<br />
-                            <a href="{link}" style="color: #4f46e5;">{link}</a>
-                        </p>
-                    </div>
-                    """
+<div style="margin:0; padding:2rem 1rem; background-color:#f5f2e7;">
+    <div style="
+        max-width:36rem;
+        margin:0 auto;
+        background-color:#ffffff;
+        border:1px solid #c5d3c1;
+        border-radius:1.25rem;
+        overflow:hidden;
+        box-shadow:0 4px 6px rgba(0, 0, 0, 0.1);
+        font-family:'Chiron GoRound TC', Arial, sans-serif;
+        color:#1e293b;
+    ">
+        <div style="
+            background-color:#c5d3c1;
+            padding:1.25rem 1.5rem;
+            text-align:center;
+        ">
+            <div style="
+                display:inline-block;
+                padding:0.375rem 0.75rem;
+                background-color:#f5f2e7;
+                color:#c57b58;
+                border-radius:999px;
+                font-size:0.875rem;
+                font-weight:700;
+                letter-spacing:0.02em;
+            ">
+                Carden
+            </div>
+        </div>
+
+        <div style="padding:2rem 1.5rem 1.5rem 1.5rem;">
+            <h2 style="
+                margin:0 0 1rem 0;
+                font-size:1.75rem;
+                line-height:1.2;
+                font-weight:700;
+                color:#1e293b;
+            ">
+                Confirm your email address
+            </h2>
+
+            <p style="
+                margin:0 0 1rem 0;
+                font-size:1rem;
+                line-height:1.7;
+                color:#1e293b;
+            ">
+                Thank you for creating your account. Please confirm your email address to activate it and start growing your garden.
+            </p>
+
+            <div style="margin:2rem 0; text-align:center;">
+                <a
+                    href="{link}"
+                    style="
+                        display:inline-block;
+                        background-color:#c57b58;
+                        color:#ffffff;
+                        text-decoration:none;
+                        padding:0.875rem 1.5rem;
+                        border-radius:0.875rem;
+                        font-size:1rem;
+                        font-weight:700;
+                    "
+                >
+                    Confirm Email
+                </a>
+            </div>
+
+            <div style="
+                margin:1.5rem 0;
+                padding:1rem;
+                background-color:#f5f2e7;
+                border:1px solid #c5d3c1;
+                border-radius:0.875rem;
+            ">
+                <p style="
+                    margin:0;
+                    font-size:0.9375rem;
+                    line-height:1.6;
+                    color:#64748b;
+                ">
+                    If the button does not work, copy and paste this link into your browser:
+                </p>
+                <p style="margin:0.75rem 0 0 0; word-break:break-all;">
+                    <a
+                        href="{link}"
+                        style="
+                            color:#c57b58;
+                            text-decoration:none;
+                            font-weight:600;
+                        "
+                    >
+                        {link}
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <div style="
+            padding:1rem 1.5rem 1.5rem 1.5rem;
+            text-align:center;
+        ">
+            <p style="
+                margin:0;
+                font-size:0.8125rem;
+                line-height:1.6;
+                color:#64748b;
+            ">
+                If you did not create an account, you can safely ignore this email.
+            </p>
+        </div>
+    </div>
+</div>
+"""
 
             return! this.SendEmailWithHtmlBody email subject body ct
         }

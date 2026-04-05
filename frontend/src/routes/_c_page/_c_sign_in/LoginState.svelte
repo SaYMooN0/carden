@@ -62,7 +62,7 @@
 </script>
 
 <div class="form-hero">
-	<PlantIcon size="54px" color="var(--color-sage)" />
+	<PlantIcon size="64px" color="var(--color-sage)" />
 	<h2>С возвращением</h2>
 	<p>Войдите, чтобы продолжить работу с Carden</p>
 </div>

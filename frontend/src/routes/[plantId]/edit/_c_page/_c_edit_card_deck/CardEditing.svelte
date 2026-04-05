@@ -196,7 +196,7 @@
 	<section class="content-column">
 		<div class="content-column-header">
 			<div>
-				<div class="content-column-title">лицевая сторона</div>
+				<div class="content-column-title">Лицевая сторона</div>
 				<p class="content-column-subtitle">Вопрос, подсказка или заголовок</p>
 			</div>
 
@@ -238,7 +238,7 @@
 	<section class="content-column">
 		<div class="content-column-header">
 			<div>
-				<div class="content-column-title">обратная сторона</div>
+				<div class="content-column-title">Обратная сторона</div>
 				<p class="content-column-subtitle">Ответ, объяснение или доп. заметка</p>
 			</div>
 
@@ -407,9 +407,8 @@
 	.content-column-title {
 		font-size: 1.25rem;
 		font-weight: 700;
-		line-height: 1.2;
+		line-height: 1;
 		color: var(--text);
-		text-transform: lowercase;
 	}
 
 	.content-column-subtitle {
@@ -442,6 +441,8 @@
 		position: relative;
 		min-height: 100%;
 		block-size: 100%;
+		overflow-y: auto;
+		overflow-x: hidden;
 	}
 
 	.content-column-list {
@@ -452,8 +453,9 @@
 		gap: 0.875rem;
 		min-height: 100%;
 		max-height: 100%;
-		overflow: auto;
-		padding-right: 0.25rem;
+		overflow-x: hidden !important;
+		min-height: 100%;
+		max-height: 100%;
 	}
 
 	.content-column-list-wrap.is-empty::before {
@@ -498,21 +500,5 @@
 	.content-column-scroll-area {
 		min-height: 0;
 		overflow: hidden;
-	}
-
-	.content-column-list-wrap {
-		position: relative;
-		min-height: 100%;
-		block-size: 100%;
-	}
-
-	.content-column-list {
-		display: grid;
-		align-content: start;
-		gap: 0.875rem;
-		min-height: 100%;
-		max-height: 100%;
-		overflow: auto;
-		padding-right: 0.25rem;
 	}
 </style>

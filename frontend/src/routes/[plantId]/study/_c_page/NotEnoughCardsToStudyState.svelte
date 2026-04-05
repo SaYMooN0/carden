@@ -2,14 +2,19 @@
 	interface Props {
 		plantId: string;
 		cardsCount: number;
+		minCardsToStudyCount: number;
 	}
 
-	let { plantId, cardsCount }: Props = $props();
+	let { plantId, cardsCount, minCardsToStudyCount }: Props = $props();
 
 	const cardsLabel = $derived.by(() => {
 		const rule = new Intl.PluralRules('ru-RU').select(cardsCount);
-		if (rule === 'one') return 'карточка';
-		if (rule === 'few') return 'карточки';
+		if (rule === 'one') {
+			return 'карточка';
+		}
+		if (rule === 'few') {
+			return 'карточки';
+		}
 		return 'карточек';
 	});
 </script>
@@ -20,7 +25,8 @@
 		<h2 class="state-title">Недостаточно карточек для начала обучения</h2>
 		<p class="state-description">
 			В этой колоде пока недостаточно карточек. Сейчас в ней
-			<span class="state-count">{cardsCount} {cardsLabel}</span>.
+			<span class="state-count">{cardsCount} {cardsLabel}</span>. Чтобы учить колоду добавьте еще {minCardsToStudyCount -
+				cardsCount}.
 		</p>
 	</div>
 

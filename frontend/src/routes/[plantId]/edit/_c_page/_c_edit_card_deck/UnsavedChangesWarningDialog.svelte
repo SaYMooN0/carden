@@ -23,17 +23,17 @@
 <DialogWithCloseButton bind:this={dialog} dialogId="unsaved-changes-warning-dialog">
 	<div class="dialog-copy">
 		<div class="dialog-eyebrow">несохраненные изменения</div>
-		<h3 class="dialog-title">В этой карточке есть несохраненные изменения</h3>
+		<h3 class="dialog-title">В текущей карточке есть несохраненные изменения</h3>
 		<p class="dialog-description">
 			Сохраните карточку перед выходом или отмените текущие изменения и продолжите.
 		</p>
 	</div>
 
 	<div class="dialog-actions">
-		<button class="primary-button" type="button" onclick={onStay}>остаться здесь</button>
+		<button class="primary-button" type="button" onclick={onStay}>Остаться здесь</button>
 		{#if newCardId}
 			<button class="danger-button" type="button" onclick={() => onDiscardAndContinue(newCardId!)}>
-				отменить и продолжить
+				Отменить и продолжить
 			</button>
 		{/if}
 	</div>

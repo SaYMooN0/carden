@@ -1,4 +1,4 @@
-﻿module Domain.Study
+﻿module Domain.StudySettings
 
 open System
 
@@ -38,22 +38,5 @@ module StudySettings =
 
     [<Literal>]
     let ReviewCardsPerSession = 100
-
-
-
-module StudyConstants =
     [<Literal>]
-    let NewCardsPerSession = 10
-
-    [<Literal>]
-    let ReviewCardsPerSession = 20
-
-    let LearningAgainDelay: TimeSpan = TimeSpan.FromMinutes(1.)
-    let LearningHardDelay = TimeSpan.FromMinutes(5.)
-    let LearningGoodDelay = TimeSpan.FromMinutes(10.)
-    let LearningEasyInterval = TimeSpan.FromDays(3.)
-
-    let ReviewAgainDelay = TimeSpan.FromMinutes(10.)
-    let ReviewHardIntervalMultiplier = 1.2
-    let ReviewGoodIntervalMultiplier = 2.0
-    let ReviewEasyIntervalMultiplier = 3.0
+    let MinCardsInDeckNeededToStudy = 10

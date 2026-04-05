@@ -5,8 +5,8 @@ open System.Threading.Tasks
 open Dapper
 open Domain
 open Domain.PlantName
-open Domain.Study
-open Domain.Study.StudySettings
+open Domain.StudySettings
+open Domain.StudySettings.StudySettings
 open Microsoft.FSharp.Linq
 open Npgsql
 open Domain.Plants
@@ -700,8 +700,8 @@ type PlantsRepository() =
                 {| PlantId = PlantId.value plantId
                    OwnerId = AppUserId.value ownerId
                    Now = now
-                   ReviewCardsPerSession = StudyConstants.ReviewCardsPerSession
-                   NewCardsPerSession = StudyConstants.NewCardsPerSession |}
+                   ReviewCardsPerSession = ReviewCardsPerSession
+                   NewCardsPerSession = NewCardsPerSession |}
 
             let! grid = conn.QueryMultipleAsync(sql, args)
             use grid = grid
@@ -711,7 +711,7 @@ type PlantsRepository() =
             match plantDto |> Option.ofObj with
             | None -> return LoadStudySessionResult.PlantNotFoundOrAccessDenied
 
-            | Some plant when plant.CardsCount < 10 ->
+            | Some plant when plant.CardsCount < MinCardsInDeckNeededToStudy ->
                 return LoadStudySessionResult.NotEnoughCardsToStudy(plant.CardsCount, plantId)
 
             | Some plant ->

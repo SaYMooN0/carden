@@ -46,7 +46,7 @@
 		border-radius: 1rem;
 		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
 		width: 100%;
-		max-width: 400px;
+		max-width: 500px;
 		margin: 2rem;
 	}
 </style>

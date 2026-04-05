@@ -5,6 +5,7 @@
 	import StudyAnswerButtons from './_c_study_deck/StudyAnswerButtons.svelte';
 	import StudyDeckCard from './_c_study_deck/StudyDeckCard.svelte';
 	import StudySessionStats from './_c_study_deck/StudySessionStats.svelte';
+	import HomeButton from '$lib/components/HomeButton.svelte';
 
 	interface Props {
 		studyDeckLoadResponse: StudyDeckLoadResponse;
@@ -50,12 +51,12 @@
 				/>
 			{:else if pageState.deckStudyState.state === 'Finished'}
 				<section class="finished-panel">
-					<p class="finished-eyebrow">На сегодня всё</p>
 					<h2>Сеанс обучения завершён</h2>
 					<p>
 						Вы повторили <strong>{pageState.deckStudyState.totalAnswersCount}</strong> ответов по
 						<strong>{pageState.deckStudyState.uniqueCardsSeenCount}</strong> уникальным карточкам.
 					</p>
+					<HomeButton isCompact={false} />
 				</section>
 			{/if}
 		</section>
@@ -136,14 +137,6 @@
 	.finished-panel h2 {
 		font-size: 1.25rem;
 		line-height: 1.25;
-	}
-
-	.finished-eyebrow {
-		font-size: 0.875rem;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--color-text-light);
 	}
 
 	.info-list {

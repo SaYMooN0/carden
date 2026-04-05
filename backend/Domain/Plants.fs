@@ -3,7 +3,7 @@
 open System
 open Domain.CardContentItem
 open Domain.PlantName
-open Domain.Study
+open Domain.StudySettings
 
 
 [<RequireQualifiedAccess>]
@@ -225,13 +225,13 @@ module Plant =
             | _ -> None)
         |> List.sortBy snd
         |> List.map fst
-        |> List.truncate StudyConstants.ReviewCardsPerSession
+        |> List.truncate StudySettings.ReviewCardsPerSession
 
     let private getNewCardsForStudySession (plant: Plant) : Card list =
         plant.Deck.Cards
         |> List.filter (fun card -> Card.studyState card |> Option.isNone)
         |> List.sortBy Card.creationTime
-        |> List.truncate StudyConstants.NewCardsPerSession
+        |> List.truncate StudySettings.NewCardsPerSession
 
     let tryGetStudySessionCards
         (now: DateTimeOffset)

@@ -27,11 +27,8 @@
 					<span></span>
 					<span></span>
 				</button>
-
-				<div class="content-item-label">text item</div>
 			</div>
-
-			<button class="remove-button" type="button" onclick={onRemove}>remove</button>
+			<button class="remove-button" type="button" onclick={onRemove}>Удалить элемент</button>
 		</div>
 
 		<textarea
@@ -75,14 +72,6 @@
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
-	}
-
-	.content-item-label {
-		font-size: 0.875rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--color-text-light);
 	}
 
 	.drag-handle {
@@ -136,7 +125,7 @@
 
 	textarea {
 		inline-size: 100%;
-		min-block-size: 10rem;
+		min-block-size: 6rem;
 		padding: 1rem;
 		resize: vertical;
 		background: var(--color-cream);
@@ -144,7 +133,7 @@
 		border-radius: 0.875rem;
 		outline: none;
 		font-size: 1rem;
-		line-height: 1.5;
+		line-height: 1.25;
 	}
 
 	textarea:focus {

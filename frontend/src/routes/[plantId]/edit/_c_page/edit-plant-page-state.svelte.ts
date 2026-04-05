@@ -45,7 +45,7 @@ export class EditPlantPageState {
 
     #getTextPreview(text: string | null | undefined): string {
         const trimmed = text?.trim();
-        return !trimmed ? 'Empty side' : trimmed.length > 72 ? `${trimmed.slice(0, 72)}` : trimmed;
+        return !trimmed ? '(Пусто)' : trimmed.length > 72 ? `${trimmed.slice(0, 72)}` : trimmed;
     }
 
     get plantDeckCardsPreview(): CardPreview[] {

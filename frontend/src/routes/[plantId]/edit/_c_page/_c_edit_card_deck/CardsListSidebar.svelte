@@ -1,4 +1,5 @@
 <script lang="ts">
+	import HomeButton from '$lib/components/HomeButton.svelte';
 	import type { CardPreview } from '../edit-plant-page-state.svelte';
 
 	interface Props {
@@ -30,7 +31,7 @@
 
 <aside class="sidebar">
 	<div class="sidebar-hero">
-		<div class="sidebar-eyebrow">редактор колоды растения</div>
+		<HomeButton isCompact={false} />
 		<h1 class="sidebar-title" title={plantName}>{plantName}</h1>
 		<p class="sidebar-subtitle">{subtitleText}</p>
 	</div>
@@ -104,14 +105,6 @@
 	.sidebar-hero {
 		display: grid;
 		gap: 0.375rem;
-		padding: 0.375rem;
-	}
-
-	.sidebar-eyebrow {
-		font-size: 0.75rem;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
-		color: var(--color-text-light);
 	}
 
 	.sidebar-title {
@@ -133,7 +126,9 @@
 		align-content: start;
 		gap: 0.75rem;
 		min-height: 0;
-		overflow: auto;
+		overflow-y: auto;
+		overflow-x: hidden;
+		min-width: 0;
 		padding-right: 0.25rem;
 	}
 
@@ -161,7 +156,7 @@
 		height: 1.375rem;
 		border-radius: 0.375rem;
 		padding: 0.125rem;
-		background: var(--red-2);
+		background: var(--red-3);
 		color: var(--primary-foreground);
 		border: none;
 		opacity: 0;
@@ -178,7 +173,7 @@
 	}
 	.delete-button:hover {
 		opacity: 1;
-		background: var(--red-4);
+		background: var(--red-5);
 	}
 
 	.card-tile.selected {
@@ -211,6 +206,9 @@
 		font-size: 1rem;
 		line-height: 1.5;
 		color: var(--text);
+		display: block;
+		text-overflow: ellipsis;
+		overflow: hidden;
 	}
 
 	.cards-list-empty {

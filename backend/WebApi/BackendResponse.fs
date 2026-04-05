@@ -3,6 +3,7 @@
 open System
 open System.Net
 open Domain.Plants
+open Domain.StudySettings.StudySettings
 open Giraffe
 open Microsoft.FSharp.Core
 
@@ -41,7 +42,8 @@ module BackendResponseErr =
             setExtraData
                 "NOT_ENOUGH_CARDS_TO_STUDY"
                 {| CardsCount = cardsCount
-                   PlantId = PlantId.value plantId |}
+                   PlantId = PlantId.value plantId
+                   MinCardsToStudyCount = MinCardsInDeckNeededToStudy |}
                 err
 
 type BackendFailure = BackendFailure of BackendResponseErr list

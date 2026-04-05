@@ -4,7 +4,7 @@ open System
 open System.Net
 open Domain.CardContentItem
 open Domain.Plants
-open Domain.Study
+open Domain.StudySettings
 open Microsoft.AspNetCore.Http
 open WebApi.AppUsersRepository
 open WebApi.BackendResponse
