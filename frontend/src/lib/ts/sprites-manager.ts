@@ -24,7 +24,7 @@ export namespace SpritesManager {
         return `/sprites/pots/${potType}/${potType}_3.png`;
     }
     function calculatePotSpriteLvlBasedOnCardsCount(cardsCount: number): typeof potLevels[number] {
-        const lvl = Math.round(cardsCount / 10);
+        const lvl = Math.ceil(cardsCount / 15);
         if (lvl > 3) {
             return 3;
         }
@@ -35,7 +35,7 @@ export namespace SpritesManager {
     }
 
     export const potsYOffset: Record<PotType, Record<typeof potLevels[number], number>> = {
-        "Coral": { 1: 0, 2: 0, 3: 0 },
+        "Coral": { 1: 12, 2: 12, 3: 12 },
         "PVZ": { 1: 30, 2: 30, 3: 30 }
     }
     export function getPotYOffsetBasedOnCardsCount(potType: PotType, cardsCount: number): number {

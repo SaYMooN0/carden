@@ -77,7 +77,17 @@
 			onclick={selectPrev}
 			disabled={items.length <= 1}
 		>
-			‹
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M15 6C15 6 9.00001 10.4189 9 12C8.99999 13.5812 15 18 15 18" />
+			</svg>
 		</button>
 
 		<div class="carousel-window">
@@ -114,7 +124,17 @@
 			onclick={selectNext}
 			disabled={items.length <= 1}
 		>
-			›
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M15 6C15 6 9.00001 10.4189 9 12C8.99999 13.5812 15 18 15 18" />
+			</svg>
 		</button>
 	</div>
 </section>
@@ -258,14 +278,20 @@
 		border-radius: 999rem;
 		background: var(--color-cream);
 		color: var(--text);
-		font-size: 1.375rem;
-		font-weight: 700;
 		box-shadow: var(--shadow);
 		cursor: pointer;
+		padding: 0;
 		transition:
 			transform 0.18s ease,
 			background-color 0.18s ease,
+			border-color 0.18s ease,
 			opacity 0.18s ease;
+	}
+
+	.nav-button svg {
+		width: 1.375rem;
+		height: 1.375rem;
+		pointer-events: none;
 	}
 
 	.nav-button.left {
@@ -274,15 +300,36 @@
 
 	.nav-button.right {
 		right: 0.5rem;
+		transform: translateY(-50%) rotate(180deg);
 	}
 
 	.nav-button:hover:enabled {
-		transform: translateY(-50%) scale(1.04);
 		background: var(--color-sage-hover);
+		border-color: var(--primary);
+	}
+
+	.nav-button.left:hover:enabled {
+		transform: translateY(-50%) scale(1.08);
+	}
+
+	.nav-button.right:hover:enabled {
+		transform: translateY(-50%) rotate(180deg) scale(1.08);
+	}
+
+	.nav-button:active:enabled {
+		transition-duration: 0.08s;
+	}
+
+	.nav-button.left:active:enabled {
+		transform: translateY(-50%) scale(0.94);
+	}
+
+	.nav-button.right:active:enabled {
+		transform: translateY(-50%) rotate(180deg) scale(0.94);
 	}
 
 	.nav-button:disabled {
-		opacity: 0.45;
-		cursor: default;
+		opacity: 0.35;
+		cursor: not-allowed;
 	}
 </style>

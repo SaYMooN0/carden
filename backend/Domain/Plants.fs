@@ -157,20 +157,20 @@ module PlantSpecieName =
 
 
 type PotTypeName =
-    | Basic
+    | Coral
     | PVZ
 
 module PotTypeName =
     let value =
         function
-        | Basic -> "Basic"
+        | Coral -> "Coral"
         | PVZ -> "PVZ"
 
     let tryCreate (raw: string | null) : Result<PotTypeName, unit> =
         let value = if isNull raw then "" else raw.Trim()
 
         match value with
-        | "Basic" -> Ok Basic
+        | "Coral" -> Ok Coral
         | "PVZ" -> Ok PVZ
         | _ -> Error()
 
